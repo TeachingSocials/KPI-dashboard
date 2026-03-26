@@ -325,7 +325,8 @@
     .integration-team { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 24px; }
     .team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 14px; color: var(--beige); }
     .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-    .team-member-card { background: var(--bg-dark); border: 1px solid var(--border); padding: 16px; display: flex; align-items: center; gap: 12px; }
+    .team-member-card { transition: transform 0.15s, box-shadow 0.15s; }
+    .team-member-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .team-member-avatar { width: 40px; height: 40px; background: var(--bg-card); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 19px; }
     .team-member-info { flex: 1; }
     .team-member-name { font-weight: 600; font-size: 14px; }
@@ -1730,18 +1731,22 @@
         <div class="connection-error" id="closeConnectionError"></div>
       </div>
       <div class="integration-team" id="closeTeamSection" style="display:none;">
-        <div class="team-header">
-          <span>👥 Team-Mitglieder aus Close - Rollen zuweisen (Mehrfachauswahl möglich)</span>
-          <button class="btn-small" onclick="refreshCloseTeam()">🔄 Aktualisieren</button>
-          <button class="btn-small" onclick="saveTeamRoles()" style="background:var(--success);">💾 Speichern</button>
+        <div class="team-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <span style="font-size:15px;font-weight:600;color:#fff;">👥 Team-Mitglieder aus Close - Rollen zuweisen (Mehrfachauswahl möglich)</span>
+            <div style="display:flex;gap:12px;margin-top:8px;">
+              <span style="font-size:11px;color:#60a5fa;display:flex;align-items:center;gap:4px;">📞 Opener</span>
+              <span style="font-size:11px;color:#a855f7;display:flex;align-items:center;gap:4px;">📅 Setter</span>
+              <span style="font-size:11px;color:#22c55e;display:flex;align-items:center;gap:4px;">💰 Closer</span>
+              <span style="font-size:11px;color:#f59e0b;display:flex;align-items:center;gap:4px;">🤝 AM</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-small" onclick="refreshCloseTeam()">🔄 Aktualisieren</button>
+            <button class="btn-small" onclick="saveTeamRoles()" style="background:var(--success);color:#000;font-weight:600;">💾 Speichern</button>
+          </div>
         </div>
-        <div class="role-legend" style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
-          <span style="padding:5px 10px;background:#60a5fa;border-radius:4px;font-size:12px;">📞 Opener</span>
-          <span style="padding:5px 10px;background:#a855f7;border-radius:4px;font-size:12px;">📅 Setter</span>
-          <span style="padding:5px 10px;background:#22c55e;border-radius:4px;font-size:12px;">💰 Closer</span>
-          <span style="padding:5px 10px;background:#f59e0b;border-radius:4px;font-size:12px;">🤝 AM</span>
-        </div>
-        <div class="team-grid" id="closeTeamGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
+        <div class="team-grid" id="closeTeamGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
       </div>
     </div>
 
@@ -3348,67 +3353,59 @@ function renderCloseTeam() {
       'account_manager': '#f59e0b'
     };
     
-    // Create gradient border if multiple roles
-    var borderStyle;
-    if (memberRoles.length > 1) {
-      var gradientColors = memberRoles.map(function(r) { return roleColors[r] || '#2a3a4a'; }).join(', ');
-      borderStyle = 'border:2px solid transparent;background:linear-gradient(var(--bg-card), var(--bg-card)) padding-box, linear-gradient(135deg, ' + gradientColors + ') border-box;';
-    } else if (memberRoles.length === 1) {
-      borderStyle = 'border:2px solid ' + (roleColors[memberRoles[0]] || 'var(--border)') + ';background:var(--bg-card);';
-    } else {
-      borderStyle = 'border:2px solid var(--border);background:var(--bg-card);';
-    }
-    
     // Avatar: use image if available, otherwise initials
     var avatarHtml;
     if (member.image) {
-      avatarHtml = '<img src="' + member.image + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML=\'<div style=\\\'width:40px;height:40px;border-radius:50%;background:var(--beige);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-weight:bold;\\\'>' + (initials || '👤') + '</div>\'">';
+      avatarHtml = '<img src="' + member.image + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.outerHTML=\'<div style=\\\'width:40px;height:40px;border-radius:50%;background:var(--beige);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;flex-shrink:0;\\\'>' + (initials || '👤') + '</div>\'">';
     } else {
-      avatarHtml = '<div style="width:40px;height:40px;border-radius:50%;background:var(--beige);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-weight:bold;">' + (initials || '👤') + '</div>';
+      avatarHtml = '<div style="width:40px;height:40px;border-radius:50%;background:var(--beige);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;flex-shrink:0;">' + (initials || '👤') + '</div>';
     }
     
-    // Build checkbox options - horizontal row
-    var checkboxHtml = '<div style="display:flex;flex-direction:row;gap:6px;margin-top:12px;">';
+    // Build compact role toggle buttons
     var roles = [
-      { id: 'opener', label: '📞', color: '#60a5fa', title: 'Opener' },
-      { id: 'setter', label: '📅', color: '#a855f7', title: 'Setter' },
-      { id: 'closer', label: '💰', color: '#22c55e', title: 'Closer' },
-      { id: 'account_manager', label: '🤝', color: '#f59e0b', title: 'AM' }
+      { id: 'opener', label: '📞', color: '#60a5fa', name: 'O' },
+      { id: 'setter', label: '📅', color: '#a855f7', name: 'S' },
+      { id: 'closer', label: '💰', color: '#22c55e', name: 'C' },
+      { id: 'account_manager', label: '🤝', color: '#f59e0b', name: 'AM' }
     ];
     
+    var rolesHtml = '<div style="display:flex;gap:6px;margin-left:auto;">';
     roles.forEach(function(role) {
-      var isChecked = memberRoles.includes(role.id);
-      var bgColor = isChecked ? role.color : 'var(--bg-panel)';
-      var textColor = isChecked ? '#000' : 'var(--text-dim)';
-      var borderCol = isChecked ? role.color : 'var(--border)';
-      checkboxHtml += '<label title="' + role.title + '" style="display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 10px;border:1px solid ' + borderCol + ';border-radius:4px;cursor:pointer;font-size:12px;background:' + bgColor + ';color:' + textColor + ';transition:all 0.2s;flex:1;text-align:center;">' +
-        '<input type="checkbox" data-member-id="' + memberId + '" data-role="' + role.id + '" ' + (isChecked ? 'checked' : '') + ' onchange="updateMemberRoles(this)" style="display:none;">' +
-        '<span>' + role.label + '</span><span style="font-size:10px;">' + role.title + '</span>' +
-      '</label>';
+      var isActive = memberRoles.includes(role.id);
+      var btnStyle = isActive 
+        ? 'background:' + role.color + ';color:#000;border-color:' + role.color + ';' 
+        : 'background:transparent;color:var(--text-dim);border-color:var(--border);opacity:0.5;';
+      
+      rolesHtml += '<button onclick="toggleMemberRole(\'' + memberId + '\', \'' + role.id + '\')" ' +
+        'title="' + role.id.replace('_', ' ') + '" ' +
+        'style="width:32px;height:32px;border:2px solid;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;' + btnStyle + '">' +
+        role.label +
+      '</button>';
     });
-    checkboxHtml += '</div>';
+    rolesHtml += '</div>';
     
-    html += '<div class="team-member-card" data-member-id="' + memberId + '" style="' + borderStyle + 'padding:16px;border-radius:8px;">' +
-      '<div style="display:flex;align-items:center;gap:12px;">' +
-        avatarHtml +
-        '<div style="flex:1;min-width:0;">' +
-          '<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (member.first_name || '') + ' ' + (member.last_name || '') + '</div>' +
-          '<div style="font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (member.email || '-') + '</div>' +
-        '</div>' +
+    // Card border style based on roles
+    var cardBorderStyle = memberRoles.length > 1
+      ? 'border:2px solid transparent;background:linear-gradient(var(--bg-card), var(--bg-card)) padding-box, linear-gradient(135deg, ' + memberRoles.map(function(r) { return roleColors[r]; }).join(', ') + ') border-box;'
+      : memberRoles.length === 1
+        ? 'border:2px solid ' + roleColors[memberRoles[0]] + ';background:var(--bg-card);'
+        : 'border:1px solid var(--border);background:var(--bg-card);';
+    
+    html += '<div class="team-member-card" style="' + cardBorderStyle + 'padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:12px;">' +
+      avatarHtml +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;">' + (member.first_name || '') + ' ' + (member.last_name || '') + '</div>' +
+        '<div style="font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (member.email || '-') + '</div>' +
       '</div>' +
-      checkboxHtml +
+      rolesHtml +
     '</div>';
   });
   
   grid.innerHTML = html;
 }
 
-// Update member roles on checkbox change
-function updateMemberRoles(checkbox) {
-  var memberId = checkbox.getAttribute('data-member-id');
-  var role = checkbox.getAttribute('data-role');
-  var isChecked = checkbox.checked;
-  
+// Toggle a single role for a member
+function toggleMemberRole(memberId, roleId) {
   var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
   
   // Support both old format (string) and new format (array)
@@ -3419,10 +3416,12 @@ function updateMemberRoles(checkbox) {
     memberRoles = [];
   }
   
-  if (isChecked && !memberRoles.includes(role)) {
-    memberRoles.push(role);
-  } else if (!isChecked) {
-    memberRoles = memberRoles.filter(function(r) { return r !== role; });
+  // Toggle the role
+  var roleIndex = memberRoles.indexOf(roleId);
+  if (roleIndex >= 0) {
+    memberRoles.splice(roleIndex, 1);
+  } else {
+    memberRoles.push(roleId);
   }
   
   if (memberRoles.length > 0) {
@@ -3436,7 +3435,7 @@ function updateMemberRoles(checkbox) {
   // Re-render to update visual state
   renderCloseTeam();
   
-  console.log('Rollen aktualisiert:', memberId, '→', memberRoles);
+  console.log('Rolle getoggelt:', memberId, roleId, '→', memberRoles);
 }
 
 // Save all team roles
