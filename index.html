@@ -3173,7 +3173,7 @@ async function connectCloseAPI() {
   errorEl.classList.remove('show');
   
   try {
-    // Test connection via Supabase Edge Function
+    // Test connection via Vercel API Route
     var response = await fetch(SUPABASE_URL + '/functions/v1/smart-action', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
