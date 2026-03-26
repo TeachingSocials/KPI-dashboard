@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teaching Socials Übersicht</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root { --bg-dark: #0a0e13; --bg-panel: #131a24; --bg-card: #1a2332; --beige: #C0AD94; --text: #e0e0e0; --text-dim: #6b7a8a; --border: #2a3a4a; --success: #4ade80; --warning: #fbbf24; --danger: #f87171; --purple: #a855f7; --pink: #E1306C; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -291,6 +292,45 @@
     .einstellungen-card-status { font-size: 0.75rem; }
     .einstellungen-card-status.connected { color: var(--success); }
     .einstellungen-card-status.missing { color: var(--danger); }
+    
+    /* INTEGRATION SETUP */
+    .integration-setup-card { background: var(--bg-panel); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .integration-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .integration-icon { font-size: 2.5rem; }
+    .integration-info { flex: 1; min-width: 200px; }
+    .integration-name { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--beige); }
+    .integration-desc { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; }
+    .integration-status { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--bg-dark); border-radius: 20px; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .status-dot.connected { background: var(--success); box-shadow: 0 0 10px var(--success); }
+    .status-dot.disconnected { background: var(--text-dim); }
+    .status-text { font-size: 0.8rem; }
+    .integration-form { border-top: 1px solid var(--border); padding-top: 1.5rem; }
+    .form-row { margin-bottom: 1rem; }
+    .form-row label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+    .input-with-btn { display: flex; gap: 0.5rem; }
+    .input-with-btn input { flex: 1; padding: 0.75rem 1rem; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); font-family: inherit; font-size: 0.9rem; }
+    .input-with-btn input:focus { outline: none; border-color: var(--beige); }
+    .btn-small { padding: 0.75rem; background: var(--bg-card); border: 1px solid var(--border); color: var(--text); cursor: pointer; font-size: 1rem; }
+    .btn-small:hover { border-color: var(--beige); }
+    .form-hint { font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem; }
+    .form-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    .btn-primary { padding: 0.85rem 2rem; background: var(--beige); border: none; color: var(--bg-dark); font-family: inherit; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary { padding: 0.85rem 2rem; background: transparent; border: 1px solid var(--danger); color: var(--danger); font-family: inherit; cursor: pointer; font-size: 0.9rem; }
+    .connection-error { margin-top: 1rem; padding: 0.75rem; background: rgba(248,113,113,0.1); border: 1px solid var(--danger); color: var(--danger); font-size: 0.8rem; display: none; }
+    .connection-error.show { display: block; }
+    .integration-team { border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1.5rem; }
+    .team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-size: 0.9rem; color: var(--beige); }
+    .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+    .team-member-card { background: var(--bg-dark); border: 1px solid var(--border); padding: 1rem; display: flex; align-items: center; gap: 0.75rem; }
+    .team-member-avatar { width: 40px; height: 40px; background: var(--bg-card); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .team-member-info { flex: 1; }
+    .team-member-name { font-weight: 600; font-size: 0.85rem; }
+    .team-member-email { font-size: 0.7rem; color: var(--text-dim); }
+    .team-member-role { font-size: 0.65rem; color: var(--beige); text-transform: uppercase; margin-top: 0.25rem; }
+    
     .baustein-promo { display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem; background: var(--bg-panel); border: 1px solid var(--border); margin-bottom: 1rem; flex-wrap: wrap; }
     .promo-icon { font-size: 2.5rem; }
     .promo-content { flex: 1; min-width: 200px; }
@@ -1707,30 +1747,58 @@
 
   <!-- EINSTELLUNGEN TAB -->
   <div id="einstellungen" class="tab-content">
+    <div class="section-title">🔌 CLOSE CRM VERBINDEN</div>
+    <div class="integration-setup-card">
+      <div class="integration-header">
+        <div class="integration-icon">📊</div>
+        <div class="integration-info">
+          <div class="integration-name">Close CRM</div>
+          <div class="integration-desc">Verbinde dein Close CRM um Vertriebsdaten live anzuzeigen</div>
+        </div>
+        <div class="integration-status" id="closeConnectionStatus">
+          <span class="status-dot disconnected"></span>
+          <span class="status-text">Nicht verbunden</span>
+        </div>
+      </div>
+      <div class="integration-form">
+        <div class="form-row">
+          <label>API Key</label>
+          <div class="input-with-btn">
+            <input type="password" id="closeApiKeyInput" placeholder="api_xxxxxxxxxxxxxxxx" />
+            <button class="btn-small" onclick="toggleApiKeyVisibility()">👁️</button>
+          </div>
+          <div class="form-hint">Findest du unter Close → Settings → API Keys</div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="connectCloseBtn" onclick="connectCloseAPI()">🔗 Verbinden</button>
+          <button class="btn-secondary" id="disconnectCloseBtn" onclick="disconnectCloseAPI()" style="display:none;">❌ Trennen</button>
+        </div>
+        <div class="connection-error" id="closeConnectionError"></div>
+      </div>
+      <div class="integration-team" id="closeTeamSection" style="display:none;">
+        <div class="team-header">
+          <span>👥 Team-Mitglieder aus Close</span>
+          <button class="btn-small" onclick="refreshCloseTeam()">🔄 Aktualisieren</button>
+        </div>
+        <div class="team-grid" id="closeTeamGrid"></div>
+      </div>
+    </div>
+
     <div class="section-title">🎨 BAUSTEIN-BAUKASTEN</div>
     <div class="baustein-promo">
       <div class="promo-icon">🎨</div>
       <div class="promo-content"><div class="promo-title">Eigene Übersichts bauen</div><div class="promo-desc">Erstelle eigene Bausteins mit beliebigen Kennzahlen und Formeln</div></div>
       <button class="promo-btn" onclick="openBausteinModal()">BAUSTEIN ERSTELLEN</button>
     </div>
-    <div class="section-title">🔌 VERBUNDENE WERKZEUGE</div>
+    
+    <div class="section-title">🔌 WEITERE INTEGRATIONEN</div>
     <div class="einstellungen-grid">
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">📊</div><div class="einstellungen-card-title">Close CRM</div></div><div class="einstellungen-card-status connected">● Verbunden</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">🤖</div><div class="einstellungen-card-title">ManyChat</div></div><div class="einstellungen-card-status connected">● Verbunden</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">📷</div><div class="einstellungen-card-title">Instagram</div></div><div class="einstellungen-card-status connected">● Verbunden</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">📱</div><div class="einstellungen-card-title">Meta Ads</div></div><div class="einstellungen-card-status missing">● API-Key fehlt</div></div>
+      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">🤖</div><div class="einstellungen-card-title">ManyChat</div></div><div class="einstellungen-card-status missing">● Demnächst</div></div>
+      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">📷</div><div class="einstellungen-card-title">Instagram</div></div><div class="einstellungen-card-status missing">● Demnächst</div></div>
+      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">📱</div><div class="einstellungen-card-title">Meta Ads</div></div><div class="einstellungen-card-status missing">● Demnächst</div></div>
+      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">💳</div><div class="einstellungen-card-title">Stripe</div></div><div class="einstellungen-card-status missing">● Demnächst</div></div>
     </div>
-    <div class="section-title">🏢 ENTERPRISE INTEGRATIONEN</div>
-    <div class="einstellungen-grid">
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">☁️</div><div class="einstellungen-card-title">Vertriebforce</div></div><div class="einstellungen-card-status connected">● Verbunden</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">🔷</div><div class="einstellungen-card-title">SAP</div></div><div class="einstellungen-card-status connected">● Verbunden</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">🔑</div><div class="einstellungen-card-title">Azure AD (SSO)</div></div><div class="einstellungen-card-status connected">● Aktiv</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">📊</div><div class="einstellungen-card-title">Power BI</div></div><div class="einstellungen-card-status connected">● Verbunden</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">💳</div><div class="einstellungen-card-title">Stripe</div></div><div class="einstellungen-card-status connected">● Verbunden</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">📅</div><div class="einstellungen-card-title">Calendly</div></div><div class="einstellungen-card-status connected">● Verbunden</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">📧</div><div class="einstellungen-card-title">HubSpot</div></div><div class="einstellungen-card-status missing">● Nicht verbunden</div></div>
-      <div class="einstellungen-card"><div class="einstellungen-card-header"><div class="einstellungen-card-icon">🔄</div><div class="einstellungen-card-title">Zapier</div></div><div class="einstellungen-card-status connected">● 12 Zaps aktiv</div></div>
-    </div>
+    
     <div class="section-title">⚙️ SETUP</div>
     <div class="setup-card">
       <div class="setup-info"><strong>Branche:</strong> <span id="einstellungenBranche">Coaching</span></div>
@@ -1855,17 +1923,32 @@
 
 <script>
 // =====================================================
-// GLOBAL STATE & CONFIG (must be defined first!)
+// SUPABASE CONFIGURATION
+// =====================================================
+const SUPABASE_URL = 'https://akoberpkxsqdlcagrrtk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrb2JlcnBreHNxZGxjYWdycnRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNTUyNDUsImV4cCI6MjA4OTkzMTI0NX0.rGp-FOJwE3J8vzHPpisIyKGCWLQttQke-gO0Ffj7TSo';
+
+// Initialize Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log('✓ Supabase initialized');
+
+// =====================================================
+// GLOBAL STATE & CONFIG
 // =====================================================
 var state = { branche: null, selectedWerkzeuge: [], currentVertriebRole: 'gesamt', currentVertriebView: 'team', currentKundenView: 'team', bausteinType: 'kpi', bausteinSource: 'close', bausteinMetric: null, bausteinDisplay: 'Große Zahl', formulaA: '', formulaB: '', formulaOp: '÷' };
 var branchenLabels = { coaching: 'Coaching', versicherung: 'Versicherungsmakler', finanzen: 'Finanzmakler', immobilien: 'Projektentwickler', kapital: 'Kapitalanlage' };
+var currentUser = null;
 
 // ==================== LOGIN FUNCTIONS ====================
-function handleLogin() {
-  var email = document.getElementById('loginEmail').value;
+async function handleLogin() {
+  var email = document.getElementById('loginEmail').value.trim();
   var password = document.getElementById('loginPassword').value;
   var loginBtn = document.getElementById('loginBtn');
   var errorEl = document.getElementById('loginError');
+  
+  // Clear error
+  errorEl.classList.remove('show');
+  errorEl.textContent = '';
   
   // Validation
   if (!email || !password) {
@@ -1874,49 +1957,86 @@ function handleLogin() {
     return;
   }
   
+  if (password.length < 6) {
+    errorEl.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
+    errorEl.classList.add('show');
+    return;
+  }
+  
   loginBtn.textContent = 'Wird angemeldet...';
   loginBtn.disabled = true;
-  errorEl.classList.remove('show');
   
-  // Simulate API call (später Supabase)
-  setTimeout(function() {
-    if (email && password.length >= 6) {
-      sessionStorage.setItem('ts_user', JSON.stringify({ email: email, loggedIn: true }));
-      document.getElementById('loginScreen').style.display = 'none';
-      
-      // Demo-User oder bereits eingerichtete User → direkt ins Dashboard
-      var isDemo = email.includes('demo') || email.includes('test');
-      var hasOnboarded = localStorage.getItem('ts_onboarded_' + email);
-      
-      if (isDemo || hasOnboarded) {
-        // Direkt ins Dashboard
-        document.getElementById('onboarding').style.display = 'none';
-        document.getElementById('dashboard').classList.add('active');
-        state.branche = localStorage.getItem('ts_branche_' + email) || 'coaching';
-        document.getElementById('einstellungenBranche').textContent = branchenLabels[state.branche];
-        renderEmployeeGrids();
-      } else {
-        // Neuer User → Onboarding
-        document.getElementById('onboarding').style.display = 'flex';
-      }
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+    
+    if (error) throw error;
+    
+    console.log('✓ Login erfolgreich:', data.user.email);
+    currentUser = data.user;
+    
+    // Load profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*, company:companies(*)')
+      .eq('id', data.user.id)
+      .single();
+    
+    document.getElementById('loginScreen').style.display = 'none';
+    
+    if (profile?.onboarding_completed && profile?.company) {
+      document.getElementById('onboarding').style.display = 'none';
+      document.getElementById('dashboard').classList.add('active');
+      state.branche = profile.company?.branche || 'coaching';
+      document.getElementById('einstellungenBranche').textContent = branchenLabels[state.branche] || state.branche;
+      renderEmployeeGrids();
     } else {
-      errorEl.textContent = 'E-Mail oder Passwort ist falsch. Passwort muss mind. 6 Zeichen haben.';
-      errorEl.classList.add('show');
-      loginBtn.textContent = 'Anmelden';
-      loginBtn.disabled = false;
+      document.getElementById('onboarding').style.display = 'flex';
     }
-  }, 800);
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    var errorMessage = 'E-Mail oder Passwort ist falsch.';
+    if (error.message.includes('Invalid login')) errorMessage = 'E-Mail oder Passwort ist falsch.';
+    else if (error.message.includes('Email not confirmed')) errorMessage = 'Bitte bestätige zuerst deine E-Mail-Adresse.';
+    else if (error.message.includes('Too many requests')) errorMessage = 'Zu viele Anmeldeversuche. Bitte warte einen Moment.';
+    
+    errorEl.textContent = errorMessage;
+    errorEl.classList.add('show');
+    loginBtn.textContent = 'Anmelden';
+    loginBtn.disabled = false;
+  }
 }
 
-function handleSSO(provider) {
-  alert('SSO mit ' + provider.charAt(0).toUpperCase() + provider.slice(1) + ' wird in Kürze verfügbar sein.\n\nFür die Demo bitte E-Mail und Passwort verwenden.');
+async function handleSSO(provider) {
+  try {
+    const providerMap = { google: 'google', microsoft: 'azure' };
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: providerMap[provider] || provider,
+      options: {
+        redirectTo: window.location.origin + window.location.pathname
+      }
+    });
+    if (error) throw error;
+  } catch (error) {
+    console.error('SSO error:', error);
+    alert('SSO-Fehler: ' + error.message);
+  }
 }
 
 function showForgotPassword(event) {
   event.preventDefault();
   var email = document.getElementById('loginEmail').value;
   if (email) {
-    alert('Ein Link zum Zurücksetzen des Passworts wurde an ' + email + ' gesendet.\n\n(Demo-Modus: Keine E-Mail versendet)');
+    supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    }).then(function() {
+      alert('Ein Link zum Zurücksetzen des Passworts wurde an ' + email + ' gesendet.');
+    }).catch(function(error) {
+      alert('Fehler: ' + error.message);
+    });
   } else {
     alert('Bitte gib zuerst deine E-Mail-Adresse ein.');
     document.getElementById('loginEmail').focus();
@@ -1925,15 +2045,21 @@ function showForgotPassword(event) {
 
 function showDemo(event) {
   event.preventDefault();
-  alert('Demo-Zugang:\n\nE-Mail: demo@teaching-socials.de\nPasswort: demo123\n\nOder registriere dich für einen persönlichen Account.');
   document.getElementById('loginEmail').value = 'demo@teaching-socials.de';
   document.getElementById('loginPassword').value = 'demo123';
+  alert('Demo-Zugangsdaten eingefügt!\n\nKlicke jetzt auf "Anmelden".');
 }
 
-function handleLogout() {
-  sessionStorage.removeItem('ts_user');
+async function handleLogout() {
+  try {
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+  currentUser = null;
   document.getElementById('dashboard').classList.remove('active');
   document.getElementById('onboarding').style.display = 'none';
+  document.getElementById('registerScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginEmail').value = '';
   document.getElementById('loginPassword').value = '';
@@ -1941,28 +2067,50 @@ function handleLogout() {
   document.getElementById('loginBtn').disabled = false;
 }
 
-function checkSession() {
-  var session = sessionStorage.getItem('ts_user');
-  if (session) {
-    var user = JSON.parse(session);
-    if (user.loggedIn) {
+async function checkSession() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session) {
+      console.log('✓ Session gefunden:', session.user.email);
+      currentUser = session.user;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*, company:companies(*)')
+        .eq('id', session.user.id)
+        .single();
+      
       document.getElementById('loginScreen').style.display = 'none';
       
-      var isDemo = user.email.includes('demo') || user.email.includes('test');
-      var hasOnboarded = localStorage.getItem('ts_onboarded_' + user.email);
-      
-      if (isDemo || hasOnboarded) {
+      if (profile?.onboarding_completed && profile?.company) {
         document.getElementById('onboarding').style.display = 'none';
         document.getElementById('dashboard').classList.add('active');
-        state.branche = localStorage.getItem('ts_branche_' + user.email) || 'coaching';
-        document.getElementById('einstellungenBranche').textContent = branchenLabels[state.branche];
+        state.branche = profile.company?.branche || 'coaching';
+        document.getElementById('einstellungenBranche').textContent = branchenLabels[state.branche] || state.branche;
         renderEmployeeGrids();
       } else {
         document.getElementById('onboarding').style.display = 'flex';
       }
     }
+  } catch (error) {
+    console.error('Session check error:', error);
   }
 }
+
+// Auth state listener
+supabase.auth.onAuthStateChange(async (event, session) => {
+  console.log('Auth state changed:', event);
+  if (event === 'SIGNED_IN' && session) {
+    currentUser = session.user;
+  }
+  if (event === 'SIGNED_OUT') {
+    currentUser = null;
+  }
+});
+
+// Initialize on page load
+checkSession();
 
 // ==================== REGISTRATION FUNCTIONS ====================
 var regState = {
@@ -2412,30 +2560,82 @@ async function processStripePayment() {
   }
 }
 
-function completeRegistration() {
-  // User Session erstellen
-  sessionStorage.setItem('ts_user', JSON.stringify({
-    email: regState.email,
-    name: regState.vorname + ' ' + regState.nachname,
-    firma: regState.firma,
-    plan: regState.plan,
-    loggedIn: true
-  }));
-  
-  // Onboarding-Status speichern
-  localStorage.setItem('ts_onboarded_' + regState.email, 'true');
-  localStorage.setItem('ts_branche_' + regState.email, regState.branche);
-  
-  // Erfolg anzeigen
-  var planName = regState.plan.charAt(0).toUpperCase() + regState.plan.slice(1);
-  alert('🎉 Willkommen bei Teaching Socials!\n\nDein ' + planName + '-Account wurde erfolgreich erstellt.\n\nDu wirst jetzt zu deinem Dashboard weitergeleitet.');
-  
-  // Zum Dashboard weiterleiten
-  document.getElementById('registerScreen').style.display = 'none';
-  document.getElementById('dashboard').classList.add('active');
-  state.branche = regState.branche;
-  document.getElementById('einstellungenBranche').textContent = branchenLabels[state.branche];
-  renderEmployeeGrids();
+async function completeRegistration() {
+  try {
+    // 1. Create user in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: regState.email,
+      password: regState.password,
+      options: {
+        data: {
+          vorname: regState.vorname,
+          nachname: regState.nachname
+        }
+      }
+    });
+    
+    if (authError) throw authError;
+    
+    console.log('✓ User erstellt:', authData.user.email);
+    currentUser = authData.user;
+    
+    // 2. Create company
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .insert({
+        name: regState.firma,
+        branche: regState.branche,
+        team_size: regState.teamSize,
+        phone: regState.phone,
+        vat_id: regState.vatId
+      })
+      .select()
+      .single();
+    
+    if (companyError) throw companyError;
+    
+    console.log('✓ Company erstellt:', company.name);
+    
+    // 3. Update profile with company
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        company_id: company.id,
+        vorname: regState.vorname,
+        nachname: regState.nachname,
+        onboarding_completed: true
+      })
+      .eq('id', authData.user.id);
+    
+    if (profileError) throw profileError;
+    
+    // 4. Create subscription record
+    const { error: subError } = await supabase
+      .from('subscriptions')
+      .insert({
+        company_id: company.id,
+        plan: regState.plan,
+        billing_interval: regState.billing,
+        status: 'active'
+      });
+    
+    if (subError) console.warn('Subscription error:', subError);
+    
+    // Success!
+    var planName = regState.plan.charAt(0).toUpperCase() + regState.plan.slice(1);
+    alert('🎉 Willkommen bei Teaching Socials!\n\nDein ' + planName + '-Account wurde erfolgreich erstellt.\n\nBitte überprüfe deine E-Mails und bestätige deine E-Mail-Adresse.');
+    
+    // Go to dashboard
+    document.getElementById('registerScreen').style.display = 'none';
+    document.getElementById('dashboard').classList.add('active');
+    state.branche = regState.branche;
+    document.getElementById('einstellungenBranche').textContent = branchenLabels[state.branche];
+    renderEmployeeGrids();
+    
+  } catch (error) {
+    console.error('Registration error:', error);
+    alert('Registrierungsfehler: ' + error.message);
+  }
 }
 
 // ==================== CONFIG ====================
@@ -2913,6 +3113,324 @@ function createBaustein() {
   alert('Baustein "' + name + '" wurde erstellt!\n\nTyp: ' + state.bausteinType + '\nDatenquelle: ' + state.bausteinSource + '\nKennzahl: ' + state.bausteinMetric);
   closeBausteinModal();
 }
+
+// =====================================================
+// CLOSE CRM API INTEGRATION
+// =====================================================
+var closeApiKey = localStorage.getItem('ts_close_api_key') || '';
+var closeTeamMembers = [];
+
+// Initialize Close connection on page load
+function initCloseConnection() {
+  if (closeApiKey) {
+    document.getElementById('closeApiKeyInput').value = closeApiKey;
+    verifyCloseConnection();
+  }
+}
+
+// Toggle API key visibility
+function toggleApiKeyVisibility() {
+  var input = document.getElementById('closeApiKeyInput');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// Connect to Close API
+async function connectCloseAPI() {
+  var apiKey = document.getElementById('closeApiKeyInput').value.trim();
+  var btn = document.getElementById('connectCloseBtn');
+  var errorEl = document.getElementById('closeConnectionError');
+  
+  if (!apiKey) {
+    showCloseError('Bitte gib deinen Close API Key ein.');
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ Verbinde...';
+  errorEl.classList.remove('show');
+  
+  try {
+    // Test connection via Supabase Edge Function
+    var response = await fetch(SUPABASE_URL + '/functions/v1/dynamic-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'me/', apiKey: apiKey })
+    });
+    
+    var data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    if (!data.id) {
+      throw new Error('Ungültiger API Key');
+    }
+    
+    // Success! Save API key
+    closeApiKey = apiKey;
+    localStorage.setItem('ts_close_api_key', apiKey);
+    
+    console.log('✓ Close verbunden:', data.first_name, data.last_name);
+    
+    // Update UI
+    updateCloseConnectionStatus(true, data.first_name + ' ' + data.last_name);
+    
+    // Load team members
+    await loadCloseTeam();
+    
+    btn.textContent = '✓ Verbunden';
+    
+  } catch (error) {
+    console.error('Close connection error:', error);
+    showCloseError('Verbindung fehlgeschlagen: ' + error.message);
+    btn.disabled = false;
+    btn.textContent = '🔗 Verbinden';
+  }
+}
+
+// Verify existing connection
+async function verifyCloseConnection() {
+  if (!closeApiKey) return;
+  
+  try {
+    var response = await fetch(SUPABASE_URL + '/functions/v1/dynamic-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'me/', apiKey: closeApiKey })
+    });
+    
+    var data = await response.json();
+    
+    if (data.id) {
+      updateCloseConnectionStatus(true, data.first_name + ' ' + data.last_name);
+      await loadCloseTeam();
+      document.getElementById('connectCloseBtn').textContent = '✓ Verbunden';
+    } else {
+      updateCloseConnectionStatus(false);
+    }
+  } catch (error) {
+    console.error('Close verify error:', error);
+    updateCloseConnectionStatus(false);
+  }
+}
+
+// Load team members from Close
+async function loadCloseTeam() {
+  if (!closeApiKey) return;
+  
+  try {
+    var response = await fetch(SUPABASE_URL + '/functions/v1/dynamic-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'user/', apiKey: closeApiKey })
+    });
+    
+    var data = await response.json();
+    
+    if (data.data && data.data.length > 0) {
+      closeTeamMembers = data.data;
+      renderCloseTeam();
+      console.log('✓ Team geladen:', closeTeamMembers.length, 'Mitglieder');
+    }
+  } catch (error) {
+    console.error('Close team load error:', error);
+  }
+}
+
+// Render team members in UI
+function renderCloseTeam() {
+  var grid = document.getElementById('closeTeamGrid');
+  var section = document.getElementById('closeTeamSection');
+  
+  if (closeTeamMembers.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  
+  var html = '';
+  closeTeamMembers.forEach(function(member) {
+    var initials = (member.first_name?.[0] || '') + (member.last_name?.[0] || '');
+    var role = member.role || 'User';
+    html += '<div class="team-member-card">' +
+      '<div class="team-member-avatar">' + (initials || '👤') + '</div>' +
+      '<div class="team-member-info">' +
+        '<div class="team-member-name">' + (member.first_name || '') + ' ' + (member.last_name || '') + '</div>' +
+        '<div class="team-member-email">' + (member.email || '-') + '</div>' +
+        '<div class="team-member-role">' + role + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  
+  grid.innerHTML = html;
+}
+
+// Refresh team
+async function refreshCloseTeam() {
+  await loadCloseTeam();
+}
+
+// Disconnect Close
+function disconnectCloseAPI() {
+  if (!confirm('Close CRM trennen? Die Verbindung kann jederzeit wiederhergestellt werden.')) return;
+  
+  closeApiKey = '';
+  closeTeamMembers = [];
+  localStorage.removeItem('ts_close_api_key');
+  
+  updateCloseConnectionStatus(false);
+  document.getElementById('closeApiKeyInput').value = '';
+  document.getElementById('closeTeamSection').style.display = 'none';
+  document.getElementById('connectCloseBtn').textContent = '🔗 Verbinden';
+  document.getElementById('connectCloseBtn').disabled = false;
+}
+
+// Update connection status UI
+function updateCloseConnectionStatus(connected, userName) {
+  var statusEl = document.getElementById('closeConnectionStatus');
+  var connectBtn = document.getElementById('connectCloseBtn');
+  var disconnectBtn = document.getElementById('disconnectCloseBtn');
+  
+  if (connected) {
+    statusEl.innerHTML = '<span class="status-dot connected"></span><span class="status-text">Verbunden' + (userName ? ' als ' + userName : '') + '</span>';
+    connectBtn.style.display = 'none';
+    disconnectBtn.style.display = 'inline-block';
+  } else {
+    statusEl.innerHTML = '<span class="status-dot disconnected"></span><span class="status-text">Nicht verbunden</span>';
+    connectBtn.style.display = 'inline-block';
+    disconnectBtn.style.display = 'none';
+  }
+}
+
+// Show error message
+function showCloseError(message) {
+  var errorEl = document.getElementById('closeConnectionError');
+  errorEl.textContent = message;
+  errorEl.classList.add('show');
+}
+
+// =====================================================
+// CLOSE KPI DATA FETCHING
+// =====================================================
+async function fetchCloseKPIs(period) {
+  if (!closeApiKey) {
+    console.log('Close nicht verbunden - zeige Demo-Daten');
+    return null;
+  }
+  
+  period = period || 'month';
+  var dateRange = getDateRange(period);
+  
+  try {
+    // Fetch activities (calls, emails)
+    var callsResponse = await fetch(SUPABASE_URL + '/functions/v1/dynamic-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        endpoint: 'activity/?_type=Call&date_created__gte=' + dateRange.from + '&date_created__lte=' + dateRange.to + '&_limit=0',
+        apiKey: closeApiKey 
+      })
+    });
+    var callsData = await callsResponse.json();
+    
+    var emailsResponse = await fetch(SUPABASE_URL + '/functions/v1/dynamic-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        endpoint: 'activity/?_type=Email&date_created__gte=' + dateRange.from + '&date_created__lte=' + dateRange.to + '&_limit=0',
+        apiKey: closeApiKey 
+      })
+    });
+    var emailsData = await emailsResponse.json();
+    
+    // Fetch opportunities
+    var oppsResponse = await fetch(SUPABASE_URL + '/functions/v1/dynamic-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        endpoint: 'opportunity/?date_created__gte=' + dateRange.from + '&date_created__lte=' + dateRange.to,
+        apiKey: closeApiKey 
+      })
+    });
+    var oppsData = await oppsResponse.json();
+    
+    // Fetch leads
+    var leadsResponse = await fetch(SUPABASE_URL + '/functions/v1/dynamic-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        endpoint: 'lead/?date_created__gte=' + dateRange.from + '&date_created__lte=' + dateRange.to + '&_limit=0',
+        apiKey: closeApiKey 
+      })
+    });
+    var leadsData = await leadsResponse.json();
+    
+    // Calculate KPIs
+    var wonOpps = (oppsData.data || []).filter(function(o) { return o.status_type === 'won'; });
+    var activeOpps = (oppsData.data || []).filter(function(o) { return o.status_type === 'active'; });
+    var totalRevenue = wonOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
+    var pipelineValue = activeOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
+    
+    return {
+      ausgehendeAnrufe: callsData.total_results || 0,
+      gesendeteMails: emailsData.total_results || 0,
+      neueLeads: leadsData.total_results || 0,
+      pipelineValue: pipelineValue,
+      offeneDeals: activeOpps.length,
+      abschluesse: wonOpps.length,
+      umsatz: totalRevenue,
+      durchschnAuftragswert: wonOpps.length > 0 ? Math.round(totalRevenue / wonOpps.length) : 0,
+      abschlussquote: oppsData.data?.length > 0 ? Math.round(wonOpps.length / oppsData.data.length * 100) : 0
+    };
+    
+  } catch (error) {
+    console.error('Close KPI fetch error:', error);
+    return null;
+  }
+}
+
+// Get date range for period
+function getDateRange(period) {
+  var now = new Date();
+  var to = now.toISOString().split('T')[0];
+  var from;
+  
+  switch(period) {
+    case 'today':
+      from = to;
+      break;
+    case 'week':
+      from = new Date(now.setDate(now.getDate() - 7)).toISOString().split('T')[0];
+      break;
+    case 'month':
+      from = new Date(now.setMonth(now.getMonth() - 1)).toISOString().split('T')[0];
+      break;
+    case 'quarter':
+      from = new Date(now.setMonth(now.getMonth() - 3)).toISOString().split('T')[0];
+      break;
+    default:
+      from = new Date(now.setMonth(now.getMonth() - 1)).toISOString().split('T')[0];
+  }
+  
+  return { from: from, to: to };
+}
+
+// Format currency (Close stores in cents)
+function formatCurrency(value) {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value / 100);
+}
+
+// Initialize Close on dashboard load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(initCloseConnection, 500);
+});
 </script>
 </body>
 </html>
