@@ -3226,35 +3226,43 @@ async function loadCloseTeam() {
     console.log('Close /user/ raw response - total users:', data.data ? data.data.length : 0);
     
     if (data.data && data.data.length > 0) {
-      // Log all emails for debugging
-      console.log('Alle User Emails:', data.data.map(function(u) { return u.email; }));
+      // Log first user for debugging field structure
+      console.log('Erster User (Struktur):', JSON.stringify(data.data[0], null, 2));
       
-      // Filter: nur echte Mitarbeiter, keine Test-Accounts
+      // Filter: nur AKTIVE Mitarbeiter
       var filtered = data.data.filter(function(u) {
-        var email = (u.email || '').toLowerCase();
-        // Ausschließen: setup+, dummy, test accounts, customer@, probearbeit, vorlage, mitarbeiter.vertrieb
-        if (email.includes('setup+')) return false;
-        if (email.includes('dummy')) return false;
-        if (email.includes('customer+')) return false;
-        if (email.includes('probearbeit')) return false;
-        if (email.includes('vorlage')) return false;
-        if (email.includes('@10xcrm.de')) return false;
-        if (email === 'mitarbeiter.vertrieb@teachingfinance.de') return false;
-        if (email === 'fulfillment@teachingfinance.de') return false;
-        // Nur User mit echten Namen
-        if (!u.first_name || u.first_name.length < 2) return false;
+        // Prüfe ob User inaktiv ist (Close API: organizations[].inactive oder direkt inactive)
+        var isInactive = false;
+        
+        // Check organizations array for inactive status
+        if (u.organizations && u.organizations.length > 0) {
+          isInactive = u.organizations.some(function(org) {
+            return org.inactive === true;
+          });
+        }
+        
+        // Direct inactive field on user
+        if (u.inactive === true) {
+          isInactive = true;
+        }
+        
+        // Log inactive users
+        if (isInactive) {
+          console.log('Inaktiver User übersprungen:', u.email);
+          return false;
+        }
+        
+        // Nur User mit echten Namen (mindestens 2 Zeichen)
+        if (!u.first_name || u.first_name.length < 2) {
+          console.log('User ohne Namen übersprungen:', u.email);
+          return false;
+        }
+        
         return true;
       });
       
-      console.log('Nach Filter:', filtered.length, 'von', data.data.length);
-      
-      // Falls Filter alle rausfiltert, zeige alle mit Namen
-      if (filtered.length === 0) {
-        filtered = data.data.filter(function(u) {
-          return u.first_name && u.first_name.length > 0;
-        });
-        console.log('Fallback - alle mit Namen:', filtered.length);
-      }
+      console.log('Nach Filter (nur aktive):', filtered.length, 'von', data.data.length);
+      console.log('Aktive User:', filtered.map(function(u) { return u.first_name + ' ' + u.last_name + ' (' + u.email + ')'; }));
       
       closeTeamMembers = filtered.map(function(u) {
         return {
@@ -3268,7 +3276,7 @@ async function loadCloseTeam() {
       
       renderCloseTeam();
       renderEmployeeGrids();
-      console.log('✓ Team-Mitglieder geladen:', closeTeamMembers.length, closeTeamMembers.map(function(m) { return m.first_name + ' ' + m.last_name; }));
+      console.log('✓ Team-Mitglieder geladen:', closeTeamMembers.length);
     } else {
       console.log('Keine Team-Mitglieder gefunden. Response:', JSON.stringify(data));
     }
