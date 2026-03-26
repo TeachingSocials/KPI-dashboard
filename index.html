@@ -3220,36 +3220,7 @@ async function loadCloseTeam() {
   if (!closeApiKey) return;
   
   try {
-    // Step 1: Get current user info to identify the primary organization
-    var meResponse = await fetch('/api/close-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: 'me/', apiKey: closeApiKey })
-    });
-    
-    var meData = await meResponse.json();
-    console.log('Close /me/ response:', meData);
-    
-    // Find the Teaching Finance organization ID
-    var targetOrgId = null;
-    var targetOrgName = null;
-    if (meData.organizations && meData.organizations.length > 0) {
-      // Look for Teaching Finance org, or use first if not found
-      var teachingFinanceOrg = meData.organizations.find(function(org) {
-        return org.name && org.name.toLowerCase().includes('teaching finance');
-      });
-      if (teachingFinanceOrg) {
-        targetOrgId = teachingFinanceOrg.id;
-        targetOrgName = teachingFinanceOrg.name;
-      } else {
-        targetOrgId = meData.organizations[0].id;
-        targetOrgName = meData.organizations[0].name;
-      }
-    }
-    
-    console.log('Target Organization:', targetOrgName, '(' + targetOrgId + ')');
-    
-    // Step 2: Get ALL users using /user/ endpoint (returns users from all orgs)
+    // Get ALL users using /user/ endpoint
     var userResponse = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3258,33 +3229,21 @@ async function loadCloseTeam() {
     
     var userData = await userResponse.json();
     var allUsers = userData.data || [];
-    console.log('Close /user/ - total users across all orgs:', allUsers.length);
+    console.log('Close /user/ - total users:', allUsers.length);
     
-    // Step 3: Filter users - only those belonging to Teaching Finance org
-    var orgUsers = allUsers.filter(function(user) {
-      if (!user.organizations || !Array.isArray(user.organizations)) return false;
-      return user.organizations.some(function(orgId) {
-        return orgId === targetOrgId;
-      });
-    });
-    
-    console.log('Users in', targetOrgName + ':', orgUsers.length);
-    
-    // Step 4: Filter out test/dummy/system accounts by email patterns
-    var filtered = orgUsers.filter(function(user) {
+    // Filter: nur @teachingfinance.de Emails, keine System/Test-Accounts
+    var filtered = allUsers.filter(function(user) {
       var email = (user.email || '').toLowerCase();
       var firstName = user.first_name || '';
       
-      // Ausschließen: Test/Dummy/Setup/System Accounts
-      if (email.includes('setup+')) { console.log('Filter: setup+ →', email); return false; }
-      if (email.includes('dummy')) { console.log('Filter: dummy →', email); return false; }
-      if (email.includes('customer+')) { console.log('Filter: customer+ →', email); return false; }
-      if (email.includes('probearbeit')) { console.log('Filter: probearbeit →', email); return false; }
-      if (email.includes('vorlage')) { console.log('Filter: vorlage →', email); return false; }
+      // NUR @teachingfinance.de Emails
+      if (!email.includes('@teachingfinance.de')) {
+        return false;
+      }
+      
+      // Ausschließen: System/Test/Dummy Accounts
       if (email.includes('mitarbeiter.vertrieb+')) { console.log('Filter: mitarbeiter.vertrieb+ →', email); return false; }
-      if (email.includes('@10xcrm.de')) { console.log('Filter: @10xcrm.de →', email); return false; }
-      if (email.includes('@solaris')) { console.log('Filter: @solaris →', email); return false; }
-      if (email === 'mitarbeiter.vertrieb@teachingfinance.de') { console.log('Filter: mitarbeiter.vertrieb →', email); return false; }
+      if (email.includes('mitarbeiter.vertrieb@')) { console.log('Filter: mitarbeiter.vertrieb@ →', email); return false; }
       if (email === 'fulfillment@teachingfinance.de') { console.log('Filter: fulfillment →', email); return false; }
       if (email === 'customer.success@teachingfinance.de') { console.log('Filter: customer.success →', email); return false; }
       
@@ -3294,7 +3253,7 @@ async function loadCloseTeam() {
       return true;
     });
     
-    console.log('Nach Filter:', filtered.length, 'von', orgUsers.length, 'Org-Mitgliedern');
+    console.log('Nach Filter:', filtered.length, 'Mitarbeiter mit @teachingfinance.de');
     console.log('Finale User:', filtered.map(function(u) { 
       return u.first_name + ' ' + u.last_name; 
     }));
