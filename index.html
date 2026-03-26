@@ -1925,12 +1925,17 @@
 // =====================================================
 // SUPABASE CONFIGURATION
 // =====================================================
-const SUPABASE_URL = 'https://akoberpkxsqdlcagrrtk.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrb2JlcnBreHNxZGxjYWdycnRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNTUyNDUsImV4cCI6MjA4OTkzMTI0NX0.rGp-FOJwE3J8vzHPpisIyKGCWLQttQke-gO0Ffj7TSo';
+var SUPABASE_URL = 'https://akoberpkxsqdlcagrrtk.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrb2JlcnBreHNxZGxjYWdycnRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNTUyNDUsImV4cCI6MjA4OTkzMTI0NX0.rGp-FOJwE3J8vzHPpisIyKGCWLQttQke-gO0Ffj7TSo';
 
-// Initialize Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-console.log('✓ Supabase initialized');
+// Initialize Supabase (nur wenn noch nicht vorhanden)
+var supabase;
+if (typeof window.supabase !== 'undefined') {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('✓ Supabase initialized');
+} else {
+  console.warn('⚠ Supabase SDK not loaded - running in demo mode');
+}
 
 // =====================================================
 // GLOBAL STATE & CONFIG
@@ -1966,30 +1971,48 @@ async function handleLogin() {
   loginBtn.textContent = 'Wird angemeldet...';
   loginBtn.disabled = true;
   
+  // Demo Mode - wenn Supabase nicht verfügbar oder Demo-User
+  var isDemo = email.includes('demo') || email.includes('test') || !supabase;
+  
+  if (isDemo) {
+    // Demo Login - direkt ins Dashboard
+    setTimeout(function() {
+      console.log('✓ Demo Login:', email);
+      sessionStorage.setItem('ts_user', JSON.stringify({ email: email, loggedIn: true }));
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('onboarding').style.display = 'none';
+      document.getElementById('dashboard').classList.add('active');
+      state.branche = 'coaching';
+      document.getElementById('einstellungenBranche').textContent = branchenLabels[state.branche];
+      renderEmployeeGrids();
+    }, 500);
+    return;
+  }
+  
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    var result = await supabase.auth.signInWithPassword({
       email: email,
       password: password
     });
     
-    if (error) throw error;
+    if (result.error) throw result.error;
     
-    console.log('✓ Login erfolgreich:', data.user.email);
-    currentUser = data.user;
+    console.log('✓ Login erfolgreich:', result.data.user.email);
+    currentUser = result.data.user;
     
     // Load profile
-    const { data: profile } = await supabase
+    var profileResult = await supabase
       .from('profiles')
       .select('*, company:companies(*)')
-      .eq('id', data.user.id)
+      .eq('id', result.data.user.id)
       .single();
     
     document.getElementById('loginScreen').style.display = 'none';
     
-    if (profile?.onboarding_completed && profile?.company) {
+    if (profileResult.data?.onboarding_completed && profileResult.data?.company) {
       document.getElementById('onboarding').style.display = 'none';
       document.getElementById('dashboard').classList.add('active');
-      state.branche = profile.company?.branche || 'coaching';
+      state.branche = profileResult.data.company?.branche || 'coaching';
       document.getElementById('einstellungenBranche').textContent = branchenLabels[state.branche] || state.branche;
       renderEmployeeGrids();
     } else {
@@ -1999,9 +2022,9 @@ async function handleLogin() {
   } catch (error) {
     console.error('Login error:', error);
     var errorMessage = 'E-Mail oder Passwort ist falsch.';
-    if (error.message.includes('Invalid login')) errorMessage = 'E-Mail oder Passwort ist falsch.';
-    else if (error.message.includes('Email not confirmed')) errorMessage = 'Bitte bestätige zuerst deine E-Mail-Adresse.';
-    else if (error.message.includes('Too many requests')) errorMessage = 'Zu viele Anmeldeversuche. Bitte warte einen Moment.';
+    if (error.message && error.message.includes('Invalid login')) errorMessage = 'E-Mail oder Passwort ist falsch.';
+    else if (error.message && error.message.includes('Email not confirmed')) errorMessage = 'Bitte bestätige zuerst deine E-Mail-Adresse.';
+    else if (error.message && error.message.includes('Too many requests')) errorMessage = 'Zu viele Anmeldeversuche. Bitte warte einen Moment.';
     
     errorEl.textContent = errorMessage;
     errorEl.classList.add('show');
