@@ -3209,6 +3209,9 @@ async function connectCloseAPI() {
     // Load team members
     await loadCloseTeam();
     
+    // Load and display KPIs
+    await loadAndDisplayCloseKPIs();
+    
     btn.textContent = '✓ Verbunden';
     
   } catch (error) {
@@ -3235,6 +3238,7 @@ async function verifyCloseConnection() {
     if (data.id) {
       updateCloseConnectionStatus(true, data.first_name + ' ' + data.last_name);
       await loadCloseTeam();
+      await loadAndDisplayCloseKPIs();
       document.getElementById('connectCloseBtn').textContent = '✓ Verbunden';
     } else {
       updateCloseConnectionStatus(false);
@@ -3419,6 +3423,61 @@ async function fetchCloseKPIs(period) {
     console.error('Close KPI fetch error:', error);
     return null;
   }
+}
+
+// Load and display Close KPIs in dashboard
+async function loadAndDisplayCloseKPIs() {
+  console.log('Loading Close KPIs...');
+  var kpis = await fetchCloseKPIs('month');
+  
+  if (!kpis) {
+    console.log('No KPIs returned');
+    return;
+  }
+  
+  console.log('✓ Close KPIs geladen:', kpis);
+  
+  // Update Vertrieb tab KPI cards
+  var kpiCards = document.querySelectorAll('#vertrieb-gesamt-team .kpi-card');
+  
+  // Map KPIs to cards (depends on card order in HTML)
+  var kpiMapping = [
+    { selector: '.kpi-card:nth-child(1) .kpi-value', value: kpis.ausgehendeAnrufe, format: 'number' },
+    { selector: '.kpi-card:nth-child(2) .kpi-value', value: kpis.gesendeteMails, format: 'number' },
+    { selector: '.kpi-card:nth-child(3) .kpi-value', value: kpis.neueLeads, format: 'number' },
+    { selector: '.kpi-card:nth-child(4) .kpi-value', value: kpis.offeneDeals, format: 'number' },
+    { selector: '.kpi-card:nth-child(5) .kpi-value', value: kpis.abschluesse, format: 'number' },
+    { selector: '.kpi-card:nth-child(6) .kpi-value', value: kpis.umsatz / 100, format: 'currency' }
+  ];
+  
+  // Try to update by finding specific elements
+  var gesamtSection = document.getElementById('vertrieb-gesamt-team');
+  if (gesamtSection) {
+    var allKpiValues = gesamtSection.querySelectorAll('.kpi-value');
+    
+    // Update values based on what we have
+    if (allKpiValues.length >= 1) allKpiValues[0].textContent = kpis.ausgehendeAnrufe.toLocaleString('de-DE');
+    if (allKpiValues.length >= 2) allKpiValues[1].textContent = kpis.gesendeteMails.toLocaleString('de-DE');
+    if (allKpiValues.length >= 3) allKpiValues[2].textContent = kpis.neueLeads.toLocaleString('de-DE');
+    if (allKpiValues.length >= 4) allKpiValues[3].textContent = kpis.offeneDeals.toLocaleString('de-DE');
+    if (allKpiValues.length >= 5) allKpiValues[4].textContent = kpis.abschluesse.toLocaleString('de-DE');
+    if (allKpiValues.length >= 6) allKpiValues[5].textContent = formatCurrency(kpis.umsatz);
+  }
+  
+  // Update header stats if they exist
+  var headerStats = document.querySelectorAll('.header-right .stat-value');
+  if (headerStats.length >= 2) {
+    headerStats[0].textContent = formatCurrency(kpis.pipelineValue);
+    headerStats[1].textContent = kpis.abschlussquote + '%';
+  }
+  
+  console.log('✓ KPIs in UI aktualisiert');
+}
+
+// Format currency for display
+function formatCurrency(cents) {
+  var euros = (cents || 0) / 100;
+  return euros.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 // Get date range for period
