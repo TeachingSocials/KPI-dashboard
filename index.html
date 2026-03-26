@@ -1018,10 +1018,10 @@
       <div id="vertrieb-gesamt-team" class="sub-content active">
         <div class="section-title">📊 VERTRIEB KENNZAHLEN</div>
         <div class="stats-panel">
-          <div class="stat-item"><div class="stat-value">€287.450</div><div class="stat-label">Umsatz Monatsverlauf</div></div>
-          <div class="stat-item"><div class="stat-value">47</div><div class="stat-label">Neue Kontakte</div></div>
-          <div class="stat-item"><div class="stat-value">156</div><div class="stat-label">Gebuchte Termine</div></div>
-          <div class="stat-item"><div class="stat-value">34</div><div class="stat-label">Abschlüsse</div></div>
+          <div class="stat-item"><div class="stat-value" id="kpi-umsatz">-</div><div class="stat-label">Umsatz (gewonnen)</div></div>
+          <div class="stat-item"><div class="stat-value" id="kpi-leads">-</div><div class="stat-label">Leads</div></div>
+          <div class="stat-item"><div class="stat-value" id="kpi-anrufe">-</div><div class="stat-label">Anrufe</div></div>
+          <div class="stat-item"><div class="stat-value" id="kpi-abschluesse">-</div><div class="stat-label">Abschlüsse</div></div>
         </div>
         <div class="section-title">🔄 ÜBERGABE-QUALITÄT (VERTRIEBSPIPELINE FLOW)</div>
         <div class="funnel-container" style="margin-bottom:1rem;">
@@ -1777,10 +1777,17 @@
       </div>
       <div class="integration-team" id="closeTeamSection" style="display:none;">
         <div class="team-header">
-          <span>👥 Team-Mitglieder aus Close</span>
+          <span>👥 Team-Mitglieder aus Close - Rollen zuweisen</span>
           <button class="btn-small" onclick="refreshCloseTeam()">🔄 Aktualisieren</button>
+          <button class="btn-small" onclick="saveTeamRoles()" style="background:var(--success);">💾 Speichern</button>
         </div>
-        <div class="team-grid" id="closeTeamGrid"></div>
+        <div class="role-legend" style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+          <span style="padding:0.3rem 0.6rem;background:#60a5fa;border-radius:4px;font-size:0.75rem;">📞 Opener</span>
+          <span style="padding:0.3rem 0.6rem;background:#a855f7;border-radius:4px;font-size:0.75rem;">📅 Setter</span>
+          <span style="padding:0.3rem 0.6rem;background:#22c55e;border-radius:4px;font-size:0.75rem;">💰 Closer</span>
+          <span style="padding:0.3rem 0.6rem;background:#f59e0b;border-radius:4px;font-size:0.75rem;">🤝 Account Manager</span>
+        </div>
+        <div class="team-grid" id="closeTeamGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;"></div>
       </div>
     </div>
 
@@ -3254,6 +3261,7 @@ async function loadCloseTeam() {
   if (!closeApiKey) return;
   
   try {
+    // Use /user/ endpoint to get all org users
     var response = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3261,18 +3269,31 @@ async function loadCloseTeam() {
     });
     
     var data = await response.json();
+    console.log('Close /user/ response:', data);
     
     if (data.data && data.data.length > 0) {
-      closeTeamMembers = data.data;
+      // Map user data
+      closeTeamMembers = data.data.map(function(u) {
+        return {
+          id: u.id,
+          first_name: u.first_name || '',
+          last_name: u.last_name || '',
+          email: u.email || '',
+          image: u.image || null // Close may have image field
+        };
+      });
       renderCloseTeam();
-      console.log('✓ Team geladen:', closeTeamMembers.length, 'Mitglieder');
+      renderEmployeeGrids();
+      console.log('✓ Team geladen:', closeTeamMembers.length, 'Mitglieder:', closeTeamMembers.map(function(m) { return m.first_name + ' ' + m.last_name; }));
+    } else {
+      console.log('Keine Team-Mitglieder gefunden. Response:', data);
     }
   } catch (error) {
     console.error('Close team load error:', error);
   }
 }
 
-// Render team members in UI
+// Render team members in UI with role assignment
 function renderCloseTeam() {
   var grid = document.getElementById('closeTeamGrid');
   var section = document.getElementById('closeTeamSection');
@@ -3284,21 +3305,152 @@ function renderCloseTeam() {
   
   section.style.display = 'block';
   
+  // Load saved roles from localStorage
+  var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  
   var html = '';
   closeTeamMembers.forEach(function(member) {
+    var memberId = member.id || member.email;
     var initials = (member.first_name?.[0] || '') + (member.last_name?.[0] || '');
-    var role = member.role || 'User';
-    html += '<div class="team-member-card">' +
-      '<div class="team-member-avatar">' + (initials || '👤') + '</div>' +
-      '<div class="team-member-info">' +
-        '<div class="team-member-name">' + (member.first_name || '') + ' ' + (member.last_name || '') + '</div>' +
-        '<div class="team-member-email">' + (member.email || '-') + '</div>' +
-        '<div class="team-member-role">' + role + '</div>' +
+    var savedRole = savedRoles[memberId] || '';
+    var roleColors = {
+      'opener': '#60a5fa',
+      'setter': '#a855f7', 
+      'closer': '#22c55e',
+      'account_manager': '#f59e0b'
+    };
+    var borderColor = roleColors[savedRole] || 'var(--border)';
+    
+    // Avatar: use image if available, otherwise initials
+    var avatarHtml;
+    if (member.image) {
+      avatarHtml = '<img src="' + member.image + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML=\'<div style=\\\'width:40px;height:40px;border-radius:50%;background:var(--beige);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-weight:bold;\\\'>' + (initials || '👤') + '</div>\'">';
+    } else {
+      avatarHtml = '<div style="width:40px;height:40px;border-radius:50%;background:var(--beige);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-weight:bold;">' + (initials || '👤') + '</div>';
+    }
+    
+    html += '<div class="team-member-card" style="border:2px solid ' + borderColor + ';padding:1rem;background:var(--bg-card);border-radius:8px;">' +
+      '<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">' +
+        avatarHtml +
+        '<div>' +
+          '<div style="font-weight:600;">' + (member.first_name || '') + ' ' + (member.last_name || '') + '</div>' +
+          '<div style="font-size:0.75rem;color:var(--text-dim);">' + (member.email || '-') + '</div>' +
+        '</div>' +
       '</div>' +
+      '<select class="role-select" data-member-id="' + memberId + '" onchange="updateMemberRole(this)" style="width:100%;padding:0.5rem;background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:0.85rem;">' +
+        '<option value="">-- Rolle wählen --</option>' +
+        '<option value="opener"' + (savedRole === 'opener' ? ' selected' : '') + '>📞 Opener (Akquisition)</option>' +
+        '<option value="setter"' + (savedRole === 'setter' ? ' selected' : '') + '>📅 Setter (Terminierung)</option>' +
+        '<option value="closer"' + (savedRole === 'closer' ? ' selected' : '') + '>💰 Closer (Abschluss)</option>' +
+        '<option value="account_manager"' + (savedRole === 'account_manager' ? ' selected' : '') + '>🤝 Account Manager</option>' +
+      '</select>' +
     '</div>';
   });
   
   grid.innerHTML = html;
+}
+
+// Update member role on change
+function updateMemberRole(select) {
+  var memberId = select.getAttribute('data-member-id');
+  var role = select.value;
+  var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  
+  if (role) {
+    savedRoles[memberId] = role;
+  } else {
+    delete savedRoles[memberId];
+  }
+  
+  localStorage.setItem('ts_team_roles', JSON.stringify(savedRoles));
+  
+  // Update card border color
+  var roleColors = {
+    'opener': '#60a5fa',
+    'setter': '#a855f7', 
+    'closer': '#22c55e',
+    'account_manager': '#f59e0b'
+  };
+  var card = select.closest('.team-member-card');
+  card.style.borderColor = roleColors[role] || 'var(--border)';
+  
+  console.log('Rolle aktualisiert:', memberId, '→', role);
+}
+
+// Save all team roles
+function saveTeamRoles() {
+  var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  var count = Object.keys(savedRoles).length;
+  alert('✅ ' + count + ' Rollen-Zuweisungen gespeichert!');
+  console.log('Team roles saved:', savedRoles);
+  renderEmployeeGrids();
+}
+
+// Get team members by role
+function getTeamByRole(role) {
+  var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  return closeTeamMembers.filter(function(member) {
+    var memberId = member.id || member.email;
+    return savedRoles[memberId] === role;
+  });
+}
+
+// Render employee grids by role
+function renderEmployeeGrids() {
+  var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  
+  // All employees
+  var gesamtGrid = document.getElementById('gesamt-employee-grid');
+  var openerGrid = document.getElementById('opener-employee-grid');
+  var setterGrid = document.getElementById('setter-employee-grid');
+  var closerGrid = document.getElementById('closer-employee-grid');
+  
+  if (!gesamtGrid) return;
+  
+  // Build employee cards
+  function buildEmployeeCard(member, roleLabel) {
+    var initials = (member.first_name?.[0] || '') + (member.last_name?.[0] || '');
+    var name = (member.first_name || '') + ' ' + (member.last_name || '');
+    return '<div class="employee-card" style="background:var(--bg-card);padding:1rem;border-radius:8px;border:1px solid var(--border);">' +
+      '<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;">' +
+        '<div style="width:36px;height:36px;border-radius:50%;background:var(--beige);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.85rem;">' + (initials || '👤') + '</div>' +
+        '<div>' +
+          '<div style="font-weight:600;font-size:0.9rem;">' + name + '</div>' +
+          '<div style="font-size:0.7rem;color:var(--text-dim);">' + roleLabel + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  
+  // Gesamt - alle Mitarbeiter mit zugewiesener Rolle
+  var gesamtHtml = '';
+  closeTeamMembers.forEach(function(member) {
+    var memberId = member.id || member.email;
+    var role = savedRoles[memberId];
+    if (role) {
+      var roleLabels = { opener: '📞 Opener', setter: '📅 Setter', closer: '💰 Closer', account_manager: '🤝 Account Manager' };
+      gesamtHtml += buildEmployeeCard(member, roleLabels[role] || role);
+    }
+  });
+  gesamtGrid.innerHTML = gesamtHtml || '<div style="color:var(--text-dim);padding:1rem;">Keine Mitarbeiter zugewiesen. Gehe zu Einstellungen → Close CRM um Rollen zuzuweisen.</div>';
+  gesamtGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;';
+  
+  // Opener
+  var openers = getTeamByRole('opener');
+  openerGrid.innerHTML = openers.length ? openers.map(function(m) { return buildEmployeeCard(m, '📞 Opener'); }).join('') : '<div style="color:var(--text-dim);padding:1rem;">Keine Opener zugewiesen.</div>';
+  openerGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;';
+  
+  // Setter
+  var setters = getTeamByRole('setter');
+  setterGrid.innerHTML = setters.length ? setters.map(function(m) { return buildEmployeeCard(m, '📅 Setter'); }).join('') : '<div style="color:var(--text-dim);padding:1rem;">Keine Setter zugewiesen.</div>';
+  setterGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;';
+  
+  // Closer
+  var closers = getTeamByRole('closer');
+  closerGrid.innerHTML = closers.length ? closers.map(function(m) { return buildEmployeeCard(m, '💰 Closer'); }).join('') : '<div style="color:var(--text-dim);padding:1rem;">Keine Closer zugewiesen.</div>';
+  closerGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;';
+  
+  console.log('Employee grids rendered - Opener:', openers.length, 'Setter:', setters.length, 'Closer:', closers.length);
 }
 
 // Refresh team
@@ -3354,52 +3506,54 @@ async function fetchCloseKPIs(period) {
     return null;
   }
   
-  period = period || 'month';
-  var dateRange = getDateRange(period);
-  
   try {
-    // Fetch activities (calls, emails)
+    // Fetch ALL calls (no date filter)
     var callsResponse = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        endpoint: 'activity/?_type=Call&date_created__gte=' + dateRange.from + '&date_created__lte=' + dateRange.to + '&_limit=0',
+        endpoint: 'activity/?_type=Call&_limit=0',
         apiKey: closeApiKey 
       })
     });
     var callsData = await callsResponse.json();
+    console.log('Calls response:', callsData);
     
+    // Fetch ALL emails
     var emailsResponse = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        endpoint: 'activity/?_type=Email&date_created__gte=' + dateRange.from + '&date_created__lte=' + dateRange.to + '&_limit=0',
+        endpoint: 'activity/?_type=Email&_limit=0',
         apiKey: closeApiKey 
       })
     });
     var emailsData = await emailsResponse.json();
+    console.log('Emails response:', emailsData);
     
-    // Fetch opportunities
+    // Fetch ALL opportunities
     var oppsResponse = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        endpoint: 'opportunity/?date_created__gte=' + dateRange.from + '&date_created__lte=' + dateRange.to,
+        endpoint: 'opportunity/',
         apiKey: closeApiKey 
       })
     });
     var oppsData = await oppsResponse.json();
+    console.log('Opportunities response:', oppsData);
     
-    // Fetch leads
+    // Fetch ALL leads
     var leadsResponse = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        endpoint: 'lead/?date_created__gte=' + dateRange.from + '&date_created__lte=' + dateRange.to + '&_limit=0',
+        endpoint: 'lead/?_limit=0',
         apiKey: closeApiKey 
       })
     });
     var leadsData = await leadsResponse.json();
+    console.log('Leads response:', leadsData);
     
     // Calculate KPIs
     var wonOpps = (oppsData.data || []).filter(function(o) { return o.status_type === 'won'; });
@@ -3437,41 +3591,18 @@ async function loadAndDisplayCloseKPIs() {
   
   console.log('✓ Close KPIs geladen:', kpis);
   
-  // Update Vertrieb tab KPI cards
-  var kpiCards = document.querySelectorAll('#vertrieb-gesamt-team .kpi-card');
+  // Update KPI elements by ID
+  var umsatzEl = document.getElementById('kpi-umsatz');
+  var leadsEl = document.getElementById('kpi-leads');
+  var anrufeEl = document.getElementById('kpi-anrufe');
+  var abschluesseEl = document.getElementById('kpi-abschluesse');
   
-  // Map KPIs to cards (depends on card order in HTML)
-  var kpiMapping = [
-    { selector: '.kpi-card:nth-child(1) .kpi-value', value: kpis.ausgehendeAnrufe, format: 'number' },
-    { selector: '.kpi-card:nth-child(2) .kpi-value', value: kpis.gesendeteMails, format: 'number' },
-    { selector: '.kpi-card:nth-child(3) .kpi-value', value: kpis.neueLeads, format: 'number' },
-    { selector: '.kpi-card:nth-child(4) .kpi-value', value: kpis.offeneDeals, format: 'number' },
-    { selector: '.kpi-card:nth-child(5) .kpi-value', value: kpis.abschluesse, format: 'number' },
-    { selector: '.kpi-card:nth-child(6) .kpi-value', value: kpis.umsatz / 100, format: 'currency' }
-  ];
+  if (umsatzEl) umsatzEl.textContent = '€' + Math.round(kpis.umsatz / 100).toLocaleString('de-DE');
+  if (leadsEl) leadsEl.textContent = kpis.neueLeads.toLocaleString('de-DE');
+  if (anrufeEl) anrufeEl.textContent = kpis.ausgehendeAnrufe.toLocaleString('de-DE');
+  if (abschluesseEl) abschluesseEl.textContent = kpis.abschluesse.toLocaleString('de-DE');
   
-  // Try to update by finding specific elements
-  var gesamtSection = document.getElementById('vertrieb-gesamt-team');
-  if (gesamtSection) {
-    var allKpiValues = gesamtSection.querySelectorAll('.kpi-value');
-    
-    // Update values based on what we have
-    if (allKpiValues.length >= 1) allKpiValues[0].textContent = kpis.ausgehendeAnrufe.toLocaleString('de-DE');
-    if (allKpiValues.length >= 2) allKpiValues[1].textContent = kpis.gesendeteMails.toLocaleString('de-DE');
-    if (allKpiValues.length >= 3) allKpiValues[2].textContent = kpis.neueLeads.toLocaleString('de-DE');
-    if (allKpiValues.length >= 4) allKpiValues[3].textContent = kpis.offeneDeals.toLocaleString('de-DE');
-    if (allKpiValues.length >= 5) allKpiValues[4].textContent = kpis.abschluesse.toLocaleString('de-DE');
-    if (allKpiValues.length >= 6) allKpiValues[5].textContent = formatCurrency(kpis.umsatz);
-  }
-  
-  // Update header stats if they exist
-  var headerStats = document.querySelectorAll('.header-right .stat-value');
-  if (headerStats.length >= 2) {
-    headerStats[0].textContent = formatCurrency(kpis.pipelineValue);
-    headerStats[1].textContent = kpis.abschlussquote + '%';
-  }
-  
-  console.log('✓ KPIs in UI aktualisiert');
+  console.log('✓ KPIs in UI aktualisiert - Umsatz:', kpis.umsatz, 'Leads:', kpis.neueLeads, 'Anrufe:', kpis.ausgehendeAnrufe, 'Abschlüsse:', kpis.abschluesse);
 }
 
 // Format currency for display
@@ -3519,6 +3650,7 @@ function formatCurrency(value) {
 // Initialize Close on dashboard load
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initCloseConnection, 500);
+  setTimeout(renderEmployeeGrids, 1000);
 });
 </script>
 </body>
