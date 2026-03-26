@@ -3261,30 +3261,36 @@ async function loadCloseTeam() {
   if (!closeApiKey) return;
   
   try {
-    // Use /user/ endpoint to get all org users
+    // Use /membership/ endpoint to get ACTIVE org members only
     var response = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: 'user/', apiKey: closeApiKey })
+      body: JSON.stringify({ endpoint: 'membership/', apiKey: closeApiKey })
     });
     
     var data = await response.json();
-    console.log('Close /user/ response:', data);
+    console.log('Close /membership/ response:', data);
     
     if (data.data && data.data.length > 0) {
-      // Map user data
-      closeTeamMembers = data.data.map(function(u) {
-        return {
-          id: u.id,
-          first_name: u.first_name || '',
-          last_name: u.last_name || '',
-          email: u.email || '',
-          image: u.image || null // Close may have image field
-        };
-      });
+      // Filter nur AKTIVE Memberships und mappe User-Daten
+      closeTeamMembers = data.data
+        .filter(function(m) {
+          // Nur aktive Memberships (keine inaktiven/ehemaligen)
+          return m.status === 'active';
+        })
+        .map(function(m) {
+          return {
+            id: m.user_id,
+            first_name: m.user_first_name || '',
+            last_name: m.user_last_name || '',
+            email: m.user_email || '',
+            image: m.user_image || null
+          };
+        });
+      
       renderCloseTeam();
       renderEmployeeGrids();
-      console.log('✓ Team geladen:', closeTeamMembers.length, 'Mitglieder:', closeTeamMembers.map(function(m) { return m.first_name + ' ' + m.last_name; }));
+      console.log('✓ Aktive Team-Mitglieder geladen:', closeTeamMembers.length, closeTeamMembers.map(function(m) { return m.first_name + ' ' + m.last_name + ' <' + m.email + '>'; }));
     } else {
       console.log('Keine Team-Mitglieder gefunden. Response:', data);
     }
