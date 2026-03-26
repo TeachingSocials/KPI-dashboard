@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -23,16 +22,16 @@ export default async function handler(req, res) {
 
     const closeResponse = await fetch(`https://api.close.com/api/v1/${endpoint}`, {
       method: 'GET',
-            headers: {
+      headers: {
         'Authorization': 'Basic ' + base64Key,
-                  'Content-Type': 'application/json'
-          }
-  });
+        'Content-Type': 'application/json'
+      }
+    });
 
     const data = await closeResponse.json();
     return res.status(closeResponse.status).json(data);
 
-} catch (error) {
+  } catch (error) {
     return res.status(500).json({ error: error.message });
-}
+  }
 }
