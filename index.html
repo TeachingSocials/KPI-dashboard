@@ -1741,7 +1741,7 @@
           <span style="padding:5px 10px;background:#22c55e;border-radius:4px;font-size:12px;">💰 Closer</span>
           <span style="padding:5px 10px;background:#f59e0b;border-radius:4px;font-size:12px;">🤝 AM</span>
         </div>
-        <div class="team-grid" id="closeTeamGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;"></div>
+        <div class="team-grid" id="closeTeamGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
       </div>
     </div>
 
@@ -3331,33 +3331,33 @@ function renderCloseTeam() {
       avatarHtml = '<div style="width:40px;height:40px;border-radius:50%;background:var(--beige);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-weight:bold;">' + (initials || '👤') + '</div>';
     }
     
-    // Build checkbox options
-    var checkboxHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    // Build checkbox options - horizontal row
+    var checkboxHtml = '<div style="display:flex;flex-direction:row;gap:6px;margin-top:12px;">';
     var roles = [
-      { id: 'opener', label: '📞 Opener', color: '#60a5fa' },
-      { id: 'setter', label: '📅 Setter', color: '#a855f7' },
-      { id: 'closer', label: '💰 Closer', color: '#22c55e' },
-      { id: 'account_manager', label: '🤝 AM', color: '#f59e0b' }
+      { id: 'opener', label: '📞', color: '#60a5fa', title: 'Opener' },
+      { id: 'setter', label: '📅', color: '#a855f7', title: 'Setter' },
+      { id: 'closer', label: '💰', color: '#22c55e', title: 'Closer' },
+      { id: 'account_manager', label: '🤝', color: '#f59e0b', title: 'AM' }
     ];
     
     roles.forEach(function(role) {
       var isChecked = memberRoles.includes(role.id);
-      var bgColor = isChecked ? role.color : 'transparent';
+      var bgColor = isChecked ? role.color : 'var(--bg-panel)';
       var textColor = isChecked ? '#000' : 'var(--text-dim)';
       var borderCol = isChecked ? role.color : 'var(--border)';
-      checkboxHtml += '<label style="display:flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid ' + borderCol + ';border-radius:4px;cursor:pointer;font-size:11px;background:' + bgColor + ';color:' + textColor + ';transition:all 0.2s;">' +
+      checkboxHtml += '<label title="' + role.title + '" style="display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 10px;border:1px solid ' + borderCol + ';border-radius:4px;cursor:pointer;font-size:12px;background:' + bgColor + ';color:' + textColor + ';transition:all 0.2s;flex:1;text-align:center;">' +
         '<input type="checkbox" data-member-id="' + memberId + '" data-role="' + role.id + '" ' + (isChecked ? 'checked' : '') + ' onchange="updateMemberRoles(this)" style="display:none;">' +
-        role.label +
+        '<span>' + role.label + '</span><span style="font-size:10px;">' + role.title + '</span>' +
       '</label>';
     });
     checkboxHtml += '</div>';
     
     html += '<div class="team-member-card" data-member-id="' + memberId + '" style="' + borderStyle + 'padding:16px;border-radius:8px;">' +
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
         avatarHtml +
-        '<div>' +
-          '<div style="font-weight:600;">' + (member.first_name || '') + ' ' + (member.last_name || '') + '</div>' +
-          '<div style="font-size:12px;color:var(--text-dim);">' + (member.email || '-') + '</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (member.first_name || '') + ' ' + (member.last_name || '') + '</div>' +
+          '<div style="font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (member.email || '-') + '</div>' +
         '</div>' +
       '</div>' +
       checkboxHtml +
