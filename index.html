@@ -3215,7 +3215,7 @@ async function loadCloseTeam() {
   if (!closeApiKey) return;
   
   try {
-    // Step 1: Get current user to find organization ID
+    // Step 1: Get current user info to identify the primary organization
     var meResponse = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3225,68 +3225,89 @@ async function loadCloseTeam() {
     var meData = await meResponse.json();
     console.log('Close /me/ response:', meData);
     
-    // Get organization ID from the first organization
-    var orgId = null;
+    // Find the Teaching Finance organization ID
+    var targetOrgId = null;
+    var targetOrgName = null;
     if (meData.organizations && meData.organizations.length > 0) {
-      orgId = meData.organizations[0].id;
-    } else if (meData.memberships && meData.memberships.length > 0) {
-      orgId = meData.memberships[0].organization_id;
+      // Look for Teaching Finance org, or use first if not found
+      var teachingFinanceOrg = meData.organizations.find(function(org) {
+        return org.name && org.name.toLowerCase().includes('teaching finance');
+      });
+      if (teachingFinanceOrg) {
+        targetOrgId = teachingFinanceOrg.id;
+        targetOrgName = teachingFinanceOrg.name;
+      } else {
+        targetOrgId = meData.organizations[0].id;
+        targetOrgName = meData.organizations[0].name;
+      }
     }
     
-    if (!orgId) {
-      console.log('Keine Organisation gefunden');
-      return;
-    }
+    console.log('Target Organization:', targetOrgName, '(' + targetOrgId + ')');
     
-    console.log('Organization ID:', orgId);
-    
-    // Step 2: Get organization details with memberships (active users only)
-    var orgResponse = await fetch('/api/close-proxy', {
+    // Step 2: Get ALL users using /user/ endpoint (returns users from all orgs)
+    var userResponse = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: 'organization/' + orgId + '/', apiKey: closeApiKey })
+      body: JSON.stringify({ endpoint: 'user/', apiKey: closeApiKey })
     });
     
-    var orgData = await orgResponse.json();
-    console.log('Close /organization/ response - memberships:', orgData.memberships ? orgData.memberships.length : 0);
-    console.log('Close /organization/ response - inactive_memberships:', orgData.inactive_memberships ? orgData.inactive_memberships.length : 0);
+    var userData = await userResponse.json();
+    var allUsers = userData.data || [];
+    console.log('Close /user/ - total users across all orgs:', allUsers.length);
     
-    // Use only active memberships (not inactive_memberships)
-    var activeMembers = orgData.memberships || [];
+    // Step 3: Filter users - only those belonging to Teaching Finance org
+    var orgUsers = allUsers.filter(function(user) {
+      if (!user.organizations || !Array.isArray(user.organizations)) return false;
+      return user.organizations.some(function(orgId) {
+        return orgId === targetOrgId;
+      });
+    });
     
-    if (activeMembers.length > 0) {
-      console.log('Aktive Mitglieder:', activeMembers.map(function(m) { 
-        return (m.user_first_name || m.first_name || '') + ' ' + (m.user_last_name || m.last_name || '') + ' (' + (m.user_email || m.email || '') + ')'; 
-      }));
+    console.log('Users in', targetOrgName + ':', orgUsers.length);
+    
+    // Step 4: Filter out test/dummy/system accounts by email patterns
+    var filtered = orgUsers.filter(function(user) {
+      var email = (user.email || '').toLowerCase();
+      var firstName = user.first_name || '';
       
-      // Filter: nur User mit echten Namen (mindestens 2 Zeichen)
-      var filtered = activeMembers.filter(function(m) {
-        var firstName = m.user_first_name || m.first_name || '';
-        if (firstName.length < 2) {
-          console.log('User ohne Namen übersprungen:', m.user_email || m.email);
-          return false;
-        }
-        return true;
-      });
+      // Ausschließen: Test/Dummy/Setup/System Accounts
+      if (email.includes('setup+')) { console.log('Filter: setup+ →', email); return false; }
+      if (email.includes('dummy')) { console.log('Filter: dummy →', email); return false; }
+      if (email.includes('customer+')) { console.log('Filter: customer+ →', email); return false; }
+      if (email.includes('probearbeit')) { console.log('Filter: probearbeit →', email); return false; }
+      if (email.includes('vorlage')) { console.log('Filter: vorlage →', email); return false; }
+      if (email.includes('mitarbeiter.vertrieb+')) { console.log('Filter: mitarbeiter.vertrieb+ →', email); return false; }
+      if (email.includes('@10xcrm.de')) { console.log('Filter: @10xcrm.de →', email); return false; }
+      if (email.includes('@solaris')) { console.log('Filter: @solaris →', email); return false; }
+      if (email === 'mitarbeiter.vertrieb@teachingfinance.de') { console.log('Filter: mitarbeiter.vertrieb →', email); return false; }
+      if (email === 'fulfillment@teachingfinance.de') { console.log('Filter: fulfillment →', email); return false; }
+      if (email === 'customer.success@teachingfinance.de') { console.log('Filter: customer.success →', email); return false; }
       
-      console.log('Nach Namen-Filter:', filtered.length, 'von', activeMembers.length);
+      // Nur User mit echten Namen (mindestens 2 Zeichen)
+      if (firstName.length < 2) { console.log('Filter: kein Name →', email); return false; }
       
-      closeTeamMembers = filtered.map(function(m) {
-        return {
-          id: m.user_id || m.id,
-          first_name: m.user_first_name || m.first_name || '',
-          last_name: m.user_last_name || m.last_name || '',
-          email: m.user_email || m.email || '',
-          image: m.user_image || m.image || null
-        };
-      });
-      
-      renderCloseTeam();
-      renderEmployeeGrids();
-      console.log('✓ Aktive Team-Mitglieder geladen:', closeTeamMembers.length);
-    } else {
-      console.log('Keine aktiven Team-Mitglieder gefunden.');
-    }
+      return true;
+    });
+    
+    console.log('Nach Filter:', filtered.length, 'von', orgUsers.length, 'Org-Mitgliedern');
+    console.log('Finale User:', filtered.map(function(u) { 
+      return u.first_name + ' ' + u.last_name; 
+    }));
+    
+    closeTeamMembers = filtered.map(function(user) {
+      return {
+        id: user.id,
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        email: user.email || '',
+        image: user.image || null
+      };
+    });
+    
+    renderCloseTeam();
+    renderEmployeeGrids();
+    console.log('✓ Team-Mitglieder geladen:', closeTeamMembers.length);
+    
   } catch (error) {
     console.error('Close team load error:', error);
   }
