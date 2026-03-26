@@ -3173,7 +3173,7 @@ async function connectCloseAPI() {
   errorEl.classList.remove('show');
   
   try {
-    // Test connection via Vercel API Route
+    // Test connection via Supabase Edge Function
     var response = await fetch(SUPABASE_URL + '/functions/v1/smart-action', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3181,23 +3181,30 @@ async function connectCloseAPI() {
     });
     
     var data = await response.json();
+    console.log('Close API response:', data);
     
     if (data.error) {
       throw new Error(data.error);
     }
     
-    if (!data.id) {
-      throw new Error('Ungültiger API Key');
+    // Close API can return user directly or nested - check both
+    var userId = data.id || (data.current_user && data.current_user.id);
+    var firstName = data.first_name || (data.current_user && data.current_user.first_name) || 'User';
+    var lastName = data.last_name || (data.current_user && data.current_user.last_name) || '';
+    
+    if (!userId) {
+      console.error('No user ID in response:', data);
+      throw new Error('Ungültiger API Key oder keine Berechtigung');
     }
     
     // Success! Save API key
     closeApiKey = apiKey;
     localStorage.setItem('ts_close_api_key', apiKey);
     
-    console.log('✓ Close verbunden:', data.first_name, data.last_name);
+    console.log('✓ Close verbunden:', firstName, lastName);
     
     // Update UI
-    updateCloseConnectionStatus(true, data.first_name + ' ' + data.last_name);
+    updateCloseConnectionStatus(true, firstName + ' ' + lastName);
     
     // Load team members
     await loadCloseTeam();
