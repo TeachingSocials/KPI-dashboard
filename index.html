@@ -3261,37 +3261,67 @@ async function loadCloseTeam() {
   if (!closeApiKey) return;
   
   try {
-    // Use /membership/ endpoint to get ACTIVE org members only
+    // Use /user/ endpoint to get all org users
     var response = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: 'membership/', apiKey: closeApiKey })
+      body: JSON.stringify({ endpoint: 'user/', apiKey: closeApiKey })
     });
     
     var data = await response.json();
-    console.log('Close /membership/ response:', data);
+    console.log('Close /user/ raw response - total users:', data.data ? data.data.length : 0);
     
     if (data.data && data.data.length > 0) {
-      // Filter nur AKTIVE Memberships und mappe User-Daten
-      closeTeamMembers = data.data
-        .filter(function(m) {
-          // Nur aktive Memberships (keine inaktiven/ehemaligen)
-          return m.status === 'active';
-        })
-        .map(function(m) {
-          return {
-            id: m.user_id,
-            first_name: m.user_first_name || '',
-            last_name: m.user_last_name || '',
-            email: m.user_email || '',
-            image: m.user_image || null
-          };
+      // Log all emails for debugging
+      console.log('Alle User Emails:', data.data.map(function(u) { return u.email; }));
+      
+      // Filter: nur echte Mitarbeiter, keine Test-Accounts
+      var filtered = data.data.filter(function(u) {
+        var email = (u.email || '').toLowerCase();
+        // Ausschließen: setup+, dummy, test accounts, customer@, probearbeit, vorlage, mitarbeiter.vertrieb
+        if (email.includes('setup+')) return false;
+        if (email.includes('dummy')) return false;
+        if (email.includes('customer+')) return false;
+        if (email.includes('probearbeit')) return false;
+        if (email.includes('vorlage')) return false;
+        if (email.includes('@10xcrm.de')) return false;
+        if (email === 'mitarbeiter.vertrieb@teachingfinance.de') return false;
+        if (email === 'fulfillment@teachingfinance.de') return false;
+        // Nur User mit echten Namen
+        if (!u.first_name || u.first_name.length < 2) return false;
+        return true;
+      });
+      
+      console.log('Nach Filter:', filtered.length, 'von', data.data.length);
+      
+      // Falls Filter alle rausfiltert, zeige alle mit Namen
+      if (filtered.length === 0) {
+        filtered = data.data.filter(function(u) {
+          return u.first_name && u.first_name.length > 0;
         });
+        console.log('Fallback - alle mit Namen:', filtered.length);
+      }
+      
+      closeTeamMembers = filtered.map(function(u) {
+        return {
+          id: u.id,
+          first_name: u.first_name || '',
+          last_name: u.last_name || '',
+          email: u.email || '',
+          image: u.image || null
+        };
+      });
       
       renderCloseTeam();
       renderEmployeeGrids();
-      console.log('✓ Aktive Team-Mitglieder geladen:', closeTeamMembers.length, closeTeamMembers.map(function(m) { return m.first_name + ' ' + m.last_name + ' <' + m.email + '>'; }));
+      console.log('✓ Team-Mitglieder geladen:', closeTeamMembers.length, closeTeamMembers.map(function(m) { return m.first_name + ' ' + m.last_name; }));
     } else {
+      console.log('Keine Team-Mitglieder gefunden. Response:', JSON.stringify(data));
+    }
+  } catch (error) {
+    console.error('Close team load error:', error);
+  }
+}
       console.log('Keine Team-Mitglieder gefunden. Response:', data);
     }
   } catch (error) {
