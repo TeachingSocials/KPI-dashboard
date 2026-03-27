@@ -2106,6 +2106,8 @@ supabase.auth.onAuthStateChange(async (event, session) => {
   console.log('Auth state changed:', event);
   if (event === 'SIGNED_IN' && session) {
     currentUser = session.user;
+    // Lade KPI-Config aus Supabase
+    setTimeout(loadKpiConfigFromSupabase, 500);
   }
   if (event === 'SIGNED_OUT') {
     currentUser = null;
@@ -3840,35 +3842,51 @@ async function loadCloseParameters() {
     // Custom Activity Types MIT ihren Feldern laden
     const customActivitiesWithFields = [];
     for (const ca of (customActivityTypes.data || [])) {
-      // Hole die Felder für jede Custom Activity
-      // Close API Endpoint: custom_field/activity.{activity_type_id}/
-      const fieldsResponse = await fetchCloseEndpoint('custom_field/activity.' + ca.id + '/');
-      const fields = fieldsResponse.data || [];
       
-      // Detailliertes Logging
-      console.log('📋 Custom Activity:', ca.name, '| ID:', ca.id);
-      console.log('   Endpoint: custom_field/activity.' + ca.id + '/');
-      console.log('   API Response:', JSON.stringify(fieldsResponse).substring(0, 500));
-      console.log('   Fields gefunden:', fields.length);
-      fields.forEach(f => {
-        console.log('  └─ Feld:', f.name, '| Typ:', f.type, '| Choices:', JSON.stringify(f.choices) || 'keine');
-      });
+      // HOTFIX: 150ms Pause um Close Rate Limit nicht zu sprengen
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      // Hole die Felder für jede Custom Activity
+      const fieldsResponse = await fetchCloseEndpoint('custom_field/activity.' + ca.id + '/');
+      const rawFields = fieldsResponse.data || [];
+      
+      console.log('📋 Custom Activity:', ca.name, '| Fields:', rawFields.length);
+      
+      // Für jedes Choice-Feld: Lade die Choices separat
+      const fieldsWithChoices = [];
+      for (const f of rawFields) {
+        
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        let choices = [];
+        if (f.type === 'choices') {
+          // Lade die Choices für dieses spezifische Feld
+          const fieldDetails = await fetchCloseEndpoint('custom_field/' + f.id + '/');
+          choices = fieldDetails.choices || [];
+          console.log('  └─ Feld:', f.name, '| Typ:', f.type, '| Choices:', JSON.stringify(choices));
+        } else {
+          console.log('  └─ Feld:', f.name, '| Typ:', f.type);
+        }
+        
+        fieldsWithChoices.push({
+          id: f.id,
+          name: f.name,
+          type: f.type,
+          choices: choices,
+          accepts_multiple_values: f.accepts_multiple_values || false
+        });
+      }
       
       customActivitiesWithFields.push({
         id: ca.id,
         name: ca.name,
         description: ca.description || '',
-        fields: fields.map(f => ({
-          id: f.id,
-          name: f.name,
-          type: f.type,
-          choices: f.choices || [],
-          accepts_multiple_values: f.accepts_multiple_values || false
-        }))
+        fields: fieldsWithChoices
       });
     }
     
-    console.log('✓ Custom Activities mit Feldern:', JSON.stringify(customActivitiesWithFields, null, 2));
+    console.log('✓ Custom Activities mit Feldern geladen:', customActivitiesWithFields.length);
     
     closeParameters = {
       // Standard KPIs
@@ -3895,22 +3913,8 @@ async function loadCloseParameters() {
         type: 'count'
       })),
       
-      // Custom Fields (nur zählbare/messbare)
-      customFields: (customFields.data || []).filter(cf => 
-        cf.type === 'number' || cf.type === 'choices' || cf.type === 'date'
-      ).map(cf => {
-        if (cf.type === 'choices') {
-          console.log('🏷️ Lead Custom Field:', cf.name, '| Choices:', cf.choices || 'keine');
-        }
-        return {
-          id: 'field:' + cf.id,
-          name: cf.name,
-          icon: '🏷️',
-          desc: cf.type === 'number' ? 'Zahlenfeld' : cf.type === 'choices' ? 'Auswahlfeld' : 'Datumsfeld',
-          type: cf.type,
-          choices: cf.choices || []
-        };
-      }),
+      // Custom Fields (nur zählbare/messbare) - Lade Choices separat
+      customFields: [],
       
       // Opportunity Statuses aus Pipelines
       opportunityStatuses: []
@@ -3928,6 +3932,33 @@ async function loadCloseParameters() {
         });
       });
     });
+    
+    // Lead Custom Fields mit Choices laden
+    console.log('🏷️ Lade Lead Custom Fields...');
+    const relevantFields = (customFields.data || []).filter(cf => 
+      cf.type === 'number' || cf.type === 'choices' || cf.type === 'date'
+    );
+    
+    for (const cf of relevantFields) {
+      await new Promise(resolve => setTimeout(resolve, 100)); // Rate limiting
+      
+      let choices = [];
+      if (cf.type === 'choices') {
+        // Lade Choices separat
+        const fieldDetails = await fetchCloseEndpoint('custom_field/' + cf.id + '/');
+        choices = fieldDetails.choices || [];
+        console.log('  └─ Lead Field:', cf.name, '| Choices:', JSON.stringify(choices));
+      }
+      
+      closeParameters.customFields.push({
+        id: 'field:' + cf.id,
+        name: cf.name,
+        icon: '🏷️',
+        desc: cf.type === 'number' ? 'Zahlenfeld' : cf.type === 'choices' ? 'Auswahlfeld' : 'Datumsfeld',
+        type: cf.type,
+        choices: choices
+      });
+    }
     
     console.log('✓ Close Parameter geladen:', closeParameters);
     renderKpiParameters();
@@ -4175,28 +4206,50 @@ function filterKpiParameters() {
   });
 }
 
-// Speichere die KPI-Konfiguration
-function saveKpiConfig() {
+// Speichere die KPI-Konfiguration (localStorage + Supabase)
+async function saveKpiConfig() {
   if (!currentKpiTarget || !currentKpiTarget.selectedParam) return;
   
+  // 1. Aktuelle Konfiguration aus localStorage holen
   const savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
   savedKpis[currentKpiTarget.id] = currentKpiTarget.selectedParam;
-  localStorage.setItem('ts_kpi_config', JSON.stringify(savedKpis));
   
-  console.log('✓ KPI Konfiguration gespeichert:', currentKpiTarget.id, '→', currentKpiTarget.selectedParam);
+  // 2. Button auf "Speichert..." setzen
+  const saveBtn = document.getElementById('kpiSaveBtn');
+  const originalText = saveBtn.textContent;
+  saveBtn.textContent = 'Speichert...';
+  saveBtn.disabled = true;
   
-  // Markiere die Kachel als konfiguriert
-  document.querySelectorAll('.kpi-card').forEach(card => {
-    const header = card.querySelector('.kpi-header');
-    if (header) {
-      const cardId = header.textContent.trim().toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 50);
-      if (savedKpis[cardId]) {
-        card.classList.add('configured');
+  try {
+    // 3. In Supabase speichern (wenn User eingeloggt)
+    if (currentUser && supabase) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ kpi_config: savedKpis })
+        .eq('id', currentUser.id);
+      
+      if (error) {
+        console.warn('Supabase Speichern fehlgeschlagen:', error);
+        // Trotzdem lokal speichern
+      } else {
+        console.log('✓ KPI Konfiguration in Supabase gespeichert');
       }
     }
-  });
-  
-  closeKpiConfigModal();
+    
+    // 4. Lokal speichern
+    localStorage.setItem('ts_kpi_config', JSON.stringify(savedKpis));
+    console.log('✓ KPI Konfiguration lokal gespeichert:', currentKpiTarget.id, '→', currentKpiTarget.selectedParam);
+    
+    // 5. Kacheln als konfiguriert markieren
+    markConfiguredKpis();
+    closeKpiConfigModal();
+    
+  } catch (err) {
+    console.error('Fehler beim Speichern:', err);
+    saveBtn.textContent = originalText;
+    saveBtn.disabled = false;
+    alert('Fehler beim Speichern. Bitte erneut versuchen.');
+  }
 }
 
 // Beim Laden: Markiere bereits konfigurierte Kacheln
@@ -4211,6 +4264,33 @@ function markConfiguredKpis() {
       }
     }
   });
+}
+
+// Lade KPI-Config aus Supabase beim Login
+async function loadKpiConfigFromSupabase() {
+  if (!currentUser || !supabase) return;
+  
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('kpi_config')
+      .eq('id', currentUser.id)
+      .single();
+    
+    if (error) {
+      console.warn('KPI-Config laden fehlgeschlagen:', error);
+      return;
+    }
+    
+    if (data && data.kpi_config) {
+      // In localStorage speichern für schnellen Zugriff
+      localStorage.setItem('ts_kpi_config', JSON.stringify(data.kpi_config));
+      console.log('✓ KPI-Config aus Supabase geladen');
+      markConfiguredKpis();
+    }
+  } catch (err) {
+    console.warn('Fehler beim Laden der KPI-Config:', err);
+  }
 }
 
 // Initialize Close on dashboard load
