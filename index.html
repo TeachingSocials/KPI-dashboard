@@ -3783,6 +3783,13 @@ async function openKpiConfigModal(targetId, targetName) {
       .kpi-option.selected .kpi-option-check { background:var(--beige); border-color:var(--beige); color:var(--bg-dark); }
       .kpi-subfield { margin-left:32px; border-left:2px solid var(--border); padding-left:16px; }
       .kpi-subfield .kpi-option { background:var(--bg-panel); }
+      .kpi-subfield-choices { margin-left:24px; border-left:2px solid var(--success); padding-left:12px; margin-top:4px; margin-bottom:8px; }
+      .kpi-subfield-choices .kpi-option { background:rgba(74,222,128,0.05); border-color:rgba(74,222,128,0.3); padding:10px 14px; }
+      .kpi-subfield-choices .kpi-option:hover { border-color:var(--success); background:rgba(74,222,128,0.1); }
+      .kpi-subfield-choices .kpi-option.selected { border-color:var(--success); background:rgba(74,222,128,0.15); }
+      .kpi-subfield-choices .kpi-option.selected .kpi-option-check { background:var(--success); border-color:var(--success); }
+      .kpi-subfield-choices .kpi-option-name { font-size:13px; }
+      .kpi-subfield-choices .kpi-option-icon { color:var(--success); font-size:16px; }
     `;
     document.head.appendChild(style);
   }
@@ -3975,21 +3982,48 @@ function renderKpiParameters() {
           const fieldSelected = currentSelection === fieldId ? 'selected' : '';
           const fieldTypeLabel = field.type === 'choices' ? 'Dropdown' : field.type === 'number' ? 'Zahl' : field.type;
           
-          // Bei Dropdown-Feldern die Optionen anzeigen
-          let fieldDesc = 'Feld in ' + ca.name;
-          if (field.choices && field.choices.length > 0) {
-            fieldDesc = 'Optionen: ' + field.choices.slice(0, 3).join(', ') + (field.choices.length > 3 ? '...' : '');
+          // Bei Dropdown-Feldern: Zeige das Feld selbst UND jede einzelne Option
+          if (field.type === 'choices' && field.choices && field.choices.length > 0) {
+            // Feld-Header (zählt alle mit diesem Feld)
+            html += `<div class="kpi-option ${fieldSelected}" onclick="selectKpiParameter('${fieldId}')" data-search="${field.name.toLowerCase()} ${ca.name.toLowerCase()} dropdown">
+              <span class="kpi-option-icon">📋</span>
+              <div class="kpi-option-info">
+                <div class="kpi-option-name">${field.name}</div>
+                <div class="kpi-option-desc">Alle mit diesem Feld ausgefüllt zählen</div>
+              </div>
+              <span class="kpi-option-type">Dropdown</span>
+              <div class="kpi-option-check">${fieldSelected ? '✓' : ''}</div>
+            </div>`;
+            
+            // Jede einzelne Option als auswählbar
+            html += '<div class="kpi-subfield-choices">';
+            field.choices.forEach(choice => {
+              const choiceId = 'actfieldchoice:' + ca.id + ':' + field.id + ':' + encodeURIComponent(choice);
+              const choiceSelected = currentSelection === choiceId ? 'selected' : '';
+              html += `<div class="kpi-option kpi-choice-option ${choiceSelected}" onclick="selectKpiParameter('${choiceId}')" data-search="${field.name.toLowerCase()} ${choice.toLowerCase()} ${ca.name.toLowerCase()}">
+                <span class="kpi-option-icon">✓</span>
+                <div class="kpi-option-info">
+                  <div class="kpi-option-name">${field.name} = "${choice}"</div>
+                  <div class="kpi-option-desc">Zähle Activities wo ${field.name} = ${choice}</div>
+                </div>
+                <span class="kpi-option-type">Option</span>
+                <div class="kpi-option-check">${choiceSelected ? '✓' : ''}</div>
+              </div>`;
+            });
+            html += '</div>';
+          } else {
+            // Normale Felder (Text, Number, etc.)
+            let fieldDesc = 'Feld in ' + ca.name;
+            html += `<div class="kpi-option ${fieldSelected}" onclick="selectKpiParameter('${fieldId}')" data-search="${field.name.toLowerCase()} ${ca.name.toLowerCase()}">
+              <span class="kpi-option-icon">📝</span>
+              <div class="kpi-option-info">
+                <div class="kpi-option-name">${field.name}</div>
+                <div class="kpi-option-desc">${fieldDesc}</div>
+              </div>
+              <span class="kpi-option-type">${fieldTypeLabel}</span>
+              <div class="kpi-option-check">${fieldSelected ? '✓' : ''}</div>
+            </div>`;
           }
-          
-          html += `<div class="kpi-option ${fieldSelected}" onclick="selectKpiParameter('${fieldId}')" data-search="${field.name.toLowerCase()} ${ca.name.toLowerCase()} ${fieldDesc.toLowerCase()}">
-            <span class="kpi-option-icon">📝</span>
-            <div class="kpi-option-info">
-              <div class="kpi-option-name">${field.name}</div>
-              <div class="kpi-option-desc">${fieldDesc}</div>
-            </div>
-            <span class="kpi-option-type">${fieldTypeLabel}</span>
-            <div class="kpi-option-check">${fieldSelected ? '✓' : ''}</div>
-          </div>`;
         });
         html += '</div>';
       }
@@ -4010,24 +4044,51 @@ function renderKpiParameters() {
   // Custom Fields
   if (closeParameters.customFields.length > 0) {
     html += '<div class="kpi-category" data-category="custom-fields">';
-    html += '<div class="kpi-category-header"><span class="kpi-category-icon">🏷️</span><span class="kpi-category-title">Custom Fields</span><span class="kpi-category-count">' + closeParameters.customFields.length + '</span></div>';
+    html += '<div class="kpi-category-header"><span class="kpi-category-icon">🏷️</span><span class="kpi-category-title">Custom Fields (Lead)</span><span class="kpi-category-count">' + closeParameters.customFields.length + '</span></div>';
     
     closeParameters.customFields.forEach(cf => {
       const selected = currentSelection === cf.id ? 'selected' : '';
-      let desc = cf.desc;
-      if (cf.choices && cf.choices.length > 0) {
-        desc = 'Optionen: ' + cf.choices.slice(0, 3).join(', ') + (cf.choices.length > 3 ? '...' : '');
-      }
       
-      html += `<div class="kpi-option ${selected}" onclick="selectKpiParameter('${cf.id}')" data-search="${cf.name.toLowerCase()} ${desc.toLowerCase()}">
-        <span class="kpi-option-icon">${cf.icon}</span>
-        <div class="kpi-option-info">
-          <div class="kpi-option-name">${cf.name}</div>
-          <div class="kpi-option-desc">${desc}</div>
-        </div>
-        <span class="kpi-option-type">${cf.type}</span>
-        <div class="kpi-option-check">${selected ? '✓' : ''}</div>
-      </div>`;
+      // Bei Dropdown-Feldern: Zeige das Feld UND jede einzelne Option
+      if (cf.type === 'choices' && cf.choices && cf.choices.length > 0) {
+        html += `<div class="kpi-option ${selected}" onclick="selectKpiParameter('${cf.id}')" data-search="${cf.name.toLowerCase()} dropdown">
+          <span class="kpi-option-icon">📋</span>
+          <div class="kpi-option-info">
+            <div class="kpi-option-name">${cf.name}</div>
+            <div class="kpi-option-desc">Alle Leads mit diesem Feld ausgefüllt</div>
+          </div>
+          <span class="kpi-option-type">Dropdown</span>
+          <div class="kpi-option-check">${selected ? '✓' : ''}</div>
+        </div>`;
+        
+        // Jede einzelne Option
+        html += '<div class="kpi-subfield-choices">';
+        cf.choices.forEach(choice => {
+          const choiceId = 'fieldchoice:' + cf.id.replace('field:', '') + ':' + encodeURIComponent(choice);
+          const choiceSelected = currentSelection === choiceId ? 'selected' : '';
+          html += `<div class="kpi-option kpi-choice-option ${choiceSelected}" onclick="selectKpiParameter('${choiceId}')" data-search="${cf.name.toLowerCase()} ${choice.toLowerCase()}">
+            <span class="kpi-option-icon">✓</span>
+            <div class="kpi-option-info">
+              <div class="kpi-option-name">${cf.name} = "${choice}"</div>
+              <div class="kpi-option-desc">Zähle Leads wo ${cf.name} = ${choice}</div>
+            </div>
+            <span class="kpi-option-type">Option</span>
+            <div class="kpi-option-check">${choiceSelected ? '✓' : ''}</div>
+          </div>`;
+        });
+        html += '</div>';
+      } else {
+        // Normale Felder (Number, Date, etc.)
+        html += `<div class="kpi-option ${selected}" onclick="selectKpiParameter('${cf.id}')" data-search="${cf.name.toLowerCase()} ${cf.desc.toLowerCase()}">
+          <span class="kpi-option-icon">${cf.icon}</span>
+          <div class="kpi-option-info">
+            <div class="kpi-option-name">${cf.name}</div>
+            <div class="kpi-option-desc">${cf.desc}</div>
+          </div>
+          <span class="kpi-option-type">${cf.type}</span>
+          <div class="kpi-option-check">${selected ? '✓' : ''}</div>
+        </div>`;
+      }
     });
     html += '</div>';
   }
