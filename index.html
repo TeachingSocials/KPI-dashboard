@@ -3841,8 +3841,18 @@ async function loadCloseParameters() {
     const customActivitiesWithFields = [];
     for (const ca of (customActivityTypes.data || [])) {
       // Hole die Felder für jede Custom Activity
+      // Close API Endpoint: custom_field/activity.{activity_type_id}/
       const fieldsResponse = await fetchCloseEndpoint('custom_field/activity.' + ca.id + '/');
       const fields = fieldsResponse.data || [];
+      
+      // Detailliertes Logging
+      console.log('📋 Custom Activity:', ca.name, '| ID:', ca.id);
+      console.log('   Endpoint: custom_field/activity.' + ca.id + '/');
+      console.log('   API Response:', JSON.stringify(fieldsResponse).substring(0, 500));
+      console.log('   Fields gefunden:', fields.length);
+      fields.forEach(f => {
+        console.log('  └─ Feld:', f.name, '| Typ:', f.type, '| Choices:', JSON.stringify(f.choices) || 'keine');
+      });
       
       customActivitiesWithFields.push({
         id: ca.id,
@@ -3852,10 +3862,13 @@ async function loadCloseParameters() {
           id: f.id,
           name: f.name,
           type: f.type,
-          choices: f.choices || []
+          choices: f.choices || [],
+          accepts_multiple_values: f.accepts_multiple_values || false
         }))
       });
     }
+    
+    console.log('✓ Custom Activities mit Feldern:', JSON.stringify(customActivitiesWithFields, null, 2));
     
     closeParameters = {
       // Standard KPIs
@@ -3885,14 +3898,19 @@ async function loadCloseParameters() {
       // Custom Fields (nur zählbare/messbare)
       customFields: (customFields.data || []).filter(cf => 
         cf.type === 'number' || cf.type === 'choices' || cf.type === 'date'
-      ).map(cf => ({
-        id: 'field:' + cf.id,
-        name: cf.name,
-        icon: '🏷️',
-        desc: cf.type === 'number' ? 'Zahlenfeld' : cf.type === 'choices' ? 'Auswahlfeld' : 'Datumsfeld',
-        type: cf.type,
-        choices: cf.choices || []
-      })),
+      ).map(cf => {
+        if (cf.type === 'choices') {
+          console.log('🏷️ Lead Custom Field:', cf.name, '| Choices:', cf.choices || 'keine');
+        }
+        return {
+          id: 'field:' + cf.id,
+          name: cf.name,
+          icon: '🏷️',
+          desc: cf.type === 'number' ? 'Zahlenfeld' : cf.type === 'choices' ? 'Auswahlfeld' : 'Datumsfeld',
+          type: cf.type,
+          choices: cf.choices || []
+        };
+      }),
       
       // Opportunity Statuses aus Pipelines
       opportunityStatuses: []
