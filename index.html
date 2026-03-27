@@ -3831,62 +3831,66 @@ async function loadCloseParameters() {
   }
   
   try {
-    // Parallel alle Parameter-Typen laden
-    const [customActivityTypes, leadStatuses, customFields, pipelines] = await Promise.all([
+    // 1. Parallel alle Parameter-Typen laden
+    // NEU: Wir laden jetzt auch explizit die Shared Fields und Activity Fields!
+    const [
+      customActivityTypes, 
+      leadStatuses, 
+      customFields, 
+      pipelines,
+      sharedFieldsRes,        // Holt alle Shared Fields (wie "Termin No Show")
+      activityFieldsRes       // Holt alle regulären Activity Fields
+    ] = await Promise.all([
       fetchCloseEndpoint('custom_activity_type/'),
       fetchCloseEndpoint('status/lead/'),
       fetchCloseEndpoint('custom_field/lead/'),
-      fetchCloseEndpoint('pipeline/')
+      fetchCloseEndpoint('pipeline/'),
+      fetchCloseEndpoint('custom_field/shared/'),     
+      fetchCloseEndpoint('custom_field/activity/')    
     ]);
+    
+    // Globale Liste aller existierenden Activity-Felder in deinem Close Account
+    const allPossibleFields = [...(sharedFieldsRes.data || []), ...(activityFieldsRes.data || [])];
+    console.log('📦 Alle Shared + Activity Fields geladen:', allPossibleFields.length);
     
     // Custom Activity Types MIT ihren Feldern laden
     const customActivitiesWithFields = [];
+    
     for (const ca of (customActivityTypes.data || [])) {
       
-      // HOTFIX: 150ms Pause um Close Rate Limit nicht zu sprengen
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // HOTFIX: 150ms Pause einlegen, um das Close Rate Limit nicht zu sprengen
+      await new Promise(resolve => setTimeout(resolve, 150)); 
       
-      // Hole die Felder für jede Custom Activity
-      const fieldsResponse = await fetchCloseEndpoint('custom_field/activity.' + ca.id + '/');
-      const rawFields = fieldsResponse.data || [];
+      // KORREKTUR: Wir rufen das SCHEMA der Custom Activity ab
+      // Das Schema enthält die Zuordnungen aller Felder (regulär UND shared)
+      const schemaResponse = await fetchCloseEndpoint('custom_field_schema/activity/' + ca.id + '/');
+      const schemaFields = schemaResponse.fields || []; 
       
-      console.log('📋 Custom Activity:', ca.name, '| Fields:', rawFields.length);
+      // Wir matchen die Felder aus dem Schema mit unserer globalen Feld-Liste, 
+      // damit wir sicher an das "choices" Array (die Dropdown-Werte) herankommen.
+      const fields = schemaFields.map(function(sf) {
+          return allPossibleFields.find(function(f) { return f.id === sf.id; }) || sf;
+      }).filter(function(f) { return f.type; }); // Nur gültige, gefundene Felder behalten
       
-      // Für jedes Choice-Feld: Lade die Choices separat
-      const fieldsWithChoices = [];
-      for (const f of rawFields) {
-        
-        // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        let choices = [];
-        if (f.type === 'choices') {
-          // Lade die Choices für dieses spezifische Feld
-          const fieldDetails = await fetchCloseEndpoint('custom_field/' + f.id + '/');
-          choices = fieldDetails.choices || [];
-          console.log('  └─ Feld:', f.name, '| Typ:', f.type, '| Choices:', JSON.stringify(choices));
-        } else {
-          console.log('  └─ Feld:', f.name, '| Typ:', f.type);
-        }
-        
-        fieldsWithChoices.push({
-          id: f.id,
-          name: f.name,
-          type: f.type,
-          choices: choices,
-          accepts_multiple_values: f.accepts_multiple_values || false
-        });
-      }
+      console.log('📋 Activity:', ca.name, '| Geladene Felder:', fields.map(function(f) { return f.name; }));
       
       customActivitiesWithFields.push({
         id: ca.id,
         name: ca.name,
         description: ca.description || '',
-        fields: fieldsWithChoices
+        fields: fields.map(function(f) {
+          return {
+            id: f.id,
+            name: f.name,
+            type: f.type,
+            choices: f.choices || [],
+            accepts_multiple_values: f.accepts_multiple_values || false
+          };
+        })
       });
     }
     
-    console.log('✓ Custom Activities mit Feldern geladen:', customActivitiesWithFields.length);
+    console.log('✓ Custom Activities mit ALLEN Feldern erfolgreich gematcht!');
     
     closeParameters = {
       // Standard KPIs
@@ -3901,28 +3905,41 @@ async function loadCloseParameters() {
         { id: 'std:opps_value', name: 'Deal-Wert', icon: '💰', desc: 'Gesamtwert gewonnener Deals', type: 'currency' }
       ],
       
-      // Custom Activities mit Feldern
+      // Custom Activities mit Feldern (Jetzt inkl. Shared Dropdowns!)
       customActivities: customActivitiesWithFields,
       
       // Lead Statuses
-      leadStatuses: (leadStatuses.data || []).map(ls => ({
-        id: 'status:' + ls.id,
-        name: ls.label,
-        icon: '📋',
-        desc: 'Leads in diesem Status zählen',
-        type: 'count'
-      })),
+      leadStatuses: (leadStatuses.data || []).map(function(ls) {
+        return {
+          id: 'status:' + ls.id,
+          name: ls.label,
+          icon: '📋',
+          desc: 'Leads in diesem Status zählen',
+          type: 'count'
+        };
+      }),
       
-      // Custom Fields (nur zählbare/messbare) - Lade Choices separat
-      customFields: [],
+      // Custom Fields (nur zählbare/messbare)
+      customFields: (customFields.data || []).filter(function(cf) {
+        return cf.type === 'number' || cf.type === 'choices' || cf.type === 'date';
+      }).map(function(cf) {
+        return {
+          id: 'field:' + cf.id,
+          name: cf.name,
+          icon: '🏷️',
+          desc: cf.type === 'number' ? 'Zahlenfeld' : cf.type === 'choices' ? 'Auswahlfeld' : 'Datumsfeld',
+          type: cf.type,
+          choices: cf.choices || []
+        };
+      }),
       
       // Opportunity Statuses aus Pipelines
       opportunityStatuses: []
     };
     
     // Pipeline Status hinzufügen
-    (pipelines.data || []).forEach(pipeline => {
-      (pipeline.statuses || []).forEach(status => {
+    (pipelines.data || []).forEach(function(pipeline) {
+      (pipeline.statuses || []).forEach(function(status) {
         closeParameters.opportunityStatuses.push({
           id: 'oppstatus:' + status.id,
           name: status.label,
@@ -3932,33 +3949,6 @@ async function loadCloseParameters() {
         });
       });
     });
-    
-    // Lead Custom Fields mit Choices laden
-    console.log('🏷️ Lade Lead Custom Fields...');
-    const relevantFields = (customFields.data || []).filter(cf => 
-      cf.type === 'number' || cf.type === 'choices' || cf.type === 'date'
-    );
-    
-    for (const cf of relevantFields) {
-      await new Promise(resolve => setTimeout(resolve, 100)); // Rate limiting
-      
-      let choices = [];
-      if (cf.type === 'choices') {
-        // Lade Choices separat
-        const fieldDetails = await fetchCloseEndpoint('custom_field/' + cf.id + '/');
-        choices = fieldDetails.choices || [];
-        console.log('  └─ Lead Field:', cf.name, '| Choices:', JSON.stringify(choices));
-      }
-      
-      closeParameters.customFields.push({
-        id: 'field:' + cf.id,
-        name: cf.name,
-        icon: '🏷️',
-        desc: cf.type === 'number' ? 'Zahlenfeld' : cf.type === 'choices' ? 'Auswahlfeld' : 'Datumsfeld',
-        type: cf.type,
-        choices: choices
-      });
-    }
     
     console.log('✓ Close Parameter geladen:', closeParameters);
     renderKpiParameters();
