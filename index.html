@@ -2703,7 +2703,7 @@ var allKennzahlen = ['Ausgehende Anrufe', 'Gesendete E-Mails', 'Gestartete Gespr
 // DYNAMISCHE MITARBEITER-DATEN AUS CLOSE CRM
 // Wird automatisch aus closeTeamMembers + Rollenzuweisungen generiert
 var employees = { opener: [], setter: [], closer: [], kunden: [] };
-var employeeActivityData = {}; // Cache für Activity-Daten pro User
+var employeeCrmData = {}; // Cache für CRM-Daten pro User
 
 // Generiere employees aus Close Team Members + deren Rollenzuweisungen
 function generateEmployeesFromClose() {
@@ -2717,7 +2717,7 @@ function generateEmployeesFromClose() {
     if (!Array.isArray(memberRoles)) memberRoles = [];
     
     var fullName = ((member.first_name || '') + ' ' + (member.last_name || '')).trim() || member.email;
-    var activityData = employeeActivityData[memberId] || {};
+    var activityData = employeeCrmData[memberId] || {};
     
     memberRoles.forEach(function(role) {
       var empData = {
@@ -2833,11 +2833,11 @@ function formatNumber(num) {
   return num.toLocaleString('de-DE');
 }
 
-// Lade Activity-Daten für alle Team-Mitglieder aus Close
-async function loadEmployeeActivityData() {
+// Lade CRM-Daten für alle Team-Mitglieder aus Close
+async function loadEmployeeCrmData() {
   if (!closeApiKey || closeTeamMembers.length === 0) return;
   
-  console.log('📊 Lade Activity-Daten für', closeTeamMembers.length, 'Mitarbeiter...');
+  console.log('📊 Lade CRM-Daten für', closeTeamMembers.length, 'Mitarbeiter...');
   
   for (var i = 0; i < closeTeamMembers.length; i++) {
     var member = closeTeamMembers[i];
@@ -2901,7 +2901,7 @@ async function loadEmployeeActivityData() {
       var avgDealSize = wonOpps.length > 0 ? totalRevenue / wonOpps.length : 0;
       var closeRate = opps.length > 0 ? Math.round((wonOpps.length / opps.length) * 100) : 0;
       
-      employeeActivityData[memberId] = {
+      employeeCrmData[memberId] = {
         calls: totalCalls,
         callsConnected: connectedCalls,
         avgCallDuration: avgDuration,
@@ -2923,11 +2923,11 @@ async function loadEmployeeActivityData() {
       await new Promise(function(resolve) { setTimeout(resolve, 200); });
       
     } catch (error) {
-      console.error('Fehler beim Laden von Activity-Daten für', memberId, error);
+      console.error('Fehler beim Laden von CRM-Daten für', memberId, error);
     }
   }
   
-  console.log('✓ Activity-Daten vollständig geladen');
+  console.log('✓ CRM-Daten vollständig geladen');
   generateEmployeesFromClose();
   renderEmployeeGrids();
 }
@@ -3257,8 +3257,8 @@ async function loadCloseTeam() {
     renderCloseTeam();
     renderEmployeeGrids();
     
-    // Lade Activity-Daten für alle Mitarbeiter (im Hintergrund)
-    loadEmployeeActivityData();
+    // Lade CRM-Daten für alle Mitarbeiter (im Hintergrund)
+    loadEmployeeCrmData();
     
   } catch (error) {
     console.error('Close team load error:', error);
@@ -3425,12 +3425,12 @@ function renderEmployeeGrids() {
   var kundenGrid = document.getElementById('kunden-employee-grid');
   var bestEmployeesList = document.getElementById('best-employees-list');
   
-  // Build employee card with activity data
+  // Build employee card with Close CRM data (calls, activities, opportunities, etc.)
   function buildEmployeeCard(member, roleLabel, activityData) {
     var initials = (member.first_name?.[0] || '') + (member.last_name?.[0] || '');
     var name = ((member.first_name || '') + ' ' + (member.last_name || '')).trim() || member.email;
     var memberId = member.id || member.email;
-    var data = activityData || employeeActivityData[memberId] || {};
+    var data = activityData || employeeCrmData[memberId] || {};
     
     // Stats basierend auf Rolle
     var statsHtml = '';
@@ -3481,7 +3481,7 @@ function renderEmployeeGrids() {
     if (typeof memberRoles === 'string') memberRoles = memberRoles ? [memberRoles] : [];
     var roleLabels = { opener: 'Akquisition', setter: 'Terminierung', closer: 'Abschluss', account_manager: 'Betreuung' };
     var roleDisplay = memberRoles.map(function(r) { return roleLabels[r] || r; }).join(' / ');
-    var data = employeeActivityData[memberId] || {};
+    var data = employeeCrmData[memberId] || {};
     var mainMetric = data.calls || data.revenue || 0;
     var metricLabel = data.revenue ? '€' + formatNumber(data.revenue) : (data.calls || 0) + ' Anrufe';
     
@@ -3500,11 +3500,11 @@ function renderEmployeeGrids() {
   if (bestEmployeesList) {
     var allWithData = closeTeamMembers.filter(function(m) {
       var memberId = m.id || m.email;
-      var data = employeeActivityData[memberId];
+      var data = employeeCrmData[memberId];
       return data && (data.calls > 0 || data.revenue > 0);
     }).sort(function(a, b) {
-      var dataA = employeeActivityData[a.id || a.email] || {};
-      var dataB = employeeActivityData[b.id || b.email] || {};
+      var dataA = employeeCrmData[a.id || a.email] || {};
+      var dataB = employeeCrmData[b.id || b.email] || {};
       var scoreA = (dataA.revenue || 0) + (dataA.calls || 0) * 10;
       var scoreB = (dataB.revenue || 0) + (dataB.calls || 0) * 10;
       return scoreB - scoreA;
@@ -3515,7 +3515,7 @@ function renderEmployeeGrids() {
         return buildEmployeeRow(m, i + 1);
       }).join('');
     } else if (closeTeamMembers.length > 0) {
-      bestEmployeesList.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim);">Activity-Daten werden geladen...</div>';
+      bestEmployeesList.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim);">Daten werden geladen...</div>';
     } else {
       bestEmployeesList.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim);">Verbinde Close CRM in den Einstellungen.</div>';
     }
@@ -3568,7 +3568,7 @@ function renderEmployeeGrids() {
     kundenGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;';
   }
   
-  console.log('Employee grids rendered - Team:', closeTeamMembers.length, 'mit Activity-Daten:', Object.keys(employeeActivityData).length);
+  console.log('Employee grids rendered - Team:', closeTeamMembers.length, 'mit CRM-Daten:', Object.keys(employeeCrmData).length);
 }
 
 // Dynamisches Employee Modal
@@ -3576,7 +3576,7 @@ function openEmployeeModalDynamic(memberId) {
   var member = closeTeamMembers.find(function(m) { return (m.id || m.email) === memberId; });
   if (!member) return;
   
-  var data = employeeActivityData[memberId] || {};
+  var data = employeeCrmData[memberId] || {};
   var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
   var memberRoles = savedRoles[memberId] || [];
   if (typeof memberRoles === 'string') memberRoles = memberRoles ? [memberRoles] : [];
