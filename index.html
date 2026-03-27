@@ -1062,10 +1062,10 @@
           <div class="progress-item"><svg class="progress-ring" viewBox="0 0 100 100"><circle class="progress-ring-bg" cx="50" cy="50" r="40"/><circle class="progress-ring-fill" cx="50" cy="50" r="40" style="stroke: var(--success); stroke-dasharray: 213 251;"/></svg><div class="progress-text"><div class="progress-value">85%</div><div class="progress-label">Vertriebspipeline</div></div></div>
         </div>
         <div class="section-title">👤 BESTE MITARBEITER</div>
-        <div class="employee-list">
-          <div class="employee-row" onclick="openEmployeeModal('closer','max')"><div class="employee-avatar-small">👨</div><div class="employee-info-small"><div class="employee-name-small">Max Müller</div><div class="employee-role-small">Senior Abschließer</div></div><div><div class="employee-goal">128%</div><div class="employee-goal-label">Ziel</div></div><div class="employee-trend-small positive">↑ 23%</div><div class="employee-rank-small">#1</div></div>
-          <div class="employee-row" onclick="openEmployeeModal('opener','anna')"><div class="employee-avatar-small">👩</div><div class="employee-info-small"><div class="employee-name-small">Anna Koch</div><div class="employee-role-small">Senior Akquisiteur</div></div><div><div class="employee-goal">134%</div><div class="employee-goal-label">Ziel</div></div><div class="employee-trend-small positive">↑ 15%</div><div class="employee-rank-small">#2</div></div>
-          <div class="employee-row" onclick="openEmployeeModal('setter','tom')"><div class="employee-avatar-small">👨</div><div class="employee-info-small"><div class="employee-name-small">Tom Weber</div><div class="employee-role-small">Senior Terminierer</div></div><div><div class="employee-goal">125%</div><div class="employee-goal-label">Ziel</div></div><div class="employee-trend-small positive">↑ 11%</div><div class="employee-rank-small">#3</div></div>
+        <div class="employee-list" id="best-employees-list">
+          <div class="empty-state" style="padding:20px;text-align:center;color:var(--text-dim);">
+            Mitarbeiter werden geladen...
+          </div>
         </div>
       </div>
       <div id="vertrieb-opener-team" class="sub-content">
@@ -2700,100 +2700,238 @@ var formulaTemplates = [
 
 var allKennzahlen = ['Ausgehende Anrufe', 'Gesendete E-Mails', 'Gestartete Gespräche', 'Erreichbarkeitsquote', 'Übergaben an Terminierung', 'Gebuchte Termine', 'Erscheinungsquote', 'Qualifizierungsquote', 'Anrufe pro Buchung', 'Eingenommener Umsatz', 'Abschlussquote', 'Durchschn. Auftragswert', 'Abschlüsse gesamt', 'Vertriebspipeline', 'Anrufe gesamt', 'Offene Angebote', 'Aktive Kunden', 'Kündigungen', 'Zusatzumsatz', 'Portfolio-Wert', 'Werbeausgaben gesamt', 'Klicks', 'Einblendungen', 'Kontakte', 'Abschlüsse', 'Abonnenten gesamt', 'Neue Abonnenten', 'Nachrichten gesendet'];
 
-var employees = {
-  opener: [
-    { id: 'anna', name: 'Anna Koch', role: 'Senior Akquisiteur', team: 'Vertriebsteam Mehrrendite', rank: 1, goal: 134, trend: 15, 
-      stats: { anrufe: 412, erreicht: 107, uebergaben: 58, gespraechszeit: '4:12', noShowRate: '18%' }, 
-      skills: { erreichbarkeit: 26, qualifizierung: 54, uebergabeQuote: 79, noShowRate: 18, gespraechszeit: 252, crmWert: 92 },
-      skillLabels: { erreichbarkeit: 'Erreichbarkeitsquote', qualifizierung: 'Qualifizierungsrate', uebergabeQuote: 'Übergabe-Verbindlichkeit', noShowRate: 'Nichterscheinungsquote (niedrig=gut)', gespraechszeit: 'Ø Gesprächszeit (Sek)', crmWert: 'CRM-Dokumentation' },
-      strengths: ['Höchste Erreichbarkeitsquote im Team', 'Niedrigste Nichterscheinungsquote', 'Beste CRM-Dokumentation'], 
-      improvements: ['Gesprächszeit optimieren (aktuell 4:12, Ziel: 3:30)'], 
-      recommendations: ['Gesprächsleitfaden kürzen', 'Schneller zur Qualifizierung'] },
-    { id: 'jan', name: 'Jan Becker', role: 'Akquisition', team: 'Vertriebsteam Mehrrendite', rank: 2, goal: 121, trend: 9, 
-      stats: { anrufe: 378, erreicht: 91, uebergaben: 48, gespraechszeit: '3:45', noShowRate: '22%' }, 
-      skills: { erreichbarkeit: 24, qualifizierung: 52, uebergabeQuote: 75, noShowRate: 22, gespraechszeit: 225, crmWert: 85 },
-      skillLabels: { erreichbarkeit: 'Erreichbarkeitsquote', qualifizierung: 'Qualifizierungsrate', uebergabeQuote: 'Übergabe-Verbindlichkeit', noShowRate: 'Nichterscheinungsquote (niedrig=gut)', gespraechszeit: 'Ø Gesprächszeit (Sek)', crmWert: 'CRM-Dokumentation' },
-      strengths: ['Gute Gesprächszeit', 'Konstante Performance'], 
-      improvements: ['Nichterscheinungsquote zu hoch (22%, Ziel: <20%)', 'Erreichbarkeit steigern'], 
-      recommendations: ['Verbindlichkeits-Verbindlichkeit am Ende einbauen', 'Anrufzeiten optimieren'] },
-    { id: 'sarah', name: 'Sarah Klein', role: 'Akquisition', team: 'Vertriebsteam Beta', rank: 3, goal: 108, trend: 4, 
-      stats: { anrufe: 345, erreicht: 82, uebergaben: 41, gespraechszeit: '3:28', noShowRate: '26%' }, 
-      skills: { erreichbarkeit: 24, qualifizierung: 50, uebergabeQuote: 70, noShowRate: 26, gespraechszeit: 208, crmWert: 88 },
-      skillLabels: { erreichbarkeit: 'Erreichbarkeitsquote', qualifizierung: 'Qualifizierungsrate', uebergabeQuote: 'Übergabe-Verbindlichkeit', noShowRate: 'Nichterscheinungsquote (niedrig=gut)', gespraechszeit: 'Ø Gesprächszeit (Sek)', crmWert: 'CRM-Dokumentation' },
-      strengths: ['Effiziente Gespräche'], 
-      improvements: ['Nichterscheinungsquote kritisch (26%)', 'Mehr Anrufe pro Tag nötig'], 
-      recommendations: ['Nichterscheinung Prevention Training', 'Verbindlichkeits-Skript einführen'] }
-  ],
-  setter: [
-    { id: 'tom', name: 'Tom Weber', role: 'Senior Terminierer', team: 'Vertriebsteam Mehrrendite', rank: 1, goal: 125, trend: 11, 
-      stats: { termine: 48, erscheinung: '82%', qualifiziert: '81%', zeit: '2.1 Tage', settingShowUp: '82%', closingNoShow: '12%' }, 
-      skills: { settingShowUp: 82, qualifizierung: 81, zeitBuchung: 2.1, closingNoShow: 12, umbuchung: 8, crmWert: 88 },
-      skillLabels: { settingShowUp: 'Qualifizierungs-Erscheinungsquote', qualifizierung: 'Qualifizierungsquote', zeitBuchung: 'Zeit bis Buchung (Tage)', closingNoShow: 'Abschluss-Nichterscheinung (niedrig=gut)', umbuchung: 'Umbuchungsrate (niedrig=gut)', crmWert: 'CRM-Dokumentation' },
-      strengths: ['Beste Qualifizierungs-Erscheinungsquote', 'Niedrigste Abschluss-Nichterscheinung', 'Schnellste Terminbuchung'], 
-      improvements: ['Umbuchungsrate reduzieren (8%, Ziel: 5%)'], 
-      recommendations: ['Bewährte Methoden dokumentieren und teilen'] },
-    { id: 'nina', name: 'Nina Braun', role: 'Terminierung', team: 'Vertriebsteam Mehrrendite', rank: 2, goal: 118, trend: 7, 
-      stats: { termine: 42, erscheinung: '79%', qualifiziert: '78%', zeit: '2.4 Tage', settingShowUp: '79%', closingNoShow: '16%' }, 
-      skills: { settingShowUp: 79, qualifizierung: 78, zeitBuchung: 2.4, closingNoShow: 16, umbuchung: 10, crmWert: 90 },
-      skillLabels: { settingShowUp: 'Qualifizierungs-Erscheinungsquote', qualifizierung: 'Qualifizierungsquote', zeitBuchung: 'Zeit bis Buchung (Tage)', closingNoShow: 'Abschluss-Nichterscheinung (niedrig=gut)', umbuchung: 'Umbuchungsrate (niedrig=gut)', crmWert: 'CRM-Dokumentation' },
-      strengths: ['Beste CRM-Dokumentation', 'Freundlich & empathisch (lt. Feedback)'], 
-      improvements: ['Abschluss-Nichterscheinungsquote senken (16%, Ziel: <12%)', 'Qualifizierung Erscheinung verbessern'], 
-      recommendations: ['Reminder-Sequenz optimieren', 'Abschluss-Wichtigkeit betonen'] },
-    { id: 'felix', name: 'Felix Wagner', role: 'Terminierung', team: 'Vertriebsteam Beta', rank: 3, goal: 105, trend: 3, 
-      stats: { termine: 35, erscheinung: '76%', qualifiziert: '75%', zeit: '2.8 Tage', settingShowUp: '76%', closingNoShow: '21%' }, 
-      skills: { settingShowUp: 76, qualifizierung: 75, zeitBuchung: 2.8, closingNoShow: 21, umbuchung: 12, crmWert: 82 },
-      skillLabels: { settingShowUp: 'Qualifizierungs-Erscheinungsquote', qualifizierung: 'Qualifizierungsquote', zeitBuchung: 'Zeit bis Buchung (Tage)', closingNoShow: 'Abschluss-Nichterscheinung (niedrig=gut)', umbuchung: 'Umbuchungsrate (niedrig=gut)', crmWert: 'CRM-Dokumentation' },
-      strengths: ['Solide Grundleistung'], 
-      improvements: ['Abschluss-Nichterscheinung kritisch (21%)', 'Zeit bis Buchung zu lang', 'Alle Metriken unter Durchschnitt'], 
-      recommendations: ['1:1 Coaching mit Tom Weber', 'Qualifizierungs-Kriterien verschärfen'] }
-  ],
-  closer: [
-    { id: 'max', name: 'Max Müller', role: 'Senior Abschließer', team: 'Vertriebsteam Mehrrendite', rank: 1, goal: 128, trend: 23, 
-      stats: { umsatz: '€127.450', abschluss: '38%', auftrag: '€8.496', premium: '45%', closingShowUp: '88%', amNoShow: '8%' }, 
-      skills: { abschlussQuote: 38, avgTransaktionSize: 8496, premiumQuote: 45, closingShowUp: 88, amNoShow: 8, sofortAbschluss: 62 },
-      skillLabels: { abschlussQuote: 'Abschlussquote', avgTransaktionSize: 'Ø Auftragswert (€)', premiumQuote: 'Premiumquote', closingShowUp: 'Abschluss-Erscheinungsquote', amNoShow: 'Betreuungs-Nichterscheinung (niedrig=gut)', sofortAbschluss: 'Sofort-Abschluss Quote' },
-      strengths: ['Höchste Abschlussquote (38%)', 'Beste Premiumquote (45%)', 'Niedrigste Betreuungs-Nichterscheinung (8%)'], 
-      improvements: ['CRM-Dokumentation verbessern', 'Mehr Follow-up Abschlüsse (aktuell 38% Sofort)'], 
-      recommendations: ['Follow-up Sequenz einführen', 'Übergabe-Prozess an AM dokumentieren'] },
-    { id: 'lisa', name: 'Lisa Schmidt', role: 'Abschluss', team: 'Vertriebsteam Mehrrendite', rank: 2, goal: 115, trend: 15, 
-      stats: { umsatz: '€98.200', abschluss: '35%', auftrag: '€7.850', premium: '40%', closingShowUp: '85%', amNoShow: '12%' }, 
-      skills: { abschlussQuote: 35, avgTransaktionSize: 7850, premiumQuote: 40, closingShowUp: 85, amNoShow: 12, sofortAbschluss: 55 },
-      skillLabels: { abschlussQuote: 'Abschlussquote', avgTransaktionSize: 'Ø Auftragswert (€)', premiumQuote: 'Premiumquote', closingShowUp: 'Abschluss-Erscheinungsquote', amNoShow: 'Betreuungs-Nichterscheinung (niedrig=gut)', sofortAbschluss: 'Sofort-Abschluss Quote' },
-      strengths: ['Beste CRM-Dokumentation', 'Hohe Sofort-Abschlussrate', 'Strukturierte Arbeitsweise'], 
-      improvements: ['Betreuungs-Nichterscheinungsquote verbessern (12%, Ziel: <10%)', 'Premiumquote steigern'], 
-      recommendations: ['Höherverkaufs-Training', 'Premium-Pitch optimieren'] },
-    { id: 'paul', name: 'Paul Hoffmann', role: 'Abschluss', team: 'Vertriebsteam Beta', rank: 3, goal: 102, trend: 2, 
-      stats: { umsatz: '€76.300', abschluss: '31%', auftrag: '€6.940', premium: '35%', closingShowUp: '82%', amNoShow: '18%' }, 
-      skills: { abschlussQuote: 31, avgTransaktionSize: 6940, premiumQuote: 35, closingShowUp: 82, amNoShow: 18, sofortAbschluss: 48 },
-      skillLabels: { abschlussQuote: 'Abschlussquote', avgTransaktionSize: 'Ø Auftragswert (€)', premiumQuote: 'Premiumquote', closingShowUp: 'Abschluss-Erscheinungsquote', amNoShow: 'Betreuungs-Nichterscheinung (niedrig=gut)', sofortAbschluss: 'Sofort-Abschluss Quote' },
-      strengths: ['Zuverlässig', 'Gute Grundlagen'], 
-      improvements: ['Betreuungs-Nichterscheinung kritisch (18%)', 'Alle Metriken unter Team-Durchschnitt', 'Sofort-Abschlussrate niedrig'], 
-      recommendations: ['Intensiv-Coaching mit Max Müller', 'Einwandbehandlung üben', 'Kundenerwartungen im Abschluss klarer setzen'] }
-  ],
-  kunden: [
-    { id: 'maria', name: 'Maria Weber', role: 'Senior Kundenbetreuer', team: 'Kundenerfolg', rank: 1, goal: 132, trend: 18, 
-      stats: { nrr: '118%', zusatz: '€18.500', kuendigung: '1.8%', nps: 78, portfolio: 52, healthWert: 84 }, 
-      skills: { nrr: 118, expansionRate: 32, KündigungRate: 1.8, nps: 78, responseTime: 1.8, healthWert: 84 },
-      skillLabels: { nrr: 'Netto-Umsatzbindung', expansionRate: 'Erweiterungsquote (%)', KündigungRate: 'Kündigungsrate (niedrig=gut)', nps: 'NPS-Wert', responseTime: 'Ø Antwortzeit (h)', healthWert: 'Ø Gesundheitswert' },
-      strengths: ['Höchste NRR im Team (118%)', 'Beste Erweiterungsquote (32%)', 'Höchster NPS (78)'], 
-      improvements: ['Portfolio evtl. zu groß (52 Kunden)'], 
-      recommendations: ['Bewährte Methoden dokumentieren', 'Junior-Betreuer coachen'] },
-    { id: 'stefan', name: 'Stefan Neumann', role: 'Kundenbetreuer', team: 'Kundenerfolg', rank: 2, goal: 121, trend: 11, 
-      stats: { nrr: '114%', zusatz: '€14.200', kuendigung: '2.4%', nps: 74, portfolio: 44, healthWert: 79 }, 
-      skills: { nrr: 114, expansionRate: 26, KündigungRate: 2.4, nps: 74, responseTime: 2.2, healthWert: 79 },
-      skillLabels: { nrr: 'Netto-Umsatzbindung', expansionRate: 'Erweiterungsquote (%)', KündigungRate: 'Kündigungsrate (niedrig=gut)', nps: 'NPS-Wert', responseTime: 'Ø Antwortzeit (h)', healthWert: 'Ø Gesundheitswert' },
-      strengths: ['Schnelle Reaktionszeit', 'Gute Problemlösung', 'Optimale Portfolio-Größe'], 
-      improvements: ['NPS unter Team-Durchschnitt', 'Kündigungsrate reduzieren (2.4%, Ziel: <2%)'], 
-      recommendations: ['Proaktive Check-ins erhöhen', 'Kundenfeedback-Training'] },
-    { id: 'julia', name: 'Julia Krause', role: 'Kundenbetreuer', team: 'Kundenerfolg', rank: 3, goal: 114, trend: 6, 
-      stats: { nrr: '108%', zusatz: '€12.500', kuendigung: '3.2%', nps: 68, portfolio: 38, healthWert: 72 }, 
-      skills: { nrr: 108, expansionRate: 18, KündigungRate: 3.2, nps: 68, responseTime: 3.1, healthWert: 72 },
-      skillLabels: { nrr: 'Netto-Umsatzbindung', expansionRate: 'Erweiterungsquote (%)', KündigungRate: 'Kündigungsrate (niedrig=gut)', nps: 'NPS-Wert', responseTime: 'Ø Antwortzeit (h)', healthWert: 'Ø Gesundheitswert' },
-      strengths: ['Gute Dokumentation'], 
-      improvements: ['Kündigungsrate kritisch (3.2%)', 'Antwortzeit zu lang (3.1h)', 'Gesundheitswert unter Vergleichswert', 'NPS niedrigster im Team'], 
-      recommendations: ['Kündigung-Prevention Training', 'Proaktive Outreach-Strategie', 'Gefährdet Kunden priorisieren'] }
-  ]
-};
+// DYNAMISCHE MITARBEITER-DATEN AUS CLOSE CRM
+// Wird automatisch aus closeTeamMembers + Rollenzuweisungen generiert
+var employees = { opener: [], setter: [], closer: [], kunden: [] };
+var employeeActivityData = {}; // Cache für Activity-Daten pro User
+
+// Generiere employees aus Close Team Members + deren Rollenzuweisungen
+function generateEmployeesFromClose() {
+  var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  employees = { opener: [], setter: [], closer: [], kunden: [] };
+  
+  closeTeamMembers.forEach(function(member) {
+    var memberId = member.id || member.email;
+    var memberRoles = savedRoles[memberId];
+    if (typeof memberRoles === 'string') memberRoles = memberRoles ? [memberRoles] : [];
+    if (!Array.isArray(memberRoles)) memberRoles = [];
+    
+    var fullName = ((member.first_name || '') + ' ' + (member.last_name || '')).trim() || member.email;
+    var activityData = employeeActivityData[memberId] || {};
+    
+    memberRoles.forEach(function(role) {
+      var empData = {
+        id: memberId,
+        name: fullName,
+        role: getRoleLabel(role),
+        team: 'Teaching Finance',
+        rank: 0, // Wird später berechnet
+        goal: 100,
+        trend: 0,
+        image: member.image,
+        stats: generateStatsForRole(role, activityData),
+        skills: generateSkillsForRole(role, activityData),
+        skillLabels: getSkillLabelsForRole(role),
+        strengths: [],
+        improvements: [],
+        recommendations: []
+      };
+      
+      if (role === 'opener' && employees.opener) employees.opener.push(empData);
+      else if (role === 'setter' && employees.setter) employees.setter.push(empData);
+      else if (role === 'closer' && employees.closer) employees.closer.push(empData);
+      else if (role === 'kunden' && employees.kunden) employees.kunden.push(empData);
+    });
+  });
+  
+  // Rankings berechnen
+  ['opener', 'setter', 'closer', 'kunden'].forEach(function(type) {
+    employees[type].sort(function(a, b) { return (b.stats.hauptmetrik || 0) - (a.stats.hauptmetrik || 0); });
+    employees[type].forEach(function(e, i) { e.rank = i + 1; });
+  });
+}
+
+function getRoleLabel(role) {
+  var labels = { opener: 'Akquisition', setter: 'Terminierung', closer: 'Abschluss', kunden: 'Kundenbetreuung' };
+  return labels[role] || role;
+}
+
+function generateStatsForRole(role, data) {
+  if (role === 'opener') {
+    return {
+      anrufe: data.calls || 0,
+      erreicht: data.callsConnected || 0,
+      uebergaben: data.openerActivities || 0,
+      gespraechszeit: formatDuration(data.avgCallDuration || 0),
+      noShowRate: (data.noShowRate || 0) + '%',
+      hauptmetrik: data.calls || 0
+    };
+  } else if (role === 'setter') {
+    return {
+      termine: data.setterActivities || 0,
+      erscheinung: (data.showUpRate || 0) + '%',
+      qualifiziert: (data.qualifyRate || 0) + '%',
+      zeit: (data.avgDaysToBooking || 0) + ' Tage',
+      settingShowUp: (data.showUpRate || 0) + '%',
+      closingNoShow: (data.closerNoShowRate || 0) + '%',
+      hauptmetrik: data.setterActivities || 0
+    };
+  } else if (role === 'closer') {
+    return {
+      umsatz: '€' + formatNumber(data.revenue || 0),
+      abschluss: (data.closeRate || 0) + '%',
+      auftrag: '€' + formatNumber(data.avgDealSize || 0),
+      premium: (data.premiumRate || 0) + '%',
+      closingShowUp: (data.closerShowUpRate || 0) + '%',
+      amNoShow: (data.amNoShowRate || 0) + '%',
+      hauptmetrik: data.revenue || 0
+    };
+  } else {
+    return {
+      nrr: (data.nrr || 100) + '%',
+      zusatz: '€' + formatNumber(data.expansionRevenue || 0),
+      kuendigung: (data.churnRate || 0) + '%',
+      nps: data.nps || 0,
+      portfolio: data.portfolioCount || 0,
+      healthWert: data.healthScore || 0,
+      hauptmetrik: data.nrr || 100
+    };
+  }
+}
+
+function generateSkillsForRole(role, data) {
+  if (role === 'opener') {
+    return { erreichbarkeit: data.reachRate || 0, qualifizierung: data.qualifyRate || 0, uebergabeQuote: data.handoffRate || 0, noShowRate: data.noShowRate || 0, gespraechszeit: data.avgCallDuration || 0, crmWert: data.crmScore || 80 };
+  } else if (role === 'setter') {
+    return { settingShowUp: data.showUpRate || 0, qualifizierung: data.qualifyRate || 0, zeitBuchung: data.avgDaysToBooking || 0, closingNoShow: data.closerNoShowRate || 0, umbuchung: data.rebookRate || 0, crmWert: data.crmScore || 80 };
+  } else if (role === 'closer') {
+    return { abschlussQuote: data.closeRate || 0, avgTransaktionSize: data.avgDealSize || 0, premiumQuote: data.premiumRate || 0, closingShowUp: data.closerShowUpRate || 0, amNoShow: data.amNoShowRate || 0, sofortAbschluss: data.instantCloseRate || 0 };
+  } else {
+    return { nrr: data.nrr || 100, expansionRate: data.expansionRate || 0, KündigungRate: data.churnRate || 0, nps: data.nps || 0, responseTime: data.avgResponseTime || 0, healthWert: data.healthScore || 0 };
+  }
+}
+
+function getSkillLabelsForRole(role) {
+  if (role === 'opener') {
+    return { erreichbarkeit: 'Erreichbarkeitsquote', qualifizierung: 'Qualifizierungsrate', uebergabeQuote: 'Übergabe-Verbindlichkeit', noShowRate: 'Nichterscheinungsquote (niedrig=gut)', gespraechszeit: 'Ø Gesprächszeit (Sek)', crmWert: 'CRM-Dokumentation' };
+  } else if (role === 'setter') {
+    return { settingShowUp: 'Qualifizierungs-Erscheinungsquote', qualifizierung: 'Qualifizierungsquote', zeitBuchung: 'Zeit bis Buchung (Tage)', closingNoShow: 'Abschluss-Nichterscheinung (niedrig=gut)', umbuchung: 'Umbuchungsrate (niedrig=gut)', crmWert: 'CRM-Dokumentation' };
+  } else if (role === 'closer') {
+    return { abschlussQuote: 'Abschlussquote', avgTransaktionSize: 'Ø Auftragswert (€)', premiumQuote: 'Premiumquote', closingShowUp: 'Abschluss-Erscheinungsquote', amNoShow: 'Betreuungs-Nichterscheinung (niedrig=gut)', sofortAbschluss: 'Sofort-Abschluss Quote' };
+  } else {
+    return { nrr: 'Netto-Umsatzbindung', expansionRate: 'Erweiterungsquote (%)', KündigungRate: 'Kündigungsrate (niedrig=gut)', nps: 'NPS-Wert', responseTime: 'Ø Antwortzeit (h)', healthWert: 'Ø Gesundheitswert' };
+  }
+}
+
+function formatDuration(seconds) {
+  var mins = Math.floor(seconds / 60);
+  var secs = Math.round(seconds % 60);
+  return mins + ':' + (secs < 10 ? '0' : '') + secs;
+}
+
+function formatNumber(num) {
+  return num.toLocaleString('de-DE');
+}
+
+// Lade Activity-Daten für alle Team-Mitglieder aus Close
+async function loadEmployeeActivityData() {
+  if (!closeApiKey || closeTeamMembers.length === 0) return;
+  
+  console.log('📊 Lade Activity-Daten für', closeTeamMembers.length, 'Mitarbeiter...');
+  
+  for (var i = 0; i < closeTeamMembers.length; i++) {
+    var member = closeTeamMembers[i];
+    var memberId = member.id || member.email;
+    
+    try {
+      // Anrufe laden
+      var callsResponse = await fetch('/api/close-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          endpoint: 'activity/call/?user_id=' + memberId + '&_limit=100', 
+          apiKey: closeApiKey 
+        })
+      });
+      var callsData = await callsResponse.json();
+      var calls = callsData.data || [];
+      
+      // Custom Activities laden (Opener, Setter, Closer Protokolle)
+      var activitiesResponse = await fetch('/api/close-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          endpoint: 'activity/custom_activity/?user_id=' + memberId + '&_limit=200', 
+          apiKey: closeApiKey 
+        })
+      });
+      var activitiesData = await activitiesResponse.json();
+      var activities = activitiesData.data || [];
+      
+      // Opportunities laden für Closer
+      var oppsResponse = await fetch('/api/close-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          endpoint: 'opportunity/?user_id=' + memberId + '&_limit=100', 
+          apiKey: closeApiKey 
+        })
+      });
+      var oppsData = await oppsResponse.json();
+      var opps = oppsData.data || [];
+      
+      // Zähle Activities nach Typ
+      var openerCount = 0, setterCount = 0, closerCount = 0, kundenCount = 0;
+      activities.forEach(function(a) {
+        var typeName = (a.custom_activity_type_name || '').toLowerCase();
+        if (typeName.includes('opener') || typeName.includes('1 ')) openerCount++;
+        else if (typeName.includes('setter') || typeName.includes('2 ')) setterCount++;
+        else if (typeName.includes('closer') || typeName.includes('3 ')) closerCount++;
+        else if (typeName.includes('bestand') || typeName.includes('4 ')) kundenCount++;
+      });
+      
+      // Berechne Metriken
+      var totalCalls = calls.length;
+      var connectedCalls = calls.filter(function(c) { return c.duration && c.duration > 0; }).length;
+      var totalDuration = calls.reduce(function(sum, c) { return sum + (c.duration || 0); }, 0);
+      var avgDuration = connectedCalls > 0 ? totalDuration / connectedCalls : 0;
+      
+      var wonOpps = opps.filter(function(o) { return o.status_type === 'won'; });
+      var totalRevenue = wonOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
+      var avgDealSize = wonOpps.length > 0 ? totalRevenue / wonOpps.length : 0;
+      var closeRate = opps.length > 0 ? Math.round((wonOpps.length / opps.length) * 100) : 0;
+      
+      employeeActivityData[memberId] = {
+        calls: totalCalls,
+        callsConnected: connectedCalls,
+        avgCallDuration: avgDuration,
+        reachRate: totalCalls > 0 ? Math.round((connectedCalls / totalCalls) * 100) : 0,
+        openerActivities: openerCount,
+        setterActivities: setterCount,
+        closerActivities: closerCount,
+        kundenActivities: kundenCount,
+        revenue: totalRevenue / 100, // Close speichert in Cents
+        avgDealSize: avgDealSize / 100,
+        closeRate: closeRate,
+        opportunities: opps.length,
+        wonOpportunities: wonOpps.length
+      };
+      
+      console.log('  ✓', member.first_name, member.last_name, '- Calls:', totalCalls, 'Activities:', activities.length, 'Opps:', opps.length);
+      
+      // Rate limiting
+      await new Promise(function(resolve) { setTimeout(resolve, 200); });
+      
+    } catch (error) {
+      console.error('Fehler beim Laden von Activity-Daten für', memberId, error);
+    }
+  }
+  
+  console.log('✓ Activity-Daten vollständig geladen');
+  generateEmployeesFromClose();
+  renderEmployeeGrids();
+}
+
 
 // ONBOARDING
 function selectBranche(b,el){ state.branche=b; document.querySelectorAll('.branche-option').forEach(function(o){o.classList.remove('selected')}); el.classList.add('selected'); document.getElementById('step1Next').disabled=false; }
@@ -2829,180 +2967,15 @@ function showKundenSubTab(tab, btn) { document.querySelectorAll('#kunden .sub-na
 function showEnterpriseSubTab(tab, btn) { document.querySelectorAll('#enterprise .sub-nav-btn').forEach(function(b){b.classList.remove('active')}); btn.classList.add('active'); document.querySelectorAll('.enterprise-sub-content').forEach(function(s){s.classList.remove('active')}); document.getElementById('enterprise-'+tab).classList.add('active'); }
 function showIndustryKPIs(industry, btn) { document.querySelectorAll('#enterprise-industry .chip').forEach(function(c){c.classList.remove('selected')}); btn.classList.add('selected'); document.querySelectorAll('.industry-content').forEach(function(s){s.classList.remove('active')}); document.getElementById('industry-'+industry).classList.add('active'); }
 
-function renderEmployeeGrids() {
-  ['opener','setter','closer','kunden'].forEach(function(type) {
-    var grid = document.getElementById(type === 'kunden' ? 'kunden-employee-grid' : type + '-employee-grid');
-    if (!grid) return;
-    var h = '';
-    employees[type].forEach(function(e) {
-      var stat1, stat2, stat3, label1, label2, label3, stat3Class;
-      if (type === 'opener') {
-        stat1 = e.stats.anrufe; label1 = 'Anrufe';
-        stat2 = e.stats.uebergaben; label2 = 'Übergaben';
-        stat3 = e.stats.noShowRate; label3 = 'Nichterscheinung';
-        stat3Class = parseInt(e.stats.noShowRate) < 20 ? 'success' : 'warning';
-      } else if (type === 'setter') {
-        stat1 = e.stats.termine; label1 = 'Termine';
-        stat2 = e.stats.settingShowUp; label2 = 'Erscheinung';
-        stat3 = e.stats.closingNoShow; label3 = 'Closer-Nichterscheinung';
-        stat3Class = parseInt(e.stats.closingNoShow) < 15 ? 'success' : 'warning';
-      } else if (type === 'closer') {
-        stat1 = e.stats.umsatz; label1 = 'Umsatz';
-        stat2 = e.stats.closingShowUp; label2 = 'Erscheinung';
-        stat3 = e.stats.amNoShow; label3 = 'Betreuungs-Nichterscheinung';
-        stat3Class = parseInt(e.stats.amNoShow) < 12 ? 'success' : 'warning';
-      } else {
-        stat1 = e.stats.nrr; label1 = 'NRR';
-        stat2 = e.stats.zusatz; label2 = 'Zusatzumsatz';
-        stat3 = e.stats.kuendigung; label3 = 'Kündigung';
-        stat3Class = parseFloat(e.stats.kuendigung) < 3 ? 'success' : 'warning';
-      }
-      var avatar = e.name.includes('Anna') || e.name.includes('Lisa') || e.name.includes('Nina') || e.name.includes('Sarah') || e.name.includes('Maria') || e.name.includes('Julia') ? '👩' : '👨';
-      h += '<div class="employee-card" onclick="openEmployeeModal(\''+type+'\',\''+e.id+'\')"><div class="employee-card-header"><div class="employee-avatar">'+avatar+'</div><div class="employee-card-info"><div class="employee-card-name">'+e.name+'</div><div class="employee-card-role">'+e.role+'</div></div><div class="employee-card-rank">#'+e.rank+'</div></div><div class="employee-card-stats"><div class="employee-card-stat"><div class="employee-card-stat-label">'+label1+'</div><div class="employee-card-stat-value">'+stat1+'</div></div><div class="employee-card-stat"><div class="employee-card-stat-label">'+label2+'</div><div class="employee-card-stat-value success">'+stat2+'</div></div><div class="employee-card-stat"><div class="employee-card-stat-label">'+label3+'</div><div class="employee-card-stat-value '+stat3Class+'">'+stat3+'</div></div></div><div class="employee-card-progress"><div class="employee-card-progress-fill" style="width:'+(e.goal>100?100:e.goal)+'%;background:var(--success)"></div></div><div class="employee-card-footer"><div class="employee-card-trend positive">↑ '+e.trend+'% ggü. Vormonat</div><div class="employee-card-link">Details →</div></div></div>';
-    });
-    grid.innerHTML = h;
-  });
-  var gesamtGrid = document.getElementById('gesamt-employee-grid');
-  if (gesamtGrid) {
-    var all = employees.opener.concat(employees.setter).concat(employees.closer);
-    all.sort(function(a,b) { return b.goal - a.goal; });
-    var h = '';
-    all.forEach(function(e, i) {
-      var type = employees.opener.indexOf(e) > -1 ? 'opener' : (employees.setter.indexOf(e) > -1 ? 'setter' : 'closer');
-      var stat1 = e.stats.anrufe || e.stats.termine || e.stats.umsatz;
-      var label1 = e.stats.anrufe ? 'Anrufe' : (e.stats.termine ? 'Termine' : 'Umsatz');
-      var avatar = e.name.includes('Anna') || e.name.includes('Lisa') || e.name.includes('Nina') || e.name.includes('Sarah') ? '👩' : '👨';
-      h += '<div class="employee-card" onclick="openEmployeeModal(\''+type+'\',\''+e.id+'\')"><div class="employee-card-header"><div class="employee-avatar">'+avatar+'</div><div class="employee-card-info"><div class="employee-card-name">'+e.name+'</div><div class="employee-card-role">'+e.role+'</div></div><div class="employee-card-rank">#'+(i+1)+'</div></div><div class="employee-card-stats"><div class="employee-card-stat"><div class="employee-card-stat-label">'+label1+'</div><div class="employee-card-stat-value">'+stat1+'</div></div><div class="employee-card-stat"><div class="employee-card-stat-label">Ziel</div><div class="employee-card-stat-value success">'+e.goal+'%</div></div><div class="employee-card-stat"><div class="employee-card-stat-label">Trend</div><div class="employee-card-stat-value positive">↑'+e.trend+'%</div></div></div><div class="employee-card-progress"><div class="employee-card-progress-fill" style="width:'+(e.goal>100?100:e.goal)+'%;background:var(--success)"></div></div><div class="employee-card-footer"><div class="employee-card-trend positive">↑ '+e.trend+'% ggü. Vormonat</div><div class="employee-card-link">Details →</div></div></div>';
-    });
-    gesamtGrid.innerHTML = h;
+// Legacy wrapper - redirects to new dynamic modal
+function openEmployeeModal(type, empId) {
+  // Versuche Member aus employees zu finden
+  var emp = employees[type]?.find(function(e) { return e.id === empId; });
+  if (emp) {
+    openEmployeeModalDynamic(emp.id);
   }
 }
 
-function openEmployeeModal(type, empId) {
-  var emp = null;
-  for (var i = 0; i < employees[type].length; i++) {
-    if (employees[type][i].id === empId) { emp = employees[type][i]; break; }
-  }
-  if (!emp) return;
-  
-  var avatar = emp.name.includes('Anna') || emp.name.includes('Lisa') || emp.name.includes('Nina') || emp.name.includes('Sarah') || emp.name.includes('Maria') || emp.name.includes('Julia') ? '👩' : '👨';
-  document.getElementById('modal-emp-name-title').textContent = emp.name;
-  document.getElementById('modal-avatar').textContent = avatar;
-  document.getElementById('modal-name').textContent = emp.name;
-  document.getElementById('modal-role').textContent = emp.role;
-  document.getElementById('modal-team').textContent = 'Team: ' + emp.team;
-  document.getElementById('modal-rank').textContent = '#' + emp.rank;
-  document.getElementById('modal-goal').textContent = emp.goal + '%';
-  document.getElementById('modal-trend').textContent = '↑ ' + emp.trend + '%';
-  
-  // Stats Grid based on type
-  var statsHtml = '';
-  if (type === 'opener') {
-    statsHtml = '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📞</div><div class="emp-modal-stat-value">'+emp.stats.anrufe+'</div><div class="emp-modal-stat-label">Anrufe</div><div class="emp-modal-stat-change positive">▲ '+Math.round(emp.trend*0.8)+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">✅</div><div class="emp-modal-stat-value">'+emp.stats.uebergaben+'</div><div class="emp-modal-stat-label">Übergaben</div><div class="emp-modal-stat-change positive">▲ '+Math.round(emp.trend*0.9)+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">⏱️</div><div class="emp-modal-stat-value">'+emp.stats.gespraechszeit+'</div><div class="emp-modal-stat-label">Ø Gesprächszeit</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card" style="border-color:'+(parseInt(emp.stats.noShowRate)<20?'var(--success)':'var(--warning)')+';"><div class="emp-modal-stat-icon">❌</div><div class="emp-modal-stat-value">'+emp.stats.noShowRate+'</div><div class="emp-modal-stat-label">Nichterscheinung → Terminierer</div><div class="emp-modal-stat-change '+(parseInt(emp.stats.noShowRate)<20?'positive':'negative')+'">'+(parseInt(emp.stats.noShowRate)<20?'✓ gut':'↑ zu hoch')+'</div></div>';
-  } else if (type === 'setter') {
-    statsHtml = '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📅</div><div class="emp-modal-stat-value">'+emp.stats.termine+'</div><div class="emp-modal-stat-label">Termine</div><div class="emp-modal-stat-change positive">▲ '+Math.round(emp.trend*0.7)+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card" style="border-color:var(--success);"><div class="emp-modal-stat-icon">✅</div><div class="emp-modal-stat-value">'+emp.stats.settingShowUp+'</div><div class="emp-modal-stat-label">Qualifizierung Erscheinung</div><div class="emp-modal-stat-change positive">▲ '+Math.round(emp.trend*0.5)+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">🎯</div><div class="emp-modal-stat-value">'+emp.stats.qualifiziert+'</div><div class="emp-modal-stat-label">Qualifiziert</div><div class="emp-modal-stat-change positive">▲ '+Math.round(emp.trend*0.8)+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card" style="border-color:'+(parseInt(emp.stats.closingNoShow)<15?'var(--success)':'var(--warning)')+';"><div class="emp-modal-stat-icon">❌</div><div class="emp-modal-stat-value">'+emp.stats.closingNoShow+'</div><div class="emp-modal-stat-label">Nichterscheinung → Abschließer</div><div class="emp-modal-stat-change '+(parseInt(emp.stats.closingNoShow)<15?'positive':'negative')+'">'+(parseInt(emp.stats.closingNoShow)<15?'✓ gut':'↑ zu hoch')+'</div></div>';
-  } else if (type === 'closer') {
-    statsHtml = '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">💰</div><div class="emp-modal-stat-value">'+emp.stats.umsatz+'</div><div class="emp-modal-stat-label">Umsatz</div><div class="emp-modal-stat-change positive">▲ '+emp.trend+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card" style="border-color:var(--success);"><div class="emp-modal-stat-icon">✅</div><div class="emp-modal-stat-value">'+emp.stats.closingShowUp+'</div><div class="emp-modal-stat-label">Abschluss Erscheinung</div><div class="emp-modal-stat-change positive">▲ '+Math.round(emp.trend*0.3)+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📊</div><div class="emp-modal-stat-value">'+emp.stats.abschluss+'</div><div class="emp-modal-stat-label">Abschlussquote</div><div class="emp-modal-stat-change positive">▲ '+Math.round(emp.trend*0.4)+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card" style="border-color:'+(parseInt(emp.stats.amNoShow)<12?'var(--success)':'var(--warning)')+';"><div class="emp-modal-stat-icon">❌</div><div class="emp-modal-stat-value">'+emp.stats.amNoShow+'</div><div class="emp-modal-stat-label">Nichterscheinung → Betreuung</div><div class="emp-modal-stat-change '+(parseInt(emp.stats.amNoShow)<12?'positive':'negative')+'">'+(parseInt(emp.stats.amNoShow)<12?'✓ gut':'↑ zu hoch')+'</div></div>';
-  } else if (type === 'kunden') {
-    statsHtml = '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📈</div><div class="emp-modal-stat-value">'+emp.stats.nrr+'</div><div class="emp-modal-stat-label">Umsatzbindung</div><div class="emp-modal-stat-change positive">▲ '+Math.round(emp.trend*0.7)+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">💰</div><div class="emp-modal-stat-value">'+emp.stats.zusatz+'</div><div class="emp-modal-stat-label">Zusatzumsatz</div><div class="emp-modal-stat-change positive">▲ '+emp.trend+'%</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📉</div><div class="emp-modal-stat-value">'+emp.stats.kuendigung+'</div><div class="emp-modal-stat-label">Kündigungsrate</div><div class="emp-modal-stat-change positive">▼ gut</div></div>';
-    statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">⭐</div><div class="emp-modal-stat-value">'+emp.stats.nps+'</div><div class="emp-modal-stat-label">NPS-Wert</div><div class="emp-modal-stat-change positive">▲ '+Math.round(emp.trend*0.3)+'</div></div>';
-  }
-  document.getElementById('modal-stats-grid').innerHTML = statsHtml;
-  
-  // Goal section
-  var goalHtml = '<div class="emp-modal-goal-header"><span>Monatsziel: '+emp.goal+'%</span><span style="color:var(--success)">'+emp.goal+'%</span></div>';
-  goalHtml += '<div class="emp-modal-goal-progress"><div class="emp-modal-goal-fill" style="width:'+(emp.goal>100?100:emp.goal)+'%"></div></div>';
-  goalHtml += '<div class="emp-modal-goal-footer"><span>Erreicht: '+emp.goal+'%</span><span>'+(emp.goal>100?(emp.goal-100)+'% über Ziel!':'Noch '+(100-emp.goal)+'% zum Ziel')+'</span></div>';
-  document.getElementById('modal-goal-section').innerHTML = goalHtml;
-  
-  // Comparison - ROLE-SPECIFIC TEAM COMPARISONS
-  var compHtml = '';
-  if (type === 'opener') {
-    compHtml = '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Erreichbarkeit ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+Math.min((emp.skills.erreichbarkeit/24)*100, 120)+'%"></div><div class="emp-modal-comparison-avg" style="left:100%;"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 24%</span></div>';
-    compHtml += '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Nichterscheinungsquote ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+(100-(emp.skills.noShowRate/22)*100)+'%;background:'+(emp.skills.noShowRate<=20?'var(--success)':'var(--warning)')+'"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 22%</span></div>';
-    compHtml += '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Übergaben ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+Math.min((emp.stats.uebergaben/49)*100, 120)+'%"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 49</span></div>';
-  } else if (type === 'setter') {
-    compHtml = '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Erscheinungsquote ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+Math.min((emp.skills.settingShowUp/79)*100, 120)+'%"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 79%</span></div>';
-    compHtml += '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Abschluss-Nichterscheinung ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+(100-(emp.skills.closingNoShow/16)*100)+'%;background:'+(emp.skills.closingNoShow<=15?'var(--success)':'var(--warning)')+'"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 16%</span></div>';
-    compHtml += '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Zeit bis Buchung ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+(100-(emp.skills.zeitBuchung/2.4)*100+100)+'%;background:'+(emp.skills.zeitBuchung<=2.2?'var(--success)':'var(--warning)')+'"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 2.4 Tage</span></div>';
-  } else if (type === 'closer') {
-    compHtml = '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Abschlussquote ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+Math.min((emp.skills.abschlussQuote/35)*100, 120)+'%"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 35%</span></div>';
-    compHtml += '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Ø Auftragswert ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+Math.min((emp.skills.avgTransaktionSize/7760)*100, 120)+'%"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø €7.760</span></div>';
-    compHtml += '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Premiumquote ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+Math.min((emp.skills.premiumQuote/40)*100, 120)+'%"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 40%</span></div>';
-  } else if (type === 'kunden') {
-    compHtml = '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">NRR ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+Math.min((emp.skills.nrr/113)*100, 120)+'%"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 113%</span></div>';
-    compHtml += '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">Kündigungsrate ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+(100-(emp.skills.KündigungRate/2.5)*100+50)+'%;background:'+(emp.skills.KündigungRate<=2.3?'var(--success)':'var(--warning)')+'"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 2.5%</span></div>';
-    compHtml += '<div class="emp-modal-comparison-row"><div class="emp-modal-comparison-label">NPS ggü. Team</div><div class="emp-modal-comparison-bar"><div class="emp-modal-comparison-fill" style="width:'+Math.min((emp.skills.nps/73)*100, 120)+'%"></div></div><span style="font-size:10px;color:var(--text-dim);">Ø 73</span></div>';
-  }
-  document.getElementById('modal-comparison').innerHTML = compHtml;
-  
-  // Skills (Stärken Tab) - NUR ECHTE DATEN MIT DATENQUELLEN
-  var skillsHtml = '<div class="data-source-note" style="font-size:10px;color:var(--text-dim);margin-bottom:16px;padding:8px;background:rgba(255,255,255,0.03);border-radius:4px;">📊 Alle Metriken aus Close CRM & Calendly API</div>';
-  
-  if (type === 'opener') {
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Erreichbarkeitsquote <span style="color:var(--text-dim);font-size:10px">📞 Close CRM</span></span><span class="skill-bar-value">'+emp.skills.erreichbarkeit+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.erreichbarkeit+'%;background:'+(emp.skills.erreichbarkeit>=25?'var(--success)':(emp.skills.erreichbarkeit>=20?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: 24% | Beste: 28%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Qualifizierungsrate <span style="color:var(--text-dim);font-size:10px">📊 Close CRM</span></span><span class="skill-bar-value">'+emp.skills.qualifizierung+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.qualifizierung+'%;background:'+(emp.skills.qualifizierung>=55?'var(--success)':(emp.skills.qualifizierung>=50?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: 52% | Beste: 58%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Übergabe-Verbindlichkeit <span style="color:var(--text-dim);font-size:10px">📅 Calendly</span></span><span class="skill-bar-value">'+emp.skills.uebergabeQuote+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.uebergabeQuote+'%;background:'+(emp.skills.uebergabeQuote>=80?'var(--success)':(emp.skills.uebergabeQuote>=70?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: 75% | Beste: 82%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Nichterscheinungsquote <span style="color:var(--text-dim);font-size:10px">(↓ = besser)</span></span><span class="skill-bar-value">'+emp.skills.noShowRate+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.noShowRate+'%;background:'+(emp.skills.noShowRate<=18?'var(--success)':(emp.skills.noShowRate<=22?'var(--warning)':'var(--danger)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: 22% | Bester: 18% | Ziel: <20%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Ø Gesprächszeit <span style="color:var(--text-dim);font-size:10px">📞 Close CRM</span></span><span class="skill-bar-value">'+Math.floor(emp.skills.gespraechszeit/60)+':'+(emp.skills.gespraechszeit%60<10?'0':'')+emp.skills.gespraechszeit%60+'</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+Math.min(100,emp.skills.gespraechszeit/3)+'%;background:'+(emp.skills.gespraechszeit<=210?'var(--success)':(emp.skills.gespraechszeit<=250?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Ziel: 3:30 | Team Ø: 3:48</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">CRM-Vollständigkeit <span style="color:var(--text-dim);font-size:10px">📊 Close CRM</span></span><span class="skill-bar-value">'+emp.skills.crmWert+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.crmWert+'%;background:'+(emp.skills.crmWert>=90?'var(--success)':(emp.skills.crmWert>=80?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">= Pflichtfelder ausgefüllt | Team Ø: 88%</div></div>';
-  } else if (type === 'setter') {
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Qualifizierungs-Erscheinungsquote <span style="color:var(--text-dim);font-size:10px">📅 Calendly</span></span><span class="skill-bar-value">'+emp.skills.settingShowUp+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.settingShowUp+'%;background:'+(emp.skills.settingShowUp>=80?'var(--success)':(emp.skills.settingShowUp>=75?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: 79% | Beste: 84%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Qualifizierungsquote <span style="color:var(--text-dim);font-size:10px">📊 Close CRM</span></span><span class="skill-bar-value">'+emp.skills.qualifizierung+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.qualifizierung+'%;background:'+(emp.skills.qualifizierung>=80?'var(--success)':(emp.skills.qualifizierung>=75?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: 78% | Beste: 84%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Zeit bis Buchung <span style="color:var(--text-dim);font-size:10px">(↓ = besser)</span></span><span class="skill-bar-value">'+emp.skills.zeitBuchung+' Tage</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+Math.min(100,emp.skills.zeitBuchung*30)+'%;background:'+(emp.skills.zeitBuchung<=2?'var(--success)':(emp.skills.zeitBuchung<=2.5?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Ziel: <2 Tage | Team Ø: 2.4 Tage</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Abschluss-Nichterscheinung <span style="color:var(--text-dim);font-size:10px">(↓ = besser)</span></span><span class="skill-bar-value">'+emp.skills.closingNoShow+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.closingNoShow+'%;background:'+(emp.skills.closingNoShow<=12?'var(--success)':(emp.skills.closingNoShow<=16?'var(--warning)':'var(--danger)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Ziel: <12% | Team Ø: 16%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Umbuchungsrate <span style="color:var(--text-dim);font-size:10px">(↓ = besser)</span></span><span class="skill-bar-value">'+emp.skills.umbuchung+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.umbuchung+'%;background:'+(emp.skills.umbuchung<=8?'var(--success)':(emp.skills.umbuchung<=12?'var(--warning)':'var(--danger)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Ziel: <8% | Team Ø: 10%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">CRM-Vollständigkeit <span style="color:var(--text-dim);font-size:10px">📊 Close CRM</span></span><span class="skill-bar-value">'+emp.skills.crmWert+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.crmWert+'%;background:'+(emp.skills.crmWert>=90?'var(--success)':(emp.skills.crmWert>=80?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">= Pflichtfelder ausgefüllt | Team Ø: 87%</div></div>';
-  } else if (type === 'closer') {
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Abschlussquote <span style="color:var(--text-dim);font-size:10px">📊 Close CRM</span></span><span class="skill-bar-value">'+emp.skills.abschlussQuote+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.abschlussQuote+'%;background:'+(emp.skills.abschlussQuote>=35?'var(--success)':(emp.skills.abschlussQuote>=30?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: 35% | Beste: 42%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Ø Auftragswert <span style="color:var(--text-dim);font-size:10px">📊 Close CRM</span></span><span class="skill-bar-value">€'+emp.skills.avgTransaktionSize.toLocaleString('de-DE')+'</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+Math.min(100,emp.skills.avgTransaktionSize/100)+'%;background:'+(emp.skills.avgTransaktionSize>=8000?'var(--success)':(emp.skills.avgTransaktionSize>=7000?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: €7.760 | Beste: €9.200</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Premiumquote <span style="color:var(--text-dim);font-size:10px">📊 Close CRM</span></span><span class="skill-bar-value">'+emp.skills.premiumQuote+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.premiumQuote+'%;background:'+(emp.skills.premiumQuote>=40?'var(--success)':(emp.skills.premiumQuote>=35?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: 40% | Beste: 48%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Abschluss-Erscheinungsquote <span style="color:var(--text-dim);font-size:10px">📅 Calendly</span></span><span class="skill-bar-value">'+emp.skills.closingShowUp+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.closingShowUp+'%;background:'+(emp.skills.closingShowUp>=85?'var(--success)':(emp.skills.closingShowUp>=80?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Team Ø: 85% | Beste: 92%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Betreuungs-Nichterscheinung <span style="color:var(--text-dim);font-size:10px">(↓ = besser)</span></span><span class="skill-bar-value">'+emp.skills.amNoShow+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.amNoShow+'%;background:'+(emp.skills.amNoShow<=10?'var(--success)':(emp.skills.amNoShow<=14?'var(--warning)':'var(--danger)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Ziel: <10% | Team Ø: 13%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Sofort-Abschluss Quote <span style="color:var(--text-dim);font-size:10px">📊 Close CRM</span></span><span class="skill-bar-value">'+emp.skills.sofortAbschluss+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.sofortAbschluss+'%;background:'+(emp.skills.sofortAbschluss>=55?'var(--success)':(emp.skills.sofortAbschluss>=45?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">= % Abschlüsse im ersten Gespräch | Team Ø: 55%</div></div>';
-  } else if (type === 'kunden') {
-    skillsHtml = '<div class="data-source-note" style="font-size:10px;color:var(--text-dim);margin-bottom:16px;padding:8px;background:rgba(255,255,255,0.03);border-radius:4px;">📊 Metriken aus Close CRM, Stripe & NPS Surveys</div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Netto-Umsatzbindung <span style="color:var(--text-dim);font-size:10px">💳 Stripe</span></span><span class="skill-bar-value">'+emp.skills.nrr+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+Math.min(120,emp.skills.nrr)+'%;background:'+(emp.skills.nrr>=115?'var(--success)':(emp.skills.nrr>=105?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Ziel: >100% | Team Ø: 113%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Erweiterungsquote <span style="color:var(--text-dim);font-size:10px">💳 Stripe</span></span><span class="skill-bar-value">'+emp.skills.expansionRate+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.expansionRate+'%;background:'+(emp.skills.expansionRate>=28?'var(--success)':(emp.skills.expansionRate>=20?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">= Höherverkauf + Querverkauf | Team Ø: 25%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Kündigungsrate <span style="color:var(--text-dim);font-size:10px">(↓ = besser)</span></span><span class="skill-bar-value">'+emp.skills.KündigungRate+'%</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+(emp.skills.KündigungRate*20)+'%;background:'+(emp.skills.KündigungRate<=2?'var(--success)':(emp.skills.KündigungRate<=3?'var(--warning)':'var(--danger)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Ziel: <2% | Team Ø: 2.5%</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">NPS-Wert <span style="color:var(--text-dim);font-size:10px">📋 TypeForm</span></span><span class="skill-bar-value">'+emp.skills.nps+'</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.nps+'%;background:'+(emp.skills.nps>=75?'var(--success)':(emp.skills.nps>=65?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Ziel: 70+ | Team Ø: 73</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Ø Antwortzeit <span style="color:var(--text-dim);font-size:10px">(↓ = besser)</span></span><span class="skill-bar-value">'+emp.skills.responseTime+'h</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+(emp.skills.responseTime*20)+'%;background:'+(emp.skills.responseTime<=2?'var(--success)':(emp.skills.responseTime<=3?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">Ziel: <2h | Team Ø: 2.4h</div></div>';
-    skillsHtml += '<div class="skill-bar-item"><div class="skill-bar-header"><span class="skill-bar-label">Gesundheitswert Ø <span style="color:var(--text-dim);font-size:10px">📊 Kombiniert</span></span><span class="skill-bar-value">'+emp.skills.healthWert+'/100</span></div><div class="skill-bar"><div class="skill-bar-fill" style="width:'+emp.skills.healthWert+'%;background:'+(emp.skills.healthWert>=80?'var(--success)':(emp.skills.healthWert>=70?'var(--beige)':'var(--warning)'))+';"></div></div><div class="skill-benchmark" style="font-size:10px;color:var(--text-dim);margin-top:2px;">= Nutzung + Interaktion + Zahlungen | Team Ø: 78</div></div>';
-  }
-  document.getElementById('modal-skills').innerHTML = skillsHtml;
-  
-  // Strengths
-  var strengthsHtml = '';
-  emp.strengths.forEach(function(s) { strengthsHtml += '<div class="strength-item">'+s+'</div>'; });
-  document.getElementById('modal-strengths').innerHTML = strengthsHtml;
-  
-  // Improvements
-  var improvHtml = '';
-  emp.improvements.forEach(function(s) { improvHtml += '<div class="improvement-item">'+s+'</div>'; });
-  document.getElementById('modal-improvements').innerHTML = improvHtml;
-  
-  // Recommendations
-  var recoHtml = '';
-  emp.recommendations.forEach(function(s) { recoHtml += '<div class="recommendation-item">'+s+'</div>'; });
-  document.getElementById('modal-recommendations').innerHTML = recoHtml;
-  
-  // Reset tabs
-  document.querySelectorAll('.emp-modal-tab').forEach(function(t,i){t.classList.toggle('active',i===0)});
-  document.querySelectorAll('.emp-modal-section').forEach(function(s,i){s.classList.toggle('active',i===0)});
-  
-  document.getElementById('employeeModal').classList.add('active');
-}
 function closeEmployeeModal() { document.getElementById('employeeModal').classList.remove('active'); }
 function showEmpModalTab(tab, btn) { document.querySelectorAll('.emp-modal-tab').forEach(function(t){t.classList.remove('active')}); document.querySelectorAll('.emp-modal-section').forEach(function(s){s.classList.remove('active')}); btn.classList.add('active'); document.getElementById('emp-modal-'+tab).classList.add('active'); }
 
@@ -3284,6 +3257,9 @@ async function loadCloseTeam() {
     renderCloseTeam();
     renderEmployeeGrids();
     
+    // Lade Activity-Daten für alle Mitarbeiter (im Hintergrund)
+    loadEmployeeActivityData();
+    
   } catch (error) {
     console.error('Close team load error:', error);
   }
@@ -3438,35 +3414,120 @@ function getTeamByRole(role) {
 function renderEmployeeGrids() {
   var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
   
+  // Erst employees aus closeTeamMembers generieren
+  generateEmployeesFromClose();
+  
   // All employees
   var gesamtGrid = document.getElementById('gesamt-employee-grid');
   var openerGrid = document.getElementById('opener-employee-grid');
   var setterGrid = document.getElementById('setter-employee-grid');
   var closerGrid = document.getElementById('closer-employee-grid');
+  var kundenGrid = document.getElementById('kunden-employee-grid');
+  var bestEmployeesList = document.getElementById('best-employees-list');
   
-  if (!gesamtGrid) return;
-  
-  // Build employee cards
-  function buildEmployeeCard(member, roleLabel) {
+  // Build employee card with activity data
+  function buildEmployeeCard(member, roleLabel, activityData) {
     var initials = (member.first_name?.[0] || '') + (member.last_name?.[0] || '');
-    var name = (member.first_name || '') + ' ' + (member.last_name || '');
-    return '<div class="employee-card" style="background:var(--bg-card);padding:16px;border-radius:8px;border:1px solid var(--border);">' +
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+    var name = ((member.first_name || '') + ' ' + (member.last_name || '')).trim() || member.email;
+    var memberId = member.id || member.email;
+    var data = activityData || employeeActivityData[memberId] || {};
+    
+    // Stats basierend auf Rolle
+    var statsHtml = '';
+    if (roleLabel.includes('Opener')) {
+      statsHtml = '<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;">' +
+        '<div><span style="color:var(--text-dim);">Anrufe</span><div style="font-weight:600;">' + (data.calls || 0) + '</div></div>' +
+        '<div><span style="color:var(--text-dim);">Erreicht</span><div style="font-weight:600;">' + (data.reachRate || 0) + '%</div></div>' +
+        '<div><span style="color:var(--text-dim);">Protokolle</span><div style="font-weight:600;">' + (data.openerActivities || 0) + '</div></div>' +
+      '</div>';
+    } else if (roleLabel.includes('Setter')) {
+      statsHtml = '<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;">' +
+        '<div><span style="color:var(--text-dim);">Termine</span><div style="font-weight:600;">' + (data.setterActivities || 0) + '</div></div>' +
+        '<div><span style="color:var(--text-dim);">Anrufe</span><div style="font-weight:600;">' + (data.calls || 0) + '</div></div>' +
+      '</div>';
+    } else if (roleLabel.includes('Closer')) {
+      var revenue = data.revenue || 0;
+      statsHtml = '<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;">' +
+        '<div><span style="color:var(--text-dim);">Umsatz</span><div style="font-weight:600;">€' + formatNumber(revenue) + '</div></div>' +
+        '<div><span style="color:var(--text-dim);">Quote</span><div style="font-weight:600;">' + (data.closeRate || 0) + '%</div></div>' +
+        '<div><span style="color:var(--text-dim);">Opps</span><div style="font-weight:600;">' + (data.wonOpportunities || 0) + '/' + (data.opportunities || 0) + '</div></div>' +
+      '</div>';
+    } else if (roleLabel.includes('AM') || roleLabel.includes('Kunden')) {
+      statsHtml = '<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;">' +
+        '<div><span style="color:var(--text-dim);">Checks</span><div style="font-weight:600;">' + (data.kundenActivities || 0) + '</div></div>' +
+        '<div><span style="color:var(--text-dim);">Anrufe</span><div style="font-weight:600;">' + (data.calls || 0) + '</div></div>' +
+      '</div>';
+    }
+    
+    return '<div class="employee-card" onclick="openEmployeeModalDynamic(\'' + memberId + '\')" style="background:var(--bg-card);padding:16px;border-radius:8px;border:1px solid var(--border);cursor:pointer;">' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
         '<div style="width:36px;height:36px;border-radius:50%;background:var(--beige);color:var(--bg-dark);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;">' + (initials || '👤') + '</div>' +
-        '<div>' +
+        '<div style="flex:1;">' +
           '<div style="font-weight:600;font-size:14px;">' + name + '</div>' +
           '<div style="font-size:11px;color:var(--text-dim);">' + roleLabel + '</div>' +
         '</div>' +
       '</div>' +
+      statsHtml +
     '</div>';
   }
+  
+  // Build employee row for "Beste Mitarbeiter"
+  function buildEmployeeRow(member, rank) {
+    var initials = (member.first_name?.[0] || '') + (member.last_name?.[0] || '');
+    var name = ((member.first_name || '') + ' ' + (member.last_name || '')).trim() || member.email;
+    var memberId = member.id || member.email;
+    var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+    var memberRoles = savedRoles[memberId] || [];
+    if (typeof memberRoles === 'string') memberRoles = memberRoles ? [memberRoles] : [];
+    var roleLabels = { opener: 'Akquisition', setter: 'Terminierung', closer: 'Abschluss', account_manager: 'Betreuung' };
+    var roleDisplay = memberRoles.map(function(r) { return roleLabels[r] || r; }).join(' / ');
+    var data = employeeActivityData[memberId] || {};
+    var mainMetric = data.calls || data.revenue || 0;
+    var metricLabel = data.revenue ? '€' + formatNumber(data.revenue) : (data.calls || 0) + ' Anrufe';
+    
+    return '<div class="employee-row" onclick="openEmployeeModalDynamic(\'' + memberId + '\')" style="cursor:pointer;">' +
+      '<div class="employee-avatar-small">' + (initials || '👤') + '</div>' +
+      '<div class="employee-info-small">' +
+        '<div class="employee-name-small">' + name + '</div>' +
+        '<div class="employee-role-small">' + roleDisplay + '</div>' +
+      '</div>' +
+      '<div><div class="employee-goal">' + metricLabel + '</div></div>' +
+      '<div class="employee-rank-small">#' + rank + '</div>' +
+    '</div>';
+  }
+  
+  // Beste Mitarbeiter - Top 3 nach Activity
+  if (bestEmployeesList) {
+    var allWithData = closeTeamMembers.filter(function(m) {
+      var memberId = m.id || m.email;
+      var data = employeeActivityData[memberId];
+      return data && (data.calls > 0 || data.revenue > 0);
+    }).sort(function(a, b) {
+      var dataA = employeeActivityData[a.id || a.email] || {};
+      var dataB = employeeActivityData[b.id || b.email] || {};
+      var scoreA = (dataA.revenue || 0) + (dataA.calls || 0) * 10;
+      var scoreB = (dataB.revenue || 0) + (dataB.calls || 0) * 10;
+      return scoreB - scoreA;
+    }).slice(0, 3);
+    
+    if (allWithData.length > 0) {
+      bestEmployeesList.innerHTML = allWithData.map(function(m, i) {
+        return buildEmployeeRow(m, i + 1);
+      }).join('');
+    } else if (closeTeamMembers.length > 0) {
+      bestEmployeesList.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim);">Activity-Daten werden geladen...</div>';
+    } else {
+      bestEmployeesList.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim);">Verbinde Close CRM in den Einstellungen.</div>';
+    }
+  }
+  
+  if (!gesamtGrid) return;
   
   // Gesamt - alle Mitarbeiter mit zugewiesener Rolle
   var gesamtHtml = '';
   closeTeamMembers.forEach(function(member) {
     var memberId = member.id || member.email;
     var memberRoles = savedRoles[memberId];
-    // Support both old format (string) and new format (array)
     if (typeof memberRoles === 'string' && memberRoles) {
       memberRoles = [memberRoles];
     }
@@ -3477,24 +3538,104 @@ function renderEmployeeGrids() {
     }
   });
   gesamtGrid.innerHTML = gesamtHtml || '<div style="color:var(--text-dim);padding:16px;">Keine Mitarbeiter zugewiesen. Gehe zu Einstellungen → Close CRM um Rollen zuzuweisen.</div>';
-  gesamtGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;';
+  gesamtGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;';
   
   // Opener
-  var openers = getTeamByRole('opener');
-  openerGrid.innerHTML = openers.length ? openers.map(function(m) { return buildEmployeeCard(m, '📞 Opener'); }).join('') : '<div style="color:var(--text-dim);padding:16px;">Keine Opener zugewiesen.</div>';
-  openerGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;';
+  if (openerGrid) {
+    var openers = getTeamByRole('opener');
+    openerGrid.innerHTML = openers.length ? openers.map(function(m) { return buildEmployeeCard(m, '📞 Opener'); }).join('') : '<div style="color:var(--text-dim);padding:16px;">Keine Opener zugewiesen.</div>';
+    openerGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;';
+  }
   
   // Setter
-  var setters = getTeamByRole('setter');
-  setterGrid.innerHTML = setters.length ? setters.map(function(m) { return buildEmployeeCard(m, '📅 Setter'); }).join('') : '<div style="color:var(--text-dim);padding:16px;">Keine Setter zugewiesen.</div>';
-  setterGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;';
+  if (setterGrid) {
+    var setters = getTeamByRole('setter');
+    setterGrid.innerHTML = setters.length ? setters.map(function(m) { return buildEmployeeCard(m, '📅 Setter'); }).join('') : '<div style="color:var(--text-dim);padding:16px;">Keine Setter zugewiesen.</div>';
+    setterGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;';
+  }
   
   // Closer
-  var closers = getTeamByRole('closer');
-  closerGrid.innerHTML = closers.length ? closers.map(function(m) { return buildEmployeeCard(m, '💰 Closer'); }).join('') : '<div style="color:var(--text-dim);padding:16px;">Keine Closer zugewiesen.</div>';
-  closerGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;';
+  if (closerGrid) {
+    var closers = getTeamByRole('closer');
+    closerGrid.innerHTML = closers.length ? closers.map(function(m) { return buildEmployeeCard(m, '💰 Closer'); }).join('') : '<div style="color:var(--text-dim);padding:16px;">Keine Closer zugewiesen.</div>';
+    closerGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;';
+  }
   
-  console.log('Employee grids rendered - Opener:', openers.length, 'Setter:', setters.length, 'Closer:', closers.length);
+  // Kunden / Account Manager
+  if (kundenGrid) {
+    var ams = getTeamByRole('account_manager');
+    kundenGrid.innerHTML = ams.length ? ams.map(function(m) { return buildEmployeeCard(m, '🤝 Account Manager'); }).join('') : '<div style="color:var(--text-dim);padding:16px;">Keine Account Manager zugewiesen.</div>';
+    kundenGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;';
+  }
+  
+  console.log('Employee grids rendered - Team:', closeTeamMembers.length, 'mit Activity-Daten:', Object.keys(employeeActivityData).length);
+}
+
+// Dynamisches Employee Modal
+function openEmployeeModalDynamic(memberId) {
+  var member = closeTeamMembers.find(function(m) { return (m.id || m.email) === memberId; });
+  if (!member) return;
+  
+  var data = employeeActivityData[memberId] || {};
+  var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  var memberRoles = savedRoles[memberId] || [];
+  if (typeof memberRoles === 'string') memberRoles = memberRoles ? [memberRoles] : [];
+  
+  var name = ((member.first_name || '') + ' ' + (member.last_name || '')).trim() || member.email;
+  var initials = (member.first_name?.[0] || '') + (member.last_name?.[0] || '');
+  var roleLabels = { opener: 'Akquisition', setter: 'Terminierung', closer: 'Abschluss', account_manager: 'Kundenbetreuung' };
+  var roleDisplay = memberRoles.map(function(r) { return roleLabels[r] || r; }).join(' / ') || 'Keine Rolle';
+  
+  document.getElementById('modal-emp-name-title').textContent = name;
+  document.getElementById('modal-avatar').textContent = initials || '👤';
+  document.getElementById('modal-name').textContent = name;
+  document.getElementById('modal-role').textContent = roleDisplay;
+  document.getElementById('modal-team').textContent = 'Team: Teaching Finance';
+  document.getElementById('modal-rank').textContent = '';
+  document.getElementById('modal-goal').textContent = '';
+  document.getElementById('modal-trend').textContent = '';
+  
+  // Stats Grid mit echten Daten
+  var statsHtml = '';
+  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📞</div><div class="emp-modal-stat-value">' + (data.calls || 0) + '</div><div class="emp-modal-stat-label">Anrufe gesamt</div></div>';
+  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">✅</div><div class="emp-modal-stat-value">' + (data.callsConnected || 0) + '</div><div class="emp-modal-stat-label">Erreicht</div></div>';
+  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📊</div><div class="emp-modal-stat-value">' + (data.reachRate || 0) + '%</div><div class="emp-modal-stat-label">Erreichbarkeit</div></div>';
+  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">💰</div><div class="emp-modal-stat-value">€' + formatNumber(data.revenue || 0) + '</div><div class="emp-modal-stat-label">Umsatz</div></div>';
+  
+  // Activities
+  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📝</div><div class="emp-modal-stat-value">' + (data.openerActivities || 0) + '</div><div class="emp-modal-stat-label">Opener-Protokolle</div></div>';
+  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📅</div><div class="emp-modal-stat-value">' + (data.setterActivities || 0) + '</div><div class="emp-modal-stat-label">Setter-Protokolle</div></div>';
+  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">🎯</div><div class="emp-modal-stat-value">' + (data.closerActivities || 0) + '</div><div class="emp-modal-stat-label">Closer-Protokolle</div></div>';
+  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">🤝</div><div class="emp-modal-stat-value">' + (data.kundenActivities || 0) + '</div><div class="emp-modal-stat-label">Kunden-Checks</div></div>';
+  
+  document.getElementById('modal-emp-stats').innerHTML = statsHtml;
+  
+  // Skills (Stärken/Verbesserungen) - basierend auf Daten berechnen
+  var strengths = [];
+  var improvements = [];
+  
+  if (data.reachRate > 25) strengths.push('Überdurchschnittliche Erreichbarkeitsquote (' + data.reachRate + '%)');
+  else if (data.reachRate > 0 && data.reachRate < 20) improvements.push('Erreichbarkeitsquote verbessern (' + data.reachRate + '%)');
+  
+  if (data.closeRate > 30) strengths.push('Starke Abschlussquote (' + data.closeRate + '%)');
+  else if (data.closeRate > 0 && data.closeRate < 20) improvements.push('Abschlussquote steigern (' + data.closeRate + '%)');
+  
+  if (data.calls > 100) strengths.push('Hohe Anrufaktivität (' + data.calls + ' Anrufe)');
+  else if (data.calls > 0 && data.calls < 30) improvements.push('Mehr Anrufe tätigen (' + data.calls + ' aktuell)');
+  
+  if (data.revenue > 50000) strengths.push('Top-Performer Umsatz (€' + formatNumber(data.revenue) + ')');
+  
+  document.getElementById('modal-emp-strengths').innerHTML = strengths.length ? 
+    strengths.map(function(s) { return '<div class="emp-modal-strength-item"><span class="emp-modal-strength-icon">💪</span><span>' + s + '</span></div>'; }).join('') : 
+    '<div style="color:var(--text-dim);">Noch nicht genug Daten für Analyse</div>';
+  
+  document.getElementById('modal-emp-improvements').innerHTML = improvements.length ? 
+    improvements.map(function(s) { return '<div class="emp-modal-improvement-item"><span class="emp-modal-improvement-icon">📈</span><span>' + s + '</span></div>'; }).join('') : 
+    '<div style="color:var(--text-dim);">Keine Verbesserungsvorschläge</div>';
+  
+  document.getElementById('modal-emp-recommendations').innerHTML = '<div style="color:var(--text-dim);">Empfehlungen werden basierend auf Langzeitdaten generiert.</div>';
+  
+  document.getElementById('employeeModal').classList.add('active');
 }
 
 // Refresh team
