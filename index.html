@@ -12,6 +12,15 @@
     body { font-family: 'Montserrat', sans-serif; background: var(--bg-dark); color: var(--text); min-height: 100vh; font-size: 14px; }
     .hidden { display: none !important; }
     
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+    
+    /* Focus States für Accessibility */
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--beige); outline-offset: 2px; }
+    
     /* ONBOARDING */
     .onboarding-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, #0a0e13 0%, #1a2a3a 100%); }
     .onboarding-card { background: var(--bg-panel); border: 1px solid var(--beige); padding: 40px; max-width: 900px; width: 100%; }
@@ -3220,57 +3229,53 @@ async function loadCloseTeam() {
   if (!closeApiKey) return;
   
   try {
-    // Get ALL users using /user/ endpoint
-    var userResponse = await fetch('/api/close-proxy', {
+    // Step 1: Get organization ID
+    const meResponse = await fetch('/api/close-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: 'user/', apiKey: closeApiKey })
+      body: JSON.stringify({ endpoint: 'me/', apiKey: closeApiKey })
     });
     
-    var userData = await userResponse.json();
-    var allUsers = userData.data || [];
-    console.log('Close /user/ - total users:', allUsers.length);
+    if (!meResponse.ok) throw new Error(`HTTP error! status: ${meResponse.status}`);
     
-    // Filter: nur @teachingfinance.de Emails, keine System/Test-Accounts
-    var filtered = allUsers.filter(function(user) {
-      var email = (user.email || '').toLowerCase();
-      var firstName = user.first_name || '';
-      
-      // NUR @teachingfinance.de Emails
-      if (!email.includes('@teachingfinance.de')) {
-        return false;
-      }
-      
-      // Ausschließen: System/Test/Dummy Accounts
-      if (email.includes('mitarbeiter.vertrieb+')) { console.log('Filter: mitarbeiter.vertrieb+ →', email); return false; }
-      if (email.includes('mitarbeiter.vertrieb@')) { console.log('Filter: mitarbeiter.vertrieb@ →', email); return false; }
-      if (email === 'fulfillment@teachingfinance.de') { console.log('Filter: fulfillment →', email); return false; }
-      if (email === 'customer.success@teachingfinance.de') { console.log('Filter: customer.success →', email); return false; }
-      
-      // Nur User mit echten Namen (mindestens 2 Zeichen)
-      if (firstName.length < 2) { console.log('Filter: kein Name →', email); return false; }
-      
-      return true;
+    const meData = await meResponse.json();
+    const orgId = meData.organizations?.[0]?.id || meData.memberships?.[0]?.organization_id;
+    
+    if (!orgId) {
+      console.log('Keine Organisation gefunden');
+      return;
+    }
+    
+    console.log('Organization ID:', orgId);
+    
+    // Step 2: Get organization with memberships
+    const orgResponse = await fetch('/api/close-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: 'organization/' + orgId + '/', apiKey: closeApiKey })
     });
     
-    console.log('Nach Filter:', filtered.length, 'Mitarbeiter mit @teachingfinance.de');
-    console.log('Finale User:', filtered.map(function(u) { 
-      return u.first_name + ' ' + u.last_name; 
-    }));
+    if (!orgResponse.ok) throw new Error(`HTTP error! status: ${orgResponse.status}`);
     
-    closeTeamMembers = filtered.map(function(user) {
+    const orgData = await orgResponse.json();
+    const memberships = orgData.memberships || [];
+    
+    console.log('Close memberships (aktiv):', memberships.length);
+    
+    // Zeige ALLE aktiven Memberships an - OHNE Filter
+    closeTeamMembers = memberships.map(function(m) {
       return {
-        id: user.id,
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        email: user.email || '',
-        image: user.image || null
+        id: m.user_id || m.id,
+        first_name: m.user_first_name || m.first_name || '',
+        last_name: m.user_last_name || m.last_name || '',
+        email: m.user_email || m.email || '',
+        image: m.user_image || m.image || null
       };
     });
     
+    console.log('✓ Team-Mitglieder geladen:', closeTeamMembers.length);
     renderCloseTeam();
     renderEmployeeGrids();
-    console.log('✓ Team-Mitglieder geladen:', closeTeamMembers.length);
     
   } catch (error) {
     console.error('Close team load error:', error);
