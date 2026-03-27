@@ -3333,14 +3333,14 @@ function renderCloseTeam() {
       { id: 'account_manager', label: '🤝', color: '#f59e0b', name: 'AM' }
     ];
     
-    var rolesHtml = '<div style="display:flex;gap:6px;margin-left:auto;">';
+    var rolesHtml = '<div style="display:flex;gap:6px;margin-left:auto;" onclick="event.stopPropagation()">';
     roles.forEach(function(role) {
       var isActive = memberRoles.includes(role.id);
       var btnStyle = isActive 
         ? 'background:' + role.color + ';color:#000;border-color:' + role.color + ';' 
         : 'background:transparent;color:var(--text-dim);border-color:var(--border);opacity:0.5;';
       
-      rolesHtml += '<button onclick="toggleMemberRole(\'' + memberId + '\', \'' + role.id + '\')" ' +
+      rolesHtml += '<button onclick="event.stopPropagation();toggleMemberRole(\'' + memberId + '\', \'' + role.id + '\')" ' +
         'title="' + role.id.replace('_', ' ') + '" ' +
         'style="width:32px;height:32px;border:2px solid;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;' + btnStyle + '">' +
         role.label +
@@ -3355,7 +3355,7 @@ function renderCloseTeam() {
         ? 'border:2px solid ' + roleColors[memberRoles[0]] + ';background:var(--bg-card);'
         : 'border:1px solid var(--border);background:var(--bg-card);';
     
-    html += '<div class="team-member-card" style="' + cardBorderStyle + 'padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:12px;">' +
+    html += '<div class="team-member-card" onclick="openKpiConfigModal(\'' + memberId + '\', \'' + (member.first_name || '') + ' ' + (member.last_name || '') + '\')" style="' + cardBorderStyle + 'padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:12px;cursor:pointer;" title="Klicken um KPI-Parameter zu konfigurieren">' +
       avatarHtml +
       '<div style="flex:1;min-width:0;">' +
         '<div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;">' + (member.first_name || '') + ' ' + (member.last_name || '') + '</div>' +
@@ -3682,6 +3682,348 @@ function formatCurrency(value) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(value / 100);
+}
+
+// =====================================================
+// KPI PARAMETER CONFIGURATION MODAL
+// =====================================================
+let closeParameters = null; // Cache für geladene Parameter
+let currentKpiTarget = null; // Welche Kachel wird konfiguriert
+
+// Öffne das KPI-Konfigurations-Modal
+async function openKpiConfigModal(targetId, targetName) {
+  currentKpiTarget = { id: targetId, name: targetName };
+  
+  // Modal erstellen falls nicht vorhanden
+  let modal = document.getElementById('kpiConfigModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'kpiConfigModal';
+    modal.className = 'kpi-config-modal';
+    modal.innerHTML = `
+      <div class="kpi-config-overlay" onclick="closeKpiConfigModal()"></div>
+      <div class="kpi-config-content">
+        <div class="kpi-config-header">
+          <h3>📊 KPI Parameter wählen</h3>
+          <span class="kpi-config-target" id="kpiConfigTarget"></span>
+          <button class="kpi-config-close" onclick="closeKpiConfigModal()">✕</button>
+        </div>
+        <div class="kpi-config-search">
+          <input type="text" id="kpiSearchInput" placeholder="Parameter suchen..." oninput="filterKpiParameters()">
+        </div>
+        <div class="kpi-config-loading" id="kpiConfigLoading">
+          <div class="loading-spinner"></div>
+          <span>Lade verfügbare Parameter aus Close...</span>
+        </div>
+        <div class="kpi-config-body" id="kpiConfigBody" style="display:none;"></div>
+        <div class="kpi-config-footer">
+          <button class="btn-secondary" onclick="closeKpiConfigModal()">Abbrechen</button>
+          <button class="btn-primary" onclick="saveKpiConfig()" id="kpiSaveBtn" disabled>Speichern</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // CSS für Modal hinzufügen
+    if (!document.getElementById('kpiConfigStyles')) {
+      const style = document.createElement('style');
+      style.id = 'kpiConfigStyles';
+      style.textContent = `
+        .kpi-config-modal { position:fixed; top:0; left:0; right:0; bottom:0; z-index:10000; display:flex; align-items:center; justify-content:center; }
+        .kpi-config-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); }
+        .kpi-config-content { position:relative; background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; width:90%; max-width:600px; max-height:80vh; display:flex; flex-direction:column; }
+        .kpi-config-header { padding:20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+        .kpi-config-header h3 { margin:0; font-size:18px; color:#fff; flex:1; }
+        .kpi-config-target { font-size:13px; color:var(--beige); background:rgba(192,173,148,0.15); padding:4px 12px; border-radius:20px; }
+        .kpi-config-close { background:none; border:none; color:var(--text-dim); font-size:20px; cursor:pointer; padding:4px 8px; }
+        .kpi-config-close:hover { color:#fff; }
+        .kpi-config-search { padding:16px 20px; border-bottom:1px solid var(--border); }
+        .kpi-config-search input { width:100%; padding:12px 16px; background:var(--bg-dark); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:14px; }
+        .kpi-config-search input:focus { outline:none; border-color:var(--beige); }
+        .kpi-config-body { flex:1; overflow-y:auto; padding:16px 20px; }
+        .kpi-config-loading { padding:40px; text-align:center; color:var(--text-dim); }
+        .loading-spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--beige); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 12px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .kpi-config-footer { padding:16px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; }
+        .kpi-config-footer .btn-secondary { padding:10px 20px; background:transparent; border:1px solid var(--border); color:var(--text-dim); border-radius:6px; cursor:pointer; }
+        .kpi-config-footer .btn-primary { padding:10px 20px; background:var(--beige); border:none; color:var(--bg-dark); font-weight:600; border-radius:6px; cursor:pointer; }
+        .kpi-config-footer .btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+        .kpi-category { margin-bottom:20px; }
+        .kpi-category-title { font-size:11px; color:var(--beige); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; padding-left:8px; border-left:2px solid var(--beige); }
+        .kpi-option { display:flex; align-items:center; gap:12px; padding:12px; background:var(--bg-dark); border:2px solid var(--border); border-radius:8px; margin-bottom:8px; cursor:pointer; transition:all 0.15s; }
+        .kpi-option:hover { border-color:rgba(192,173,148,0.5); }
+        .kpi-option.selected { border-color:var(--beige); background:rgba(192,173,148,0.1); }
+        .kpi-option-icon { font-size:20px; }
+        .kpi-option-info { flex:1; }
+        .kpi-option-name { font-weight:600; color:#fff; font-size:14px; }
+        .kpi-option-desc { font-size:11px; color:var(--text-dim); margin-top:2px; }
+        .kpi-option-check { width:20px; height:20px; border:2px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; }
+        .kpi-option.selected .kpi-option-check { background:var(--beige); border-color:var(--beige); color:var(--bg-dark); }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+  
+  // Target anzeigen
+  document.getElementById('kpiConfigTarget').textContent = targetName;
+  
+  // Modal anzeigen
+  modal.style.display = 'flex';
+  
+  // Parameter laden
+  await loadCloseParameters();
+}
+
+// Schließe das Modal
+function closeKpiConfigModal() {
+  const modal = document.getElementById('kpiConfigModal');
+  if (modal) modal.style.display = 'none';
+  currentKpiTarget = null;
+}
+
+// Lade alle verfügbaren Parameter aus Close
+async function loadCloseParameters() {
+  const loading = document.getElementById('kpiConfigLoading');
+  const body = document.getElementById('kpiConfigBody');
+  
+  loading.style.display = 'block';
+  body.style.display = 'none';
+  
+  // Falls bereits gecached
+  if (closeParameters) {
+    renderKpiParameters();
+    return;
+  }
+  
+  if (!closeApiKey) {
+    body.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px;">Close CRM nicht verbunden. Bitte erst API Key eingeben.</p>';
+    loading.style.display = 'none';
+    body.style.display = 'block';
+    return;
+  }
+  
+  try {
+    // Parallel alle Parameter-Typen laden
+    const [customActivities, leadStatuses, customFields, pipelines] = await Promise.all([
+      fetchCloseEndpoint('custom_activity_type/'),
+      fetchCloseEndpoint('status/lead/'),
+      fetchCloseEndpoint('custom_field/lead/'),
+      fetchCloseEndpoint('pipeline/')
+    ]);
+    
+    closeParameters = {
+      standard: [
+        { id: 'calls', name: 'Anrufe', icon: '📞', desc: 'Ausgehende Anrufe' },
+        { id: 'emails', name: 'E-Mails', icon: '📧', desc: 'Gesendete E-Mails' },
+        { id: 'meetings', name: 'Meetings', icon: '📅', desc: 'Geplante Meetings' },
+        { id: 'sms', name: 'SMS', icon: '💬', desc: 'Gesendete SMS' },
+        { id: 'leads_created', name: 'Neue Leads', icon: '👤', desc: 'Erstellte Leads' },
+        { id: 'opportunities_won', name: 'Gewonnene Deals', icon: '🏆', desc: 'Abgeschlossene Opportunities' },
+        { id: 'opportunities_value', name: 'Deal-Wert', icon: '💰', desc: 'Gesamtwert gewonnener Deals' },
+        { id: 'no_show_rate', name: 'No-Show Rate', icon: '❌', desc: 'Nicht erschienene Termine' },
+        { id: 'show_rate', name: 'Erscheinungsquote', icon: '✅', desc: 'Erschienene Termine' }
+      ],
+      customActivities: (customActivities.data || []).map(ca => ({
+        id: 'custom_activity:' + ca.id,
+        name: ca.name,
+        icon: '🎯',
+        desc: ca.description || 'Custom Activity'
+      })),
+      leadStatuses: (leadStatuses.data || []).map(ls => ({
+        id: 'lead_status:' + ls.id,
+        name: ls.label,
+        icon: '📋',
+        desc: 'Lead Status'
+      })),
+      customFields: (customFields.data || []).filter(cf => cf.type === 'number' || cf.type === 'choices').map(cf => ({
+        id: 'custom_field:' + cf.id,
+        name: cf.name,
+        icon: '🏷️',
+        desc: cf.type === 'number' ? 'Zahlenfeld' : 'Auswahlfeld'
+      })),
+      opportunityStatuses: []
+    };
+    
+    // Pipeline Status hinzufügen
+    (pipelines.data || []).forEach(pipeline => {
+      (pipeline.statuses || []).forEach(status => {
+        closeParameters.opportunityStatuses.push({
+          id: 'opp_status:' + status.id,
+          name: status.label,
+          icon: '📊',
+          desc: pipeline.name
+        });
+      });
+    });
+    
+    console.log('✓ Close Parameter geladen:', closeParameters);
+    renderKpiParameters();
+    
+  } catch (error) {
+    console.error('Fehler beim Laden der Parameter:', error);
+    body.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px;">Fehler beim Laden der Parameter. Bitte erneut versuchen.</p>';
+    loading.style.display = 'none';
+    body.style.display = 'block';
+  }
+}
+
+// Hilfsfunktion: Close API aufrufen
+async function fetchCloseEndpoint(endpoint) {
+  try {
+    const response = await fetch('/api/close-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint, apiKey: closeApiKey })
+    });
+    if (!response.ok) return { data: [] };
+    return await response.json();
+  } catch (e) {
+    console.warn('Endpoint fehlgeschlagen:', endpoint, e);
+    return { data: [] };
+  }
+}
+
+// Render die Parameter im Modal
+function renderKpiParameters() {
+  const loading = document.getElementById('kpiConfigLoading');
+  const body = document.getElementById('kpiConfigBody');
+  
+  loading.style.display = 'none';
+  body.style.display = 'block';
+  
+  // Gespeicherte Auswahl laden
+  const savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
+  const currentSelection = savedKpis[currentKpiTarget?.id] || null;
+  
+  let html = '';
+  
+  // Standard KPIs
+  if (closeParameters.standard.length > 0) {
+    html += '<div class="kpi-category"><div class="kpi-category-title">📊 Standard KPIs</div>';
+    closeParameters.standard.forEach(p => {
+      html += renderKpiOption(p, currentSelection);
+    });
+    html += '</div>';
+  }
+  
+  // Custom Activities
+  if (closeParameters.customActivities.length > 0) {
+    html += '<div class="kpi-category"><div class="kpi-category-title">🎯 Custom Activities</div>';
+    closeParameters.customActivities.forEach(p => {
+      html += renderKpiOption(p, currentSelection);
+    });
+    html += '</div>';
+  }
+  
+  // Lead Status
+  if (closeParameters.leadStatuses.length > 0) {
+    html += '<div class="kpi-category"><div class="kpi-category-title">📋 Lead Status</div>';
+    closeParameters.leadStatuses.forEach(p => {
+      html += renderKpiOption(p, currentSelection);
+    });
+    html += '</div>';
+  }
+  
+  // Opportunity Status
+  if (closeParameters.opportunityStatuses.length > 0) {
+    html += '<div class="kpi-category"><div class="kpi-category-title">📊 Opportunity Status</div>';
+    closeParameters.opportunityStatuses.forEach(p => {
+      html += renderKpiOption(p, currentSelection);
+    });
+    html += '</div>';
+  }
+  
+  // Custom Fields
+  if (closeParameters.customFields.length > 0) {
+    html += '<div class="kpi-category"><div class="kpi-category-title">🏷️ Custom Fields</div>';
+    closeParameters.customFields.forEach(p => {
+      html += renderKpiOption(p, currentSelection);
+    });
+    html += '</div>';
+  }
+  
+  body.innerHTML = html;
+  
+  // Save-Button aktivieren wenn Auswahl vorhanden
+  document.getElementById('kpiSaveBtn').disabled = !currentSelection;
+}
+
+// Render einzelne KPI Option
+function renderKpiOption(param, currentSelection) {
+  const selected = currentSelection === param.id ? 'selected' : '';
+  return `
+    <div class="kpi-option ${selected}" onclick="selectKpiParameter('${param.id}')" data-name="${param.name.toLowerCase()}" data-desc="${(param.desc || '').toLowerCase()}">
+      <span class="kpi-option-icon">${param.icon}</span>
+      <div class="kpi-option-info">
+        <div class="kpi-option-name">${param.name}</div>
+        <div class="kpi-option-desc">${param.desc || ''}</div>
+      </div>
+      <div class="kpi-option-check">${selected ? '✓' : ''}</div>
+    </div>
+  `;
+}
+
+// Wähle einen Parameter aus
+function selectKpiParameter(paramId) {
+  // Alle deselektieren
+  document.querySelectorAll('.kpi-option').forEach(el => {
+    el.classList.remove('selected');
+    el.querySelector('.kpi-option-check').textContent = '';
+  });
+  
+  // Gewählten selektieren
+  const selected = document.querySelector(`.kpi-option[onclick*="${paramId}"]`);
+  if (selected) {
+    selected.classList.add('selected');
+    selected.querySelector('.kpi-option-check').textContent = '✓';
+  }
+  
+  // Temporär speichern
+  currentKpiTarget.selectedParam = paramId;
+  
+  // Save-Button aktivieren
+  document.getElementById('kpiSaveBtn').disabled = false;
+}
+
+// Filter Parameter nach Suchbegriff
+function filterKpiParameters() {
+  const search = document.getElementById('kpiSearchInput').value.toLowerCase();
+  document.querySelectorAll('.kpi-option').forEach(el => {
+    const name = el.dataset.name || '';
+    const desc = el.dataset.desc || '';
+    const match = name.includes(search) || desc.includes(search);
+    el.style.display = match ? 'flex' : 'none';
+  });
+  
+  // Kategorien ausblenden wenn alle Optionen versteckt
+  document.querySelectorAll('.kpi-category').forEach(cat => {
+    const visibleOptions = cat.querySelectorAll('.kpi-option[style="display: flex;"], .kpi-option:not([style*="display"])');
+    const hasVisible = Array.from(cat.querySelectorAll('.kpi-option')).some(el => el.style.display !== 'none');
+    cat.style.display = hasVisible ? 'block' : 'none';
+  });
+}
+
+// Speichere die KPI-Konfiguration
+function saveKpiConfig() {
+  if (!currentKpiTarget || !currentKpiTarget.selectedParam) return;
+  
+  const savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
+  savedKpis[currentKpiTarget.id] = currentKpiTarget.selectedParam;
+  localStorage.setItem('ts_kpi_config', JSON.stringify(savedKpis));
+  
+  console.log('✓ KPI Konfiguration gespeichert:', currentKpiTarget.id, '→', currentKpiTarget.selectedParam);
+  
+  closeKpiConfigModal();
+  
+  // UI aktualisieren
+  updateKpiDisplay(currentKpiTarget.id, currentKpiTarget.selectedParam);
+}
+
+// Aktualisiere die Anzeige einer KPI-Kachel
+function updateKpiDisplay(targetId, paramId) {
+  // Finde das zugehörige Element und update es
+  // Dies wird später erweitert um die tatsächlichen Werte zu laden
+  console.log('Updating KPI display:', targetId, paramId);
 }
 
 // Initialize Close on dashboard load
