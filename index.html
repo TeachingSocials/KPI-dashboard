@@ -102,6 +102,25 @@
     .kpi-time-btn:hover { border-color: var(--beige); color: var(--beige); }
     .kpi-time-btn.active { background: var(--beige); color: var(--bg-dark); border-color: var(--beige); }
     
+    /* Personen-Ansicht Styles */
+    .person-view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .person-selector { display: flex; align-items: center; gap: 12px; }
+    .person-dropdown { padding: 12px 40px 12px 16px; background: var(--bg-dark); border: 2px solid var(--border); border-radius: 12px; color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; min-width: 220px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7a8a' d='M2 4l4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+    .person-dropdown:hover { border-color: var(--beige); }
+    .person-dropdown:focus { outline: none; border-color: var(--beige); }
+    .person-dropdown option { background: var(--bg-panel); color: var(--text); padding: 10px; }
+    
+    .person-kpis-container { min-height: 200px; }
+    .person-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; background: var(--bg-dark); border: 2px dashed var(--border); border-radius: 16px; text-align: center; }
+    .person-empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+    .person-empty-state .empty-text { font-size: 15px; color: var(--text-dim); }
+    
+    .person-info-card { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: linear-gradient(135deg, rgba(192,173,148,0.1), rgba(192,173,148,0.05)); border: 1px solid var(--beige); border-radius: 14px; margin-bottom: 20px; }
+    .person-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--beige); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: var(--bg-dark); }
+    .person-details { flex: 1; }
+    .person-name { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .person-role { font-size: 13px; color: var(--beige); }
+    
     .stats-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
     .stat-item { background: var(--bg-panel); border: 1px solid var(--border); padding: 16px; text-align: center; }
     .stat-value { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 3px; }
@@ -1142,10 +1161,70 @@
       </div>
     </div>
     <div id="vertrieb-mitarbeiter-view" class="hidden">
-      <div id="vertrieb-gesamt-mitarbeiter" class="sub-content active"><div class="section-title">👤 ALLE MITARBEITER</div><div class="employee-grid" id="gesamt-employee-grid"></div></div>
-      <div id="vertrieb-opener-mitarbeiter" class="sub-content"><div class="section-title">📞 AKQUISITION</div><div class="employee-grid" id="opener-employee-grid"></div></div>
-      <div id="vertrieb-setter-mitarbeiter" class="sub-content"><div class="section-title">📅 TERMINIERUNG</div><div class="employee-grid" id="setter-employee-grid"></div></div>
-      <div id="vertrieb-closer-mitarbeiter" class="sub-content"><div class="section-title">💰 ABSCHLUSS</div><div class="employee-grid" id="closer-employee-grid"></div></div>
+      <div id="vertrieb-gesamt-mitarbeiter" class="sub-content active">
+        <div class="person-view-header">
+          <div class="section-title" style="margin:0;">👤 PERSONEN-KENNZAHLEN</div>
+          <div class="person-selector">
+            <select id="person-select-gesamt" class="person-dropdown" onchange="selectPerson('gesamt', this.value)">
+              <option value="">Mitarbeiter wählen...</option>
+            </select>
+          </div>
+        </div>
+        <div id="person-kpis-gesamt" class="person-kpis-container">
+          <div class="person-empty-state">
+            <div class="empty-icon">👆</div>
+            <div class="empty-text">Wähle einen Mitarbeiter um seine KPIs zu sehen</div>
+          </div>
+        </div>
+      </div>
+      <div id="vertrieb-opener-mitarbeiter" class="sub-content">
+        <div class="person-view-header">
+          <div class="section-title" style="margin:0;">📞 AKQUISITION - PERSONEN</div>
+          <div class="person-selector">
+            <select id="person-select-opener" class="person-dropdown" onchange="selectPerson('opener', this.value)">
+              <option value="">Mitarbeiter wählen...</option>
+            </select>
+          </div>
+        </div>
+        <div id="person-kpis-opener" class="person-kpis-container">
+          <div class="person-empty-state">
+            <div class="empty-icon">👆</div>
+            <div class="empty-text">Wähle einen Mitarbeiter um seine KPIs zu sehen</div>
+          </div>
+        </div>
+      </div>
+      <div id="vertrieb-setter-mitarbeiter" class="sub-content">
+        <div class="person-view-header">
+          <div class="section-title" style="margin:0;">📅 TERMINIERUNG - PERSONEN</div>
+          <div class="person-selector">
+            <select id="person-select-setter" class="person-dropdown" onchange="selectPerson('setter', this.value)">
+              <option value="">Mitarbeiter wählen...</option>
+            </select>
+          </div>
+        </div>
+        <div id="person-kpis-setter" class="person-kpis-container">
+          <div class="person-empty-state">
+            <div class="empty-icon">👆</div>
+            <div class="empty-text">Wähle einen Mitarbeiter um seine KPIs zu sehen</div>
+          </div>
+        </div>
+      </div>
+      <div id="vertrieb-closer-mitarbeiter" class="sub-content">
+        <div class="person-view-header">
+          <div class="section-title" style="margin:0;">💰 ABSCHLUSS - PERSONEN</div>
+          <div class="person-selector">
+            <select id="person-select-closer" class="person-dropdown" onchange="selectPerson('closer', this.value)">
+              <option value="">Mitarbeiter wählen...</option>
+            </select>
+          </div>
+        </div>
+        <div id="person-kpis-closer" class="person-kpis-container">
+          <div class="person-empty-state">
+            <div class="empty-icon">👆</div>
+            <div class="empty-text">Wähle einen Mitarbeiter um seine KPIs zu sehen</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2029,6 +2108,156 @@ function initTimeRangeSelector() {
   // Initial setzen
   setGlobalTimeRange(savedRange);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PERSONEN-ANSICHT - Mitarbeiter auswählen und KPIs anzeigen
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Speichert geladene Mitarbeiter
+var loadedEmployees = [];
+
+// Befülle alle Personen-Dropdowns mit Mitarbeitern
+function populatePersonDropdowns() {
+  const dropdowns = ['gesamt', 'opener', 'setter', 'closer'];
+  
+  dropdowns.forEach(role => {
+    const select = document.getElementById('person-select-' + role);
+    if (!select) return;
+    
+    // Erst leeren (außer erste Option)
+    select.innerHTML = '<option value="">Mitarbeiter wählen...</option>';
+    
+    // Mitarbeiter hinzufügen
+    loadedEmployees.forEach(emp => {
+      const option = document.createElement('option');
+      option.value = emp.id;
+      option.textContent = emp.name;
+      select.appendChild(option);
+    });
+  });
+}
+
+// Wenn Mitarbeiter ausgewählt wird
+function selectPerson(role, personId) {
+  const container = document.getElementById('person-kpis-' + role);
+  if (!container) return;
+  
+  if (!personId) {
+    // Keine Person ausgewählt → Empty State
+    container.innerHTML = `
+      <div class="person-empty-state">
+        <div class="empty-icon">👆</div>
+        <div class="empty-text">Wähle einen Mitarbeiter um seine KPIs zu sehen</div>
+      </div>
+    `;
+    return;
+  }
+  
+  // Person finden
+  const person = loadedEmployees.find(e => e.id === personId);
+  if (!person) return;
+  
+  // KPIs für diese Rolle laden
+  const kpisHtml = getPersonKpisHtml(role, person);
+  
+  container.innerHTML = `
+    <div class="person-info-card">
+      <div class="person-avatar">${person.name.charAt(0)}</div>
+      <div class="person-details">
+        <div class="person-name">${person.name}</div>
+        <div class="person-role">${getRoleLabel(role)}</div>
+      </div>
+    </div>
+    <div class="stats-panel">
+      ${getPersonStatsHtml(role, person)}
+    </div>
+    <div class="kpi-grid">
+      ${kpisHtml}
+    </div>
+  `;
+}
+
+// Rollen-Label
+function getRoleLabel(role) {
+  const labels = {
+    gesamt: 'Alle Kennzahlen',
+    opener: 'Akquisition / Opener',
+    setter: 'Terminierung / Setter',
+    closer: 'Abschluss / Closer'
+  };
+  return labels[role] || role;
+}
+
+// Stats-Panel für Person generieren
+function getPersonStatsHtml(role, person) {
+  // Placeholder-Daten - werden später aus Close geladen
+  if (role === 'opener') {
+    return `
+      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Anrufe</div></div>
+      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Erreicht</div></div>
+      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Übergaben</div></div>
+      <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Quote</div></div>
+    `;
+  } else if (role === 'setter') {
+    return `
+      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Gebuchte Termine</div></div>
+      <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Erscheinungsquote</div></div>
+      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Qualifiziert</div></div>
+      <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Weitergabe</div></div>
+    `;
+  } else if (role === 'closer') {
+    return `
+      <div class="stat-item"><div class="stat-value">€--</div><div class="stat-label">Umsatz</div></div>
+      <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Abschlussquote</div></div>
+      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Abschlüsse</div></div>
+      <div class="stat-item"><div class="stat-value">€--</div><div class="stat-label">Ø Auftrag</div></div>
+    `;
+  }
+  return `
+    <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Aktivitäten</div></div>
+    <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Leads</div></div>
+    <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Anrufe</div></div>
+    <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Zielerreichung</div></div>
+  `;
+}
+
+// KPI-Kacheln für Person generieren
+function getPersonKpisHtml(role, person) {
+  // Die gleichen KPIs wie im Team-Tab, aber für diese Person
+  // Werte werden später aus Close berechnet
+  
+  if (role === 'opener') {
+    return `
+      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → SETTER</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Kontakte die beim Terminierer nicht erscheinen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter 15%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">🎯 ÜBERGABE-QUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erreichte → Übergaben</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 50%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">⏱️ Ø GESPRÄCHSZEIT</div><div class="kpi-value">--:--</div><div class="kpi-subtitle">Minuten pro Gespräch</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Optimal: 3-5 Min</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📊 VERBINDLICHKEIT</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Terminierungs-Termine eingehalten</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 85%</span></div></div>
+    `;
+  } else if (role === 'setter') {
+    return `
+      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ QUALIFIZIERUNGS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Kontakte die zum Qualifizierungsgespräch erscheinen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 75%</span></div></div>
+      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → CLOSER</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Qualifizierte die beim Abschließer fehlen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter 12%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">🎯 QUALIFIZIERUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erschienene → Qualifiziert</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 75%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS BUCHUNG</div><div class="kpi-value">-- Tage</div><div class="kpi-subtitle">Übergabe → Termin gebucht</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter 3 Tage</span></div></div>
+    `;
+  } else if (role === 'closer') {
+    return `
+      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ ABSCHLUSS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Qualifizierte die zum Abschluss erscheinen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 88%</span></div></div>
+      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → Betreuung</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Neukunden die beim AM-Ersttermin fehlen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter 10%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">💰 Ø AUFTRAGSWERT</div><div class="kpi-value">€--</div><div class="kpi-subtitle">Durchschnitt pro Transaktion</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: €8.000</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">💎 PREMIUM-QUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Hochpreis Abschlüsse</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 40%</span></div></div>
+    `;
+  }
+  
+  // Gesamt: Alle wichtigen KPIs
+  return `
+    <div class="kpi-card"><div class="kpi-header">📅 ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Durchschnitt alle Termine</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 80%</span></div></div>
+    <div class="kpi-card"><div class="kpi-header">💰 KOSTEN PRO TERMIN</div><div class="kpi-value">€--</div><div class="kpi-subtitle">Qualifizierte Termine (KPT)</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter €150</span></div></div>
+    <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS ABSCHLUSS</div><div class="kpi-value">-- Tage</div><div class="kpi-subtitle">Erstkontakt → Vertrag</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 14 Tage</span></div></div>
+    <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erschienene → Abschluss</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 30%</span></div></div>
+  `;
+}
+
 var branchenLabels = { coaching: 'Coaching', versicherung: 'Versicherungsmakler', finanzen: 'Finanzmakler', immobilien: 'Projektentwickler', kapital: 'Kapitalanlage' };
 var currentUser = null;
 
@@ -3710,6 +3939,19 @@ function renderEmployeeGrids() {
   
   // Erst employees aus closeTeamMembers generieren
   generateEmployeesFromClose();
+  
+  // Fülle loadedEmployees für Personen-Dropdowns
+  loadedEmployees = (closeTeamMembers || []).map(function(m) {
+    return {
+      id: m.id || m.email,
+      name: ((m.first_name || '') + ' ' + (m.last_name || '')).trim() || m.email,
+      email: m.email,
+      roles: savedRoles[m.id || m.email] || []
+    };
+  });
+  
+  // Personen-Dropdowns befüllen
+  populatePersonDropdowns();
   
   // All employees
   var gesamtGrid = document.getElementById('gesamt-employee-grid');
