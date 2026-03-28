@@ -2698,12 +2698,352 @@ var formulaTemplates = [
   { id: 'custom', name: 'Eigene Formel', desc: 'Komplett selbst definieren', example: 'Wähle Kennzahlen und Operatoren frei' }
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// KPI-DEFINITIONEN: Jede Kachel hat eine Formel mit konfigurierbaren Parametern
+// ═══════════════════════════════════════════════════════════════════════════════
+var KPI_DEFINITIONS = {
+  // ─── ÜBERSICHT ───────────────────────────────────────────────────────────────
+  'erscheinungsquote': {
+    name: 'Erscheinungsquote',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der gebuchten Termine werden wahrgenommen?',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Erschienene Termine', desc: 'Anzahl Kontakte die tatsächlich erschienen sind', icon: '✅' },
+      { id: 'B', name: 'Gebuchte Termine', desc: 'Anzahl aller gebuchten Termine', icon: '📅' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b * 100).toFixed(1) : '—'; }
+  },
+  'kosten_pro_termin': {
+    name: 'Kosten pro Termin',
+    formula: 'A ÷ B',
+    formulaDesc: 'Wie viel kostet ein qualifizierter Termin?',
+    unit: '€',
+    direction: 'lower_better',
+    params: [
+      { id: 'A', name: 'Werbeausgaben', desc: 'Gesamte Marketing-/Werbekosten im Zeitraum', icon: '💸' },
+      { id: 'B', name: 'Qualifizierte Termine', desc: 'Anzahl der qualifizierten Termine', icon: '📅' }
+    ],
+    calculate: function(a, b) { return b > 0 ? Math.round(a / b) : '—'; }
+  },
+  'zeit_bis_abschluss': {
+    name: 'Zeit bis Abschluss',
+    formula: 'Ø(Abschluss − Erstkontakt)',
+    formulaDesc: 'Durchschnittliche Tage vom Erstkontakt bis zum Vertragsabschluss',
+    unit: 'Tage',
+    direction: 'lower_better',
+    params: [
+      { id: 'A', name: 'Erstkontakt-Datum', desc: 'Datum des ersten Kontakts (Lead erstellt oder erster Anruf)', icon: '📞' },
+      { id: 'B', name: 'Abschluss-Datum', desc: 'Datum des Vertragsabschlusses (Opportunity Won)', icon: '✅' }
+    ],
+    calculate: function(a, b) { return 'Ø ' + Math.round((b - a) / (1000 * 60 * 60 * 24)); }
+  },
+  'abschlussquote': {
+    name: 'Abschlussquote',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der erschienenen Kontakte schließen ab?',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Abschlüsse', desc: 'Anzahl gewonnener Opportunities (Won)', icon: '🏆' },
+      { id: 'B', name: 'Erschienene Kontakte', desc: 'Anzahl Kontakte die zum Abschlussgespräch erschienen', icon: '👤' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b * 100).toFixed(1) : '—'; }
+  },
+
+  // ─── OPENER / AKQUISITION ────────────────────────────────────────────────────
+  'nichterscheinungsquote_setter': {
+    name: 'Nichterscheinungsquote → Setter',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der Kontakte erscheinen NICHT beim Terminierer?',
+    unit: '%',
+    direction: 'lower_better',
+    params: [
+      { id: 'A', name: 'Nicht erschienen', desc: 'Anzahl No-Shows beim Setter-Termin', icon: '❌' },
+      { id: 'B', name: 'Gebuchte Setter-Termine', desc: 'Alle für Setter gebuchten Termine', icon: '📅' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b * 100).toFixed(0) : '—'; }
+  },
+  'uebergabe_quote': {
+    name: 'Übergabe-Quote',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der erreichten Kontakte werden an Terminierung übergeben?',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Übergaben', desc: 'Anzahl Kontakte die an Terminierung übergeben wurden', icon: '🎯' },
+      { id: 'B', name: 'Erreichte Kontakte', desc: 'Anzahl erfolgreich erreichter Kontakte', icon: '📞' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b * 100).toFixed(1) : '—'; }
+  },
+  'durchschnittliche_gespraechszeit': {
+    name: 'Ø Gesprächszeit',
+    formula: 'A ÷ B',
+    formulaDesc: 'Durchschnittliche Dauer eines Gesprächs in Minuten',
+    unit: 'Min',
+    direction: 'neutral',
+    params: [
+      { id: 'A', name: 'Gesamte Gesprächszeit', desc: 'Summe aller Gesprächsminuten', icon: '⏱️' },
+      { id: 'B', name: 'Anzahl Gespräche', desc: 'Anzahl geführter Gespräche (verbunden)', icon: '📞' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b).toFixed(1) : '—'; }
+  },
+  'verbindlichkeit': {
+    name: 'Verbindlichkeit',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der geplanten Aktivitäten wurden eingehalten?',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Eingehaltene Termine', desc: 'Anzahl pünktlich eingehaltener Termine/Aktivitäten', icon: '✅' },
+      { id: 'B', name: 'Geplante Termine', desc: 'Anzahl aller geplanten Termine/Aktivitäten', icon: '📅' }
+    ],
+    calculate: function(a, b) { return b > 0 ? Math.round(a / b * 100) : '—'; }
+  },
+
+  // ─── SETTER / TERMINIERUNG ───────────────────────────────────────────────────
+  'qualifizierungs_erscheinungsquote': {
+    name: 'Qualifizierungs-Erscheinungsquote',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent erscheinen zum Qualifizierungsgespräch?',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Erschienene', desc: 'Anzahl Kontakte die zum Qualifizierungstermin erschienen', icon: '✅' },
+      { id: 'B', name: 'Gebuchte Q-Termine', desc: 'Alle gebuchten Qualifizierungstermine', icon: '📅' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b * 100).toFixed(1) : '—'; }
+  },
+  'nichterscheinungsquote_closer': {
+    name: 'Nichterscheinungsquote → Closer',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der Qualifizierten erscheinen NICHT beim Abschließer?',
+    unit: '%',
+    direction: 'lower_better',
+    params: [
+      { id: 'A', name: 'Nicht erschienen', desc: 'Anzahl No-Shows beim Closer-Termin', icon: '❌' },
+      { id: 'B', name: 'Gebuchte Closer-Termine', desc: 'Alle für Closer gebuchten Termine', icon: '📅' }
+    ],
+    calculate: function(a, b) { return b > 0 ? Math.round(a / b * 100) : '—'; }
+  },
+  'qualifizierungsquote': {
+    name: 'Qualifizierungsquote',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der Erschienenen werden als qualifiziert eingestuft?',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Qualifizierte', desc: 'Anzahl als qualifiziert eingestufter Kontakte', icon: '🎯' },
+      { id: 'B', name: 'Erschienene', desc: 'Anzahl erschienener Kontakte im Qualifizierungsgespräch', icon: '👤' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b * 100).toFixed(1) : '—'; }
+  },
+  'zeit_bis_buchung': {
+    name: 'Zeit bis Buchung',
+    formula: 'Ø(B − A)',
+    formulaDesc: 'Durchschnittliche Tage von der Übergabe bis zur Terminbuchung',
+    unit: 'Tage',
+    direction: 'lower_better',
+    params: [
+      { id: 'A', name: 'Übergabe-Datum', desc: 'Datum der Übergabe an Terminierung', icon: '📤' },
+      { id: 'B', name: 'Buchungs-Datum', desc: 'Datum der Terminbuchung', icon: '📅' }
+    ],
+    calculate: function(a, b) { return Math.round((b - a) / (1000 * 60 * 60 * 24) * 10) / 10; }
+  },
+
+  // ─── CLOSER / ABSCHLUSS ──────────────────────────────────────────────────────
+  'abschluss_erscheinungsquote': {
+    name: 'Abschluss-Erscheinungsquote',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der Qualifizierten erscheinen zum Abschlussgespräch?',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Erschienene', desc: 'Anzahl Kontakte die zum Abschlusstermin erschienen', icon: '✅' },
+      { id: 'B', name: 'Gebuchte Abschlusstermine', desc: 'Alle gebuchten Abschlusstermine', icon: '📅' }
+    ],
+    calculate: function(a, b) { return b > 0 ? Math.round(a / b * 100) : '—'; }
+  },
+  'nichterscheinungsquote_betreuung': {
+    name: 'Nichterscheinungsquote → Betreuung',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der Neukunden erscheinen NICHT zum AM-Ersttermin?',
+    unit: '%',
+    direction: 'lower_better',
+    params: [
+      { id: 'A', name: 'Nicht erschienen', desc: 'Anzahl No-Shows beim Account Manager Ersttermin', icon: '❌' },
+      { id: 'B', name: 'Gebuchte AM-Termine', desc: 'Alle gebuchten Ersttermine mit Account Manager', icon: '📅' }
+    ],
+    calculate: function(a, b) { return b > 0 ? Math.round(a / b * 100) : '—'; }
+  },
+  'durchschnittlicher_auftragswert': {
+    name: 'Ø Auftragswert',
+    formula: 'A ÷ B',
+    formulaDesc: 'Durchschnittlicher Umsatz pro Abschluss',
+    unit: '€',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Gesamtumsatz', desc: 'Summe aller Opportunity-Werte (Won)', icon: '💰' },
+      { id: 'B', name: 'Anzahl Abschlüsse', desc: 'Anzahl gewonnener Opportunities', icon: '🏆' }
+    ],
+    calculate: function(a, b) { return b > 0 ? '€' + Math.round(a / b).toLocaleString('de-DE') : '—'; }
+  },
+  'premium_quote': {
+    name: 'Premium-Quote',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Wie viel Prozent der Abschlüsse sind Hochpreis-Produkte?',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Premium-Abschlüsse', desc: 'Anzahl Abschlüsse über dem Premium-Schwellwert', icon: '💎' },
+      { id: 'B', name: 'Alle Abschlüsse', desc: 'Gesamtanzahl aller Abschlüsse', icon: '📊' }
+    ],
+    calculate: function(a, b) { return b > 0 ? Math.round(a / b * 100) : '—'; }
+  },
+
+  // ─── UNIT ECONOMICS ──────────────────────────────────────────────────────────
+  'klw_kak_verhaeltnis': {
+    name: 'KLW : KAK Verhältnis',
+    formula: 'A ÷ B',
+    formulaDesc: 'Kundenlebenswert geteilt durch Kundenakquisekosten (Ziel: >3x)',
+    unit: 'x',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Kundenlebenswert (KLW)', desc: 'Durchschnittlicher Umsatz pro Kunde über gesamte Laufzeit', icon: '💎' },
+      { id: 'B', name: 'Kundenakquisekosten (KAK)', desc: 'Durchschnittliche Kosten um einen Kunden zu gewinnen', icon: '💸' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b).toFixed(1) + 'x' : '—'; }
+  },
+  'amortisationszeit': {
+    name: 'Amortisationszeit',
+    formula: 'A ÷ B',
+    formulaDesc: 'Monate bis die Akquisekosten durch Umsatz gedeckt sind',
+    unit: 'Mon.',
+    direction: 'lower_better',
+    params: [
+      { id: 'A', name: 'Kundenakquisekosten', desc: 'Durchschnittliche Kosten um einen Kunden zu gewinnen', icon: '💸' },
+      { id: 'B', name: 'Monatlicher Kundenumsatz', desc: 'Durchschnittlicher monatlicher Umsatz pro Kunde', icon: '💰' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b).toFixed(1) : '—'; }
+  },
+  'wachstumseffizienz': {
+    name: 'Wachstumseffizienz',
+    formula: 'A ÷ B',
+    formulaDesc: 'Netto-Neuzuwachs geteilt durch Vertriebskosten (Ziel: >0.75)',
+    unit: '',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Netto-Neuzuwachs', desc: 'Neuer ARR minus Churn (Wiederkehrender Jahresumsatz)', icon: '📈' },
+      { id: 'B', name: 'Vertriebskosten', desc: 'Gesamte Vertriebs- und Marketingkosten', icon: '💸' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b).toFixed(2) : '—'; }
+  },
+  'erweiterungsquote': {
+    name: 'Erweiterungsquote',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Anteil von Upselling/Cross-Selling am Basis-Umsatz',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Erweiterungsumsatz', desc: 'Umsatz aus Höherverkauf + Querverkauf', icon: '📈' },
+      { id: 'B', name: 'Basis-JWU', desc: 'Jährlicher Wiederkehrender Basis-Umsatz', icon: '💰' }
+    ],
+    calculate: function(a, b) { return b > 0 ? Math.round(a / b * 100) : '—'; }
+  },
+
+  // ─── RETENTION ───────────────────────────────────────────────────────────────
+  'net_umsatz_retention': {
+    name: 'Net Umsatz Retention',
+    formula: '(A ÷ B) × 100',
+    formulaDesc: 'Umsatz bestehender Kunden vs. Vorjahr inkl. Expansion/Churn (Ziel: >100%)',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Aktueller Umsatz (Bestand)', desc: 'Umsatz der Kunden die vor 12 Monaten schon da waren', icon: '💰' },
+      { id: 'B', name: 'Umsatz vor 12 Monaten', desc: 'Deren Umsatz vor 12 Monaten', icon: '📊' }
+    ],
+    calculate: function(a, b) { return b > 0 ? (a / b * 100).toFixed(1) : '—'; }
+  },
+  'brutto_umsatzbindung': {
+    name: 'Brutto-Umsatzbindung',
+    formula: '((A − B) ÷ A) × 100',
+    formulaDesc: 'Wie viel Prozent vom Umsatz bleibt erhalten (ohne Expansion)?',
+    unit: '%',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Start-Umsatz', desc: 'Umsatz am Anfang des Zeitraums', icon: '💰' },
+      { id: 'B', name: 'Verlorener Umsatz', desc: 'Umsatz durch Kündigungen/Downgrades', icon: '📉' }
+    ],
+    calculate: function(a, b) { return a > 0 ? ((a - b) / a * 100).toFixed(1) : '—'; }
+  },
+  'kunden_lifetime_value': {
+    name: 'Kunden Lifetime Value',
+    formula: 'A × B',
+    formulaDesc: 'Durchschnittlicher Gesamtumsatz pro Kunde über die Laufzeit',
+    unit: '€',
+    direction: 'higher_better',
+    params: [
+      { id: 'A', name: 'Ø Monatsumsatz', desc: 'Durchschnittlicher monatlicher Umsatz pro Kunde', icon: '💰' },
+      { id: 'B', name: 'Ø Laufzeit (Monate)', desc: 'Durchschnittliche Kundenbeziehungsdauer in Monaten', icon: '📅' }
+    ],
+    calculate: function(a, b) { return '€' + Math.round(a * b).toLocaleString('de-DE'); }
+  }
+};
+
+// Hilfsfunktion: KPI-Definition anhand des Kachel-Headers finden
+function findKpiDefinition(headerText) {
+  var normalized = headerText.toLowerCase()
+    .replace(/[📅💰⏱️✅❌🎯📊💎📈🏆🪄⭐👤📞📤🤝]/g, '')
+    .trim()
+    .replace(/[^a-zäöüß0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+  
+  // Direktes Mapping
+  var mapping = {
+    'erscheinungsquote': 'erscheinungsquote',
+    'kosten_pro_termin': 'kosten_pro_termin',
+    'zeit_bis_abschluss': 'zeit_bis_abschluss',
+    'abschlussquote': 'abschlussquote',
+    'nichterscheinungsquote_setter': 'nichterscheinungsquote_setter',
+    'uebergabe_quote': 'uebergabe_quote',
+    'ubergabe_quote': 'uebergabe_quote',
+    'gespraechszeit': 'durchschnittliche_gespraechszeit',
+    'durchschnittliche_gespraechszeit': 'durchschnittliche_gespraechszeit',
+    'verbindlichkeit': 'verbindlichkeit',
+    'qualifizierungs_erscheinungsquote': 'qualifizierungs_erscheinungsquote',
+    'nichterscheinungsquote_closer': 'nichterscheinungsquote_closer',
+    'qualifizierungsquote': 'qualifizierungsquote',
+    'zeit_bis_buchung': 'zeit_bis_buchung',
+    'abschluss_erscheinungsquote': 'abschluss_erscheinungsquote',
+    'nichterscheinungsquote_betreuung': 'nichterscheinungsquote_betreuung',
+    'auftragswert': 'durchschnittlicher_auftragswert',
+    'durchschnittlicher_auftragswert': 'durchschnittlicher_auftragswert',
+    'premium_quote': 'premium_quote',
+    'klw_kak_verhaeltnis': 'klw_kak_verhaeltnis',
+    'amortisationszeit': 'amortisationszeit',
+    'wachstumseffizienz': 'wachstumseffizienz',
+    'erweiterungsquote': 'erweiterungsquote',
+    'net_umsatz_retention': 'net_umsatz_retention',
+    'brutto_umsatzbindung': 'brutto_umsatzbindung',
+    'kunden_lifetime_value': 'kunden_lifetime_value'
+  };
+  
+  // Suche nach passendem Key
+  for (var key in mapping) {
+    if (normalized.includes(key)) {
+      return KPI_DEFINITIONS[mapping[key]];
+    }
+  }
+  return null;
+}
+
 var allKennzahlen = ['Ausgehende Anrufe', 'Gesendete E-Mails', 'Gestartete Gespräche', 'Erreichbarkeitsquote', 'Übergaben an Terminierung', 'Gebuchte Termine', 'Erscheinungsquote', 'Qualifizierungsquote', 'Anrufe pro Buchung', 'Eingenommener Umsatz', 'Abschlussquote', 'Durchschn. Auftragswert', 'Abschlüsse gesamt', 'Vertriebspipeline', 'Anrufe gesamt', 'Offene Angebote', 'Aktive Kunden', 'Kündigungen', 'Zusatzumsatz', 'Portfolio-Wert', 'Werbeausgaben gesamt', 'Klicks', 'Einblendungen', 'Kontakte', 'Abschlüsse', 'Abonnenten gesamt', 'Neue Abonnenten', 'Nachrichten gesendet'];
 
 // DYNAMISCHE MITARBEITER-DATEN AUS CLOSE CRM
 // Wird automatisch aus closeTeamMembers + Rollenzuweisungen generiert
 var employees = { opener: [], setter: [], closer: [], kunden: [] };
-var employeeCrmData = {}; // Cache für CRM-Daten pro User
 
 // Generiere employees aus Close Team Members + deren Rollenzuweisungen
 function generateEmployeesFromClose() {
@@ -2717,7 +3057,6 @@ function generateEmployeesFromClose() {
     if (!Array.isArray(memberRoles)) memberRoles = [];
     
     var fullName = ((member.first_name || '') + ' ' + (member.last_name || '')).trim() || member.email;
-    var activityData = employeeCrmData[memberId] || {};
     
     memberRoles.forEach(function(role) {
       var empData = {
@@ -2725,12 +3064,12 @@ function generateEmployeesFromClose() {
         name: fullName,
         role: getRoleLabel(role),
         team: 'Teaching Finance',
-        rank: 0, // Wird später berechnet
+        rank: 0,
         goal: 100,
         trend: 0,
         image: member.image,
-        stats: generateStatsForRole(role, activityData),
-        skills: generateSkillsForRole(role, activityData),
+        stats: {}, // Stats kommen aus KPI-Konfiguration
+        skills: [],
         skillLabels: getSkillLabelsForRole(role),
         strengths: [],
         improvements: [],
@@ -2744,9 +3083,8 @@ function generateEmployeesFromClose() {
     });
   });
   
-  // Rankings berechnen
+  // Rankings nach Anzahl der Rollen (oder alphabetisch)
   ['opener', 'setter', 'closer', 'kunden'].forEach(function(type) {
-    employees[type].sort(function(a, b) { return (b.stats.hauptmetrik || 0) - (a.stats.hauptmetrik || 0); });
     employees[type].forEach(function(e, i) { e.rank = i + 1; });
   });
 }
@@ -2756,61 +3094,7 @@ function getRoleLabel(role) {
   return labels[role] || role;
 }
 
-function generateStatsForRole(role, data) {
-  if (role === 'opener') {
-    return {
-      anrufe: data.calls || 0,
-      erreicht: data.callsConnected || 0,
-      uebergaben: data.openerActivities || 0,
-      gespraechszeit: formatDuration(data.avgCallDuration || 0),
-      noShowRate: (data.noShowRate || 0) + '%',
-      hauptmetrik: data.calls || 0
-    };
-  } else if (role === 'setter') {
-    return {
-      termine: data.setterActivities || 0,
-      erscheinung: (data.showUpRate || 0) + '%',
-      qualifiziert: (data.qualifyRate || 0) + '%',
-      zeit: (data.avgDaysToBooking || 0) + ' Tage',
-      settingShowUp: (data.showUpRate || 0) + '%',
-      closingNoShow: (data.closerNoShowRate || 0) + '%',
-      hauptmetrik: data.setterActivities || 0
-    };
-  } else if (role === 'closer') {
-    return {
-      umsatz: '€' + formatNumber(data.revenue || 0),
-      abschluss: (data.closeRate || 0) + '%',
-      auftrag: '€' + formatNumber(data.avgDealSize || 0),
-      premium: (data.premiumRate || 0) + '%',
-      closingShowUp: (data.closerShowUpRate || 0) + '%',
-      amNoShow: (data.amNoShowRate || 0) + '%',
-      hauptmetrik: data.revenue || 0
-    };
-  } else {
-    return {
-      nrr: (data.nrr || 100) + '%',
-      zusatz: '€' + formatNumber(data.expansionRevenue || 0),
-      kuendigung: (data.churnRate || 0) + '%',
-      nps: data.nps || 0,
-      portfolio: data.portfolioCount || 0,
-      healthWert: data.healthScore || 0,
-      hauptmetrik: data.nrr || 100
-    };
-  }
-}
-
-function generateSkillsForRole(role, data) {
-  if (role === 'opener') {
-    return { erreichbarkeit: data.reachRate || 0, qualifizierung: data.qualifyRate || 0, uebergabeQuote: data.handoffRate || 0, noShowRate: data.noShowRate || 0, gespraechszeit: data.avgCallDuration || 0, crmWert: data.crmScore || 80 };
-  } else if (role === 'setter') {
-    return { settingShowUp: data.showUpRate || 0, qualifizierung: data.qualifyRate || 0, zeitBuchung: data.avgDaysToBooking || 0, closingNoShow: data.closerNoShowRate || 0, umbuchung: data.rebookRate || 0, crmWert: data.crmScore || 80 };
-  } else if (role === 'closer') {
-    return { abschlussQuote: data.closeRate || 0, avgTransaktionSize: data.avgDealSize || 0, premiumQuote: data.premiumRate || 0, closingShowUp: data.closerShowUpRate || 0, amNoShow: data.amNoShowRate || 0, sofortAbschluss: data.instantCloseRate || 0 };
-  } else {
-    return { nrr: data.nrr || 100, expansionRate: data.expansionRate || 0, KündigungRate: data.churnRate || 0, nps: data.nps || 0, responseTime: data.avgResponseTime || 0, healthWert: data.healthScore || 0 };
-  }
-}
-
+// Skill Labels für verschiedene Rollen (wird für das Modal verwendet)
 function getSkillLabelsForRole(role) {
   if (role === 'opener') {
     return { erreichbarkeit: 'Erreichbarkeitsquote', qualifizierung: 'Qualifizierungsrate', uebergabeQuote: 'Übergabe-Verbindlichkeit', noShowRate: 'Nichterscheinungsquote (niedrig=gut)', gespraechszeit: 'Ø Gesprächszeit (Sek)', crmWert: 'CRM-Dokumentation' };
@@ -2833,104 +3117,8 @@ function formatNumber(num) {
   return num.toLocaleString('de-DE');
 }
 
-// Lade CRM-Daten für alle Team-Mitglieder aus Close
-async function loadEmployeeCrmData() {
-  if (!closeApiKey || closeTeamMembers.length === 0) return;
-  
-  console.log('📊 Lade CRM-Daten für', closeTeamMembers.length, 'Mitarbeiter...');
-  
-  for (var i = 0; i < closeTeamMembers.length; i++) {
-    var member = closeTeamMembers[i];
-    var memberId = member.id || member.email;
-    
-    try {
-      // Anrufe laden
-      var callsResponse = await fetch('/api/close-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          endpoint: 'activity/call/?user_id=' + memberId + '&_limit=100', 
-          apiKey: closeApiKey 
-        })
-      });
-      var callsData = await callsResponse.json();
-      var calls = callsData.data || [];
-      
-      // Custom Activities laden (Opener, Setter, Closer Protokolle)
-      var activitiesResponse = await fetch('/api/close-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          endpoint: 'activity/custom_activity/?user_id=' + memberId + '&_limit=200', 
-          apiKey: closeApiKey 
-        })
-      });
-      var activitiesData = await activitiesResponse.json();
-      var activities = activitiesData.data || [];
-      
-      // Opportunities laden für Closer
-      var oppsResponse = await fetch('/api/close-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          endpoint: 'opportunity/?user_id=' + memberId + '&_limit=100', 
-          apiKey: closeApiKey 
-        })
-      });
-      var oppsData = await oppsResponse.json();
-      var opps = oppsData.data || [];
-      
-      // Zähle Activities nach Typ
-      var openerCount = 0, setterCount = 0, closerCount = 0, kundenCount = 0;
-      activities.forEach(function(a) {
-        var typeName = (a.custom_activity_type_name || '').toLowerCase();
-        if (typeName.includes('opener') || typeName.includes('1 ')) openerCount++;
-        else if (typeName.includes('setter') || typeName.includes('2 ')) setterCount++;
-        else if (typeName.includes('closer') || typeName.includes('3 ')) closerCount++;
-        else if (typeName.includes('bestand') || typeName.includes('4 ')) kundenCount++;
-      });
-      
-      // Berechne Metriken
-      var totalCalls = calls.length;
-      var connectedCalls = calls.filter(function(c) { return c.duration && c.duration > 0; }).length;
-      var totalDuration = calls.reduce(function(sum, c) { return sum + (c.duration || 0); }, 0);
-      var avgDuration = connectedCalls > 0 ? totalDuration / connectedCalls : 0;
-      
-      var wonOpps = opps.filter(function(o) { return o.status_type === 'won'; });
-      var totalRevenue = wonOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
-      var avgDealSize = wonOpps.length > 0 ? totalRevenue / wonOpps.length : 0;
-      var closeRate = opps.length > 0 ? Math.round((wonOpps.length / opps.length) * 100) : 0;
-      
-      employeeCrmData[memberId] = {
-        calls: totalCalls,
-        callsConnected: connectedCalls,
-        avgCallDuration: avgDuration,
-        reachRate: totalCalls > 0 ? Math.round((connectedCalls / totalCalls) * 100) : 0,
-        openerActivities: openerCount,
-        setterActivities: setterCount,
-        closerActivities: closerCount,
-        kundenActivities: kundenCount,
-        revenue: totalRevenue / 100, // Close speichert in Cents
-        avgDealSize: avgDealSize / 100,
-        closeRate: closeRate,
-        opportunities: opps.length,
-        wonOpportunities: wonOpps.length
-      };
-      
-      console.log('  ✓', member.first_name, member.last_name, '- Calls:', totalCalls, 'Activities:', activities.length, 'Opps:', opps.length);
-      
-      // Rate limiting
-      await new Promise(function(resolve) { setTimeout(resolve, 200); });
-      
-    } catch (error) {
-      console.error('Fehler beim Laden von CRM-Daten für', memberId, error);
-    }
-  }
-  
-  console.log('✓ CRM-Daten vollständig geladen');
-  generateEmployeesFromClose();
-  renderEmployeeGrids();
-}
+// CRM-Daten werden jetzt basierend auf KPI-Konfiguration geladen, nicht hardcoded
+// Die KPI-Kacheln holen ihre Daten dynamisch basierend auf der Konfiguration
 
 
 // ONBOARDING
@@ -3257,9 +3445,6 @@ async function loadCloseTeam() {
     renderCloseTeam();
     renderEmployeeGrids();
     
-    // Lade CRM-Daten für alle Mitarbeiter (im Hintergrund)
-    loadEmployeeCrmData();
-    
   } catch (error) {
     console.error('Close team load error:', error);
   }
@@ -3413,6 +3598,7 @@ function getTeamByRole(role) {
 // Render employee grids by role
 function renderEmployeeGrids() {
   var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  var savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
   
   // Erst employees aus closeTeamMembers generieren
   generateEmployeesFromClose();
@@ -3425,38 +3611,36 @@ function renderEmployeeGrids() {
   var kundenGrid = document.getElementById('kunden-employee-grid');
   var bestEmployeesList = document.getElementById('best-employees-list');
   
-  // Build employee card with Close CRM data (calls, activities, opportunities, etc.)
-  function buildEmployeeCard(member, roleLabel, activityData) {
+  // Build employee card - zeigt Name, Rolle und konfigurierte KPIs
+  function buildEmployeeCard(member, roleLabel) {
     var initials = (member.first_name?.[0] || '') + (member.last_name?.[0] || '');
     var name = ((member.first_name || '') + ' ' + (member.last_name || '')).trim() || member.email;
     var memberId = member.id || member.email;
-    var data = activityData || employeeCrmData[memberId] || {};
     
-    // Stats basierend auf Rolle
+    // Finde konfigurierte KPIs für diese Rolle
+    var roleKey = roleLabel.includes('Opener') ? 'opener' : 
+                  roleLabel.includes('Setter') ? 'setter' : 
+                  roleLabel.includes('Closer') ? 'closer' : 'kunden';
+    
+    // Zeige bis zu 2 konfigurierte KPIs als Vorschau
+    var configuredKpis = [];
+    Object.keys(savedKpis).forEach(function(kpiId) {
+      var kpi = savedKpis[kpiId];
+      // Prüfe ob KPI zur Rolle passt (anhand des KPI-IDs oder der Konfiguration)
+      if (kpi && kpi.parameter) {
+        configuredKpis.push({ id: kpiId, config: kpi });
+      }
+    });
+    
     var statsHtml = '';
-    if (roleLabel.includes('Opener')) {
-      statsHtml = '<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;">' +
-        '<div><span style="color:var(--text-dim);">Anrufe</span><div style="font-weight:600;">' + (data.calls || 0) + '</div></div>' +
-        '<div><span style="color:var(--text-dim);">Erreicht</span><div style="font-weight:600;">' + (data.reachRate || 0) + '%</div></div>' +
-        '<div><span style="color:var(--text-dim);">Protokolle</span><div style="font-weight:600;">' + (data.openerActivities || 0) + '</div></div>' +
-      '</div>';
-    } else if (roleLabel.includes('Setter')) {
-      statsHtml = '<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;">' +
-        '<div><span style="color:var(--text-dim);">Termine</span><div style="font-weight:600;">' + (data.setterActivities || 0) + '</div></div>' +
-        '<div><span style="color:var(--text-dim);">Anrufe</span><div style="font-weight:600;">' + (data.calls || 0) + '</div></div>' +
-      '</div>';
-    } else if (roleLabel.includes('Closer')) {
-      var revenue = data.revenue || 0;
-      statsHtml = '<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;">' +
-        '<div><span style="color:var(--text-dim);">Umsatz</span><div style="font-weight:600;">€' + formatNumber(revenue) + '</div></div>' +
-        '<div><span style="color:var(--text-dim);">Quote</span><div style="font-weight:600;">' + (data.closeRate || 0) + '%</div></div>' +
-        '<div><span style="color:var(--text-dim);">Opps</span><div style="font-weight:600;">' + (data.wonOpportunities || 0) + '/' + (data.opportunities || 0) + '</div></div>' +
-      '</div>';
-    } else if (roleLabel.includes('AM') || roleLabel.includes('Kunden')) {
-      statsHtml = '<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;">' +
-        '<div><span style="color:var(--text-dim);">Checks</span><div style="font-weight:600;">' + (data.kundenActivities || 0) + '</div></div>' +
-        '<div><span style="color:var(--text-dim);">Anrufe</span><div style="font-weight:600;">' + (data.calls || 0) + '</div></div>' +
-      '</div>';
+    if (configuredKpis.length > 0) {
+      statsHtml = '<div style="display:flex;gap:8px;margin-top:8px;font-size:10px;flex-wrap:wrap;">';
+      configuredKpis.slice(0, 2).forEach(function(kpi) {
+        var paramName = kpi.config.parameter?.split('/').pop() || 'KPI';
+        statsHtml += '<span style="background:var(--bg-panel);padding:2px 6px;border-radius:4px;color:var(--text-dim);">' + 
+          truncateText(paramName, 15) + '</span>';
+      });
+      statsHtml += '</div>';
     }
     
     return '<div class="employee-card" onclick="openEmployeeModalDynamic(\'' + memberId + '\')" style="background:var(--bg-card);padding:16px;border-radius:8px;border:1px solid var(--border);cursor:pointer;">' +
@@ -3471,19 +3655,19 @@ function renderEmployeeGrids() {
     '</div>';
   }
   
-  // Build employee row for "Beste Mitarbeiter"
+  function truncateText(text, maxLength) {
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  }
+  
+  // Build employee row for "Beste Mitarbeiter" - zeigt Mitarbeiter mit zugewiesenen Rollen
   function buildEmployeeRow(member, rank) {
     var initials = (member.first_name?.[0] || '') + (member.last_name?.[0] || '');
     var name = ((member.first_name || '') + ' ' + (member.last_name || '')).trim() || member.email;
     var memberId = member.id || member.email;
-    var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
     var memberRoles = savedRoles[memberId] || [];
     if (typeof memberRoles === 'string') memberRoles = memberRoles ? [memberRoles] : [];
     var roleLabels = { opener: 'Akquisition', setter: 'Terminierung', closer: 'Abschluss', account_manager: 'Betreuung' };
-    var roleDisplay = memberRoles.map(function(r) { return roleLabels[r] || r; }).join(' / ');
-    var data = employeeCrmData[memberId] || {};
-    var mainMetric = data.calls || data.revenue || 0;
-    var metricLabel = data.revenue ? '€' + formatNumber(data.revenue) : (data.calls || 0) + ' Anrufe';
+    var roleDisplay = memberRoles.map(function(r) { return roleLabels[r] || r; }).join(' / ') || 'Keine Rolle';
     
     return '<div class="employee-row" onclick="openEmployeeModalDynamic(\'' + memberId + '\')" style="cursor:pointer;">' +
       '<div class="employee-avatar-small">' + (initials || '👤') + '</div>' +
@@ -3491,27 +3675,21 @@ function renderEmployeeGrids() {
         '<div class="employee-name-small">' + name + '</div>' +
         '<div class="employee-role-small">' + roleDisplay + '</div>' +
       '</div>' +
-      '<div><div class="employee-goal">' + metricLabel + '</div></div>' +
       '<div class="employee-rank-small">#' + rank + '</div>' +
     '</div>';
   }
   
-  // Beste Mitarbeiter - Top 3 nach Activity
+  // Beste Mitarbeiter - zeigt Mitarbeiter mit zugewiesenen Rollen
   if (bestEmployeesList) {
-    var allWithData = closeTeamMembers.filter(function(m) {
+    var membersWithRoles = closeTeamMembers.filter(function(m) {
       var memberId = m.id || m.email;
-      var data = employeeCrmData[memberId];
-      return data && (data.calls > 0 || data.revenue > 0);
-    }).sort(function(a, b) {
-      var dataA = employeeCrmData[a.id || a.email] || {};
-      var dataB = employeeCrmData[b.id || b.email] || {};
-      var scoreA = (dataA.revenue || 0) + (dataA.calls || 0) * 10;
-      var scoreB = (dataB.revenue || 0) + (dataB.calls || 0) * 10;
-      return scoreB - scoreA;
+      var memberRoles = savedRoles[memberId] || [];
+      if (typeof memberRoles === 'string') memberRoles = memberRoles ? [memberRoles] : [];
+      return memberRoles.length > 0;
     }).slice(0, 3);
     
-    if (allWithData.length > 0) {
-      bestEmployeesList.innerHTML = allWithData.map(function(m, i) {
+    if (membersWithRoles.length > 0) {
+      bestEmployeesList.innerHTML = membersWithRoles.map(function(m, i) {
         return buildEmployeeRow(m, i + 1);
       }).join('');
     } else if (closeTeamMembers.length > 0) {
@@ -3568,16 +3746,17 @@ function renderEmployeeGrids() {
     kundenGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;';
   }
   
-  console.log('Employee grids rendered - Team:', closeTeamMembers.length, 'mit CRM-Daten:', Object.keys(employeeCrmData).length);
+  var assignedRoles = Object.keys(savedRoles).filter(function(k) { return savedRoles[k] && savedRoles[k].length > 0; }).length;
+  console.log('Employee grids rendered - Team:', closeTeamMembers.length, 'mit Rollen:', assignedRoles);
 }
 
-// Dynamisches Employee Modal
+// Dynamisches Employee Modal - zeigt konfigurierte KPIs für den Mitarbeiter
 function openEmployeeModalDynamic(memberId) {
   var member = closeTeamMembers.find(function(m) { return (m.id || m.email) === memberId; });
   if (!member) return;
   
-  var data = employeeCrmData[memberId] || {};
   var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  var savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
   var memberRoles = savedRoles[memberId] || [];
   if (typeof memberRoles === 'string') memberRoles = memberRoles ? [memberRoles] : [];
   
@@ -3595,45 +3774,81 @@ function openEmployeeModalDynamic(memberId) {
   document.getElementById('modal-goal').textContent = '';
   document.getElementById('modal-trend').textContent = '';
   
-  // Stats Grid mit echten Daten
+  // Stats Grid - zeige konfigurierte KPIs für die Rollen dieses Mitarbeiters
   var statsHtml = '';
-  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📞</div><div class="emp-modal-stat-value">' + (data.calls || 0) + '</div><div class="emp-modal-stat-label">Anrufe gesamt</div></div>';
-  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">✅</div><div class="emp-modal-stat-value">' + (data.callsConnected || 0) + '</div><div class="emp-modal-stat-label">Erreicht</div></div>';
-  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📊</div><div class="emp-modal-stat-value">' + (data.reachRate || 0) + '%</div><div class="emp-modal-stat-label">Erreichbarkeit</div></div>';
-  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">💰</div><div class="emp-modal-stat-value">€' + formatNumber(data.revenue || 0) + '</div><div class="emp-modal-stat-label">Umsatz</div></div>';
+  var configuredKpisForRoles = [];
   
-  // Activities
-  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📝</div><div class="emp-modal-stat-value">' + (data.openerActivities || 0) + '</div><div class="emp-modal-stat-label">Opener-Protokolle</div></div>';
-  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📅</div><div class="emp-modal-stat-value">' + (data.setterActivities || 0) + '</div><div class="emp-modal-stat-label">Setter-Protokolle</div></div>';
-  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">🎯</div><div class="emp-modal-stat-value">' + (data.closerActivities || 0) + '</div><div class="emp-modal-stat-label">Closer-Protokolle</div></div>';
-  statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">🤝</div><div class="emp-modal-stat-value">' + (data.kundenActivities || 0) + '</div><div class="emp-modal-stat-label">Kunden-Checks</div></div>';
+  // Sammle alle KPIs die für die Rollen dieses Mitarbeiters relevant sind
+  Object.keys(savedKpis).forEach(function(kpiId) {
+    var kpi = savedKpis[kpiId];
+    if (kpi && kpi.parameter) {
+      // KPI-ID enthält oft die Rolle (z.B. "opener-calls", "setter-termine")
+      var isRelevant = memberRoles.some(function(role) {
+        return kpiId.toLowerCase().includes(role) || 
+               (kpi.parameter && kpi.parameter.toLowerCase().includes(role));
+      });
+      // Oder zeige alle konfigurierten KPIs wenn keine Rolle-spezifische Zuordnung
+      if (isRelevant || memberRoles.length === 0) {
+        configuredKpisForRoles.push({ id: kpiId, config: kpi });
+      }
+    }
+  });
+  
+  if (configuredKpisForRoles.length > 0) {
+    configuredKpisForRoles.forEach(function(kpi) {
+      var paramName = kpi.config.parameter?.split('/').pop() || kpi.id;
+      var icon = '📊';
+      if (paramName.toLowerCase().includes('anruf') || paramName.toLowerCase().includes('call')) icon = '📞';
+      else if (paramName.toLowerCase().includes('termin')) icon = '📅';
+      else if (paramName.toLowerCase().includes('umsatz') || paramName.toLowerCase().includes('revenue')) icon = '💰';
+      else if (paramName.toLowerCase().includes('quote')) icon = '📈';
+      else if (paramName.toLowerCase().includes('show') || paramName.toLowerCase().includes('erschein')) icon = '✅';
+      else if (paramName.toLowerCase().includes('no show') || paramName.toLowerCase().includes('nichterschein')) icon = '❌';
+      
+      statsHtml += '<div class="emp-modal-stat-card">' +
+        '<div class="emp-modal-stat-icon">' + icon + '</div>' +
+        '<div class="emp-modal-stat-value">—</div>' +
+        '<div class="emp-modal-stat-label">' + paramName + '</div>' +
+        '<div class="emp-modal-stat-change" style="color:var(--text-dim);font-size:10px;">Konfiguriert</div>' +
+      '</div>';
+    });
+  } else {
+    // Keine KPIs konfiguriert - zeige Platzhalter basierend auf Rollen
+    if (memberRoles.includes('opener')) {
+      statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📞</div><div class="emp-modal-stat-value">—</div><div class="emp-modal-stat-label">Anrufe</div></div>';
+      statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">✅</div><div class="emp-modal-stat-value">—</div><div class="emp-modal-stat-label">Erreicht</div></div>';
+    }
+    if (memberRoles.includes('setter')) {
+      statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📅</div><div class="emp-modal-stat-value">—</div><div class="emp-modal-stat-label">Termine</div></div>';
+      statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">✅</div><div class="emp-modal-stat-value">—</div><div class="emp-modal-stat-label">Erscheinung</div></div>';
+    }
+    if (memberRoles.includes('closer')) {
+      statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">💰</div><div class="emp-modal-stat-value">—</div><div class="emp-modal-stat-label">Umsatz</div></div>';
+      statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📊</div><div class="emp-modal-stat-value">—</div><div class="emp-modal-stat-label">Abschlussquote</div></div>';
+    }
+    if (memberRoles.includes('account_manager')) {
+      statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">🤝</div><div class="emp-modal-stat-value">—</div><div class="emp-modal-stat-label">Kunden-Checks</div></div>';
+      statsHtml += '<div class="emp-modal-stat-card"><div class="emp-modal-stat-icon">📈</div><div class="emp-modal-stat-value">—</div><div class="emp-modal-stat-label">Bindungsrate</div></div>';
+    }
+    if (memberRoles.length === 0) {
+      statsHtml = '<div style="color:var(--text-dim);padding:16px;text-align:center;">Keine Rolle zugewiesen. Weise in den Einstellungen eine Rolle zu.</div>';
+    }
+  }
   
   document.getElementById('modal-emp-stats').innerHTML = statsHtml;
   
-  // Skills (Stärken/Verbesserungen) - basierend auf Daten berechnen
-  var strengths = [];
-  var improvements = [];
+  // Stärken/Verbesserungen - basierend auf konfigurierten KPIs
+  var kpiCount = configuredKpisForRoles.length;
   
-  if (data.reachRate > 25) strengths.push('Überdurchschnittliche Erreichbarkeitsquote (' + data.reachRate + '%)');
-  else if (data.reachRate > 0 && data.reachRate < 20) improvements.push('Erreichbarkeitsquote verbessern (' + data.reachRate + '%)');
+  document.getElementById('modal-emp-strengths').innerHTML = kpiCount > 0 ?
+    '<div style="color:var(--text-dim);">' + kpiCount + ' KPIs konfiguriert. Werte werden aus Close CRM geladen.</div>' :
+    '<div style="color:var(--text-dim);">Konfiguriere KPIs um Stärken zu analysieren.</div>';
   
-  if (data.closeRate > 30) strengths.push('Starke Abschlussquote (' + data.closeRate + '%)');
-  else if (data.closeRate > 0 && data.closeRate < 20) improvements.push('Abschlussquote steigern (' + data.closeRate + '%)');
+  document.getElementById('modal-emp-improvements').innerHTML = 
+    '<div style="color:var(--text-dim);">Verbesserungsvorschläge werden basierend auf KPI-Zielen generiert.</div>';
   
-  if (data.calls > 100) strengths.push('Hohe Anrufaktivität (' + data.calls + ' Anrufe)');
-  else if (data.calls > 0 && data.calls < 30) improvements.push('Mehr Anrufe tätigen (' + data.calls + ' aktuell)');
-  
-  if (data.revenue > 50000) strengths.push('Top-Performer Umsatz (€' + formatNumber(data.revenue) + ')');
-  
-  document.getElementById('modal-emp-strengths').innerHTML = strengths.length ? 
-    strengths.map(function(s) { return '<div class="emp-modal-strength-item"><span class="emp-modal-strength-icon">💪</span><span>' + s + '</span></div>'; }).join('') : 
-    '<div style="color:var(--text-dim);">Noch nicht genug Daten für Analyse</div>';
-  
-  document.getElementById('modal-emp-improvements').innerHTML = improvements.length ? 
-    improvements.map(function(s) { return '<div class="emp-modal-improvement-item"><span class="emp-modal-improvement-icon">📈</span><span>' + s + '</span></div>'; }).join('') : 
-    '<div style="color:var(--text-dim);">Keine Verbesserungsvorschläge</div>';
-  
-  document.getElementById('modal-emp-recommendations').innerHTML = '<div style="color:var(--text-dim);">Empfehlungen werden basierend auf Langzeitdaten generiert.</div>';
+  document.getElementById('modal-emp-recommendations').innerHTML = 
+    '<div style="color:var(--text-dim);">Empfehlungen erscheinen nach KPI-Konfiguration und Datenanalyse.</div>';
   
   document.getElementById('employeeModal').classList.add('active');
 }
@@ -3837,6 +4052,12 @@ function formatCurrency(value) {
 // =====================================================
 let closeParameters = null; // Cache für geladene Parameter
 let currentKpiTarget = null; // Welche Kachel wird konfiguriert
+let currentParamBeingConfigured = null; // Welcher Parameter wird gerade konfiguriert
+
+
+// HINWEIS: Die alten kpiDefinitions wurden entfernt.
+// Wir nutzen jetzt KPI_DEFINITIONS (definiert weiter oben im Script).
+// Die neue findKpiDefinition Funktion ist ebenfalls oben definiert.
 
 // Event Listener für alle KPI-Karten
 document.addEventListener('click', function(e) {
@@ -3851,102 +4072,490 @@ document.addEventListener('click', function(e) {
 
 // Öffne das KPI-Konfigurations-Modal
 async function openKpiConfigModal(targetId, targetName) {
-  currentKpiTarget = { id: targetId, name: targetName };
+  // Finde die KPI-Definition
+  const kpiDef = findKpiDefinition(targetName);
+  currentKpiTarget = { 
+    id: targetId, 
+    name: targetName,
+    definition: kpiDef,
+    paramMappings: {} // Speichert welcher Parameter auf welche Close-Daten gemappt ist
+  };
+  
+  // Lade gespeicherte Mappings
+  const savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
+  if (savedKpis[targetId]) {
+    currentKpiTarget.paramMappings = savedKpis[targetId].mappings || {};
+  }
   
   // Modal erstellen falls nicht vorhanden
   let modal = document.getElementById('kpiConfigModal');
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'kpiConfigModal';
-    modal.innerHTML = `
-      <div class="kpi-modal-overlay" onclick="closeKpiConfigModal()"></div>
-      <div class="kpi-modal-content">
-        <div class="kpi-modal-header">
-          <div>
-            <h3>⚙️ Parameter konfigurieren</h3>
-            <span class="kpi-modal-target" id="kpiConfigTarget"></span>
-          </div>
-          <button class="kpi-modal-close" onclick="closeKpiConfigModal()">✕</button>
-        </div>
-        <div class="kpi-modal-search">
-          <input type="text" id="kpiSearchInput" placeholder="🔍 Parameter suchen..." oninput="filterKpiParameters()">
-        </div>
-        <div class="kpi-modal-loading" id="kpiConfigLoading">
-          <div class="kpi-spinner"></div>
-          <span>Lade verfügbare Parameter aus Close CRM...</span>
-        </div>
-        <div class="kpi-modal-body" id="kpiConfigBody"></div>
-        <div class="kpi-modal-footer">
-          <button class="kpi-btn-secondary" onclick="closeKpiConfigModal()">Abbrechen</button>
-          <button class="kpi-btn-primary" onclick="saveKpiConfig()" id="kpiSaveBtn" disabled>Parameter speichern</button>
-        </div>
-      </div>
-    `;
     document.body.appendChild(modal);
     
-    // CSS für Modal
+    // CSS für neues intuitives Modal
     const style = document.createElement('style');
     style.textContent = `
       #kpiConfigModal { position:fixed; top:0; left:0; right:0; bottom:0; z-index:10000; display:none; align-items:center; justify-content:center; }
       #kpiConfigModal.active { display:flex; }
-      .kpi-modal-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); }
-      .kpi-modal-content { position:relative; background:var(--bg-panel); border:1px solid var(--border); border-radius:16px; width:95%; max-width:700px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
-      .kpi-modal-header { padding:24px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; }
-      .kpi-modal-header h3 { margin:0 0 8px 0; font-size:20px; color:#fff; }
-      .kpi-modal-target { font-size:13px; color:var(--beige); background:rgba(192,173,148,0.15); padding:6px 14px; border-radius:20px; display:inline-block; max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-      .kpi-modal-close { background:none; border:none; color:var(--text-dim); font-size:24px; cursor:pointer; padding:4px 8px; line-height:1; }
-      .kpi-modal-close:hover { color:#fff; }
-      .kpi-modal-search { padding:16px 24px; border-bottom:1px solid var(--border); }
-      .kpi-modal-search input { width:100%; padding:14px 18px; background:var(--bg-dark); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:15px; }
-      .kpi-modal-search input:focus { outline:none; border-color:var(--beige); }
-      .kpi-modal-body { flex:1; overflow-y:auto; padding:20px 24px; }
-      .kpi-modal-loading { padding:60px; text-align:center; color:var(--text-dim); }
-      .kpi-spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--beige); border-radius:50%; animation:kpi-spin 1s linear infinite; margin:0 auto 16px; }
-      @keyframes kpi-spin { to { transform:rotate(360deg); } }
-      .kpi-modal-footer { padding:20px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; }
-      .kpi-btn-secondary { padding:12px 24px; background:transparent; border:1px solid var(--border); color:var(--text-dim); border-radius:8px; cursor:pointer; font-size:14px; }
-      .kpi-btn-secondary:hover { border-color:var(--text-dim); color:#fff; }
-      .kpi-btn-primary { padding:12px 24px; background:var(--beige); border:none; color:var(--bg-dark); font-weight:600; border-radius:8px; cursor:pointer; font-size:14px; }
-      .kpi-btn-primary:disabled { opacity:0.4; cursor:not-allowed; }
-      .kpi-btn-primary:not(:disabled):hover { background:#d4c4a8; }
-      .kpi-category { margin-bottom:24px; }
-      .kpi-category-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
-      .kpi-category-icon { font-size:18px; }
-      .kpi-category-title { font-size:12px; color:var(--beige); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
-      .kpi-category-count { font-size:11px; color:var(--text-dim); background:var(--bg-dark); padding:2px 8px; border-radius:10px; }
-      .kpi-option { display:flex; align-items:center; gap:14px; padding:14px 16px; background:var(--bg-dark); border:2px solid var(--border); border-radius:10px; margin-bottom:10px; cursor:pointer; transition:all 0.15s; }
-      .kpi-option:hover { border-color:rgba(192,173,148,0.5); background:rgba(192,173,148,0.05); }
-      .kpi-option.selected { border-color:var(--beige); background:rgba(192,173,148,0.1); }
-      .kpi-option-icon { font-size:22px; width:32px; text-align:center; }
-      .kpi-option-info { flex:1; min-width:0; }
-      .kpi-option-name { font-weight:600; color:#fff; font-size:14px; margin-bottom:2px; }
-      .kpi-option-desc { font-size:12px; color:var(--text-dim); }
-      .kpi-option-type { font-size:10px; color:var(--text-dim); background:var(--bg-panel); padding:3px 8px; border-radius:4px; text-transform:uppercase; }
-      .kpi-option-check { width:24px; height:24px; border:2px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
-      .kpi-option.selected .kpi-option-check { background:var(--beige); border-color:var(--beige); color:var(--bg-dark); }
-      .kpi-subfield { margin-left:32px; border-left:2px solid var(--border); padding-left:16px; }
-      .kpi-subfield .kpi-option { background:var(--bg-panel); }
-      .kpi-subfield-choices { margin-left:24px; border-left:2px solid var(--success); padding-left:12px; margin-top:4px; margin-bottom:8px; }
-      .kpi-subfield-choices .kpi-option { background:rgba(74,222,128,0.05); border-color:rgba(74,222,128,0.3); padding:10px 14px; }
-      .kpi-subfield-choices .kpi-option:hover { border-color:var(--success); background:rgba(74,222,128,0.1); }
-      .kpi-subfield-choices .kpi-option.selected { border-color:var(--success); background:rgba(74,222,128,0.15); }
-      .kpi-subfield-choices .kpi-option.selected .kpi-option-check { background:var(--success); border-color:var(--success); }
-      .kpi-subfield-choices .kpi-option-name { font-size:13px; }
-      .kpi-subfield-choices .kpi-option-icon { color:var(--success); font-size:16px; }
+      .kpi-modal-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); }
+      .kpi-modal-content { position:relative; background:var(--bg-panel); border:1px solid var(--border); border-radius:20px; width:95%; max-width:600px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 25px 80px rgba(0,0,0,0.6); overflow:hidden; }
+      
+      /* Header */
+      .kpi-modal-header { padding:28px 28px 20px; background:linear-gradient(180deg, rgba(192,173,148,0.1) 0%, transparent 100%); }
+      .kpi-modal-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+      .kpi-modal-title h2 { margin:0; font-size:22px; color:#fff; font-weight:700; }
+      .kpi-modal-close { background:none; border:none; color:var(--text-dim); font-size:28px; cursor:pointer; padding:0; line-height:1; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+      .kpi-modal-close:hover { color:#fff; background:rgba(255,255,255,0.1); }
+      
+      /* Formel-Box - visueller Bruch */
+      .kpi-formula-box { background:var(--bg-dark); border:2px solid var(--border); border-radius:16px; padding:24px; margin:0 28px 20px; text-align:center; }
+      .kpi-formula-visual { display:inline-flex; flex-direction:column; align-items:center; gap:4px; }
+      .kpi-formula-top { font-size:16px; color:var(--beige); font-weight:600; padding:8px 20px; }
+      .kpi-formula-line { width:100%; height:3px; background:var(--beige); border-radius:2px; min-width:200px; }
+      .kpi-formula-bottom { font-size:16px; color:var(--beige); font-weight:600; padding:8px 20px; }
+      .kpi-formula-equals { font-size:18px; color:var(--text-dim); margin:0 16px; }
+      .kpi-formula-result { font-size:18px; color:#fff; font-weight:700; }
+      .kpi-formula-multiplier { font-size:14px; color:var(--text-dim); margin-left:8px; }
+      
+      /* Erklärung */
+      .kpi-explanation { padding:0 28px 20px; }
+      .kpi-explanation-text { display:flex; align-items:flex-start; gap:10px; padding:14px 18px; background:rgba(192,173,148,0.08); border-radius:12px; border-left:3px solid var(--beige); }
+      .kpi-explanation-icon { font-size:18px; flex-shrink:0; }
+      .kpi-explanation-content { font-size:14px; color:var(--text); line-height:1.5; }
+      
+      /* Parameter Section */
+      .kpi-params-section { padding:0 28px 20px; }
+      .kpi-params-title { font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+      .kpi-params-title::after { content:''; flex:1; height:1px; background:var(--border); }
+      
+      /* Parameter Card */
+      .kpi-param-card { background:var(--bg-dark); border:2px solid var(--border); border-radius:14px; padding:18px; margin-bottom:14px; transition:all 0.2s; }
+      .kpi-param-card:hover { border-color:rgba(192,173,148,0.4); }
+      .kpi-param-card.connected { border-color:var(--success); background:rgba(74,222,128,0.05); }
+      .kpi-param-card.not-connected { border-color:var(--warning); }
+      
+      .kpi-param-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+      .kpi-param-label { display:flex; align-items:center; gap:10px; }
+      .kpi-param-icon { font-size:20px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; background:rgba(192,173,148,0.15); border-radius:8px; }
+      .kpi-param-name { font-size:15px; font-weight:600; color:#fff; }
+      .kpi-param-status { font-size:12px; padding:4px 10px; border-radius:20px; font-weight:500; }
+      .kpi-param-status.connected { background:rgba(74,222,128,0.2); color:var(--success); }
+      .kpi-param-status.not-connected { background:rgba(251,191,36,0.2); color:var(--warning); }
+      
+      .kpi-param-desc { font-size:13px; color:var(--text-dim); margin-bottom:12px; line-height:1.4; }
+      
+      /* Dropdown für Parameter-Auswahl */
+      .kpi-param-select { position:relative; }
+      .kpi-param-select-btn { width:100%; padding:12px 16px; background:var(--bg-panel); border:2px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; text-align:left; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:all 0.15s; }
+      .kpi-param-select-btn:hover { border-color:var(--beige); }
+      .kpi-param-select-btn.has-value { border-color:var(--success); background:rgba(74,222,128,0.05); }
+      .kpi-param-select-btn .select-text { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .kpi-param-select-btn .select-arrow { color:var(--text-dim); font-size:12px; margin-left:10px; }
+      
+      /* Dropdown Panel */
+      .kpi-param-dropdown { position:absolute; top:100%; left:0; right:0; background:var(--bg-panel); border:2px solid var(--border); border-radius:12px; margin-top:6px; max-height:280px; overflow-y:auto; z-index:100; display:none; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
+      .kpi-param-dropdown.open { display:block; }
+      .kpi-param-dropdown-search { padding:12px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--bg-panel); }
+      .kpi-param-dropdown-search input { width:100%; padding:10px 14px; background:var(--bg-dark); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; }
+      .kpi-param-dropdown-search input:focus { outline:none; border-color:var(--beige); }
+      
+      .kpi-dropdown-item { padding:12px 16px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:background 0.1s; }
+      .kpi-dropdown-item:hover { background:rgba(192,173,148,0.1); }
+      .kpi-dropdown-item.selected { background:rgba(74,222,128,0.1); }
+      .kpi-dropdown-item-icon { font-size:16px; width:24px; text-align:center; }
+      .kpi-dropdown-item-info { flex:1; min-width:0; }
+      .kpi-dropdown-item-name { font-size:13px; color:#fff; font-weight:500; }
+      .kpi-dropdown-item-hint { font-size:11px; color:var(--text-dim); margin-top:2px; }
+      .kpi-dropdown-item-check { color:var(--success); font-size:16px; }
+      
+      .kpi-dropdown-category { padding:10px 16px 6px; font-size:10px; color:var(--beige); text-transform:uppercase; letter-spacing:1px; font-weight:700; background:var(--bg-dark); position:sticky; top:52px; }
+      
+      /* Footer */
+      .kpi-modal-footer { padding:20px 28px; border-top:1px solid var(--border); background:var(--bg-dark); }
+      .kpi-save-btn { width:100%; padding:16px; background:var(--beige); border:none; color:var(--bg-dark); font-size:16px; font-weight:700; border-radius:12px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; gap:10px; }
+      .kpi-save-btn:hover:not(:disabled) { background:#d4c4a8; transform:translateY(-1px); }
+      .kpi-save-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+      .kpi-save-btn .btn-icon { font-size:18px; }
+      
+      /* Fallback wenn keine Definition */
+      .kpi-no-definition { padding:40px 28px; text-align:center; }
+      .kpi-no-definition-icon { font-size:48px; margin-bottom:16px; opacity:0.5; }
+      .kpi-no-definition-text { font-size:16px; color:var(--text-dim); margin-bottom:8px; }
+      .kpi-no-definition-hint { font-size:13px; color:var(--text-dim); opacity:0.7; }
     `;
     document.head.appendChild(style);
   }
   
-  // Target anzeigen
-  document.getElementById('kpiConfigTarget').textContent = targetName;
+  // Modal-Inhalt generieren
+  modal.innerHTML = `
+    <div class="kpi-modal-overlay" onclick="closeKpiConfigModal()"></div>
+    <div class="kpi-modal-content">
+      ${renderKpiModalContent(kpiDef, targetName, currentKpiTarget.paramMappings)}
+    </div>
+  `;
   
   // Modal anzeigen
   modal.classList.add('active');
-  document.getElementById('kpiSearchInput').value = '';
-  document.getElementById('kpiSearchInput').focus();
   
-  // Parameter laden
-  await loadCloseParameters();
+  // Close-Parameter laden falls noch nicht vorhanden
+  if (!closeParameters || !closeParameters.customActivities) {
+    await loadCloseParameters();
+  }
+}
+
+// Rendere Modal-Inhalt basierend auf KPI-Definition
+function renderKpiModalContent(kpiDef, targetName, mappings) {
+  if (!kpiDef) {
+    // Fallback für unbekannte KPIs
+    return `
+      <div class="kpi-modal-header">
+        <div class="kpi-modal-title">
+          <h2>${targetName}</h2>
+          <button class="kpi-modal-close" onclick="closeKpiConfigModal()">✕</button>
+        </div>
+      </div>
+      <div class="kpi-no-definition">
+        <div class="kpi-no-definition-icon">📊</div>
+        <div class="kpi-no-definition-text">Für diese Kennzahl ist noch keine Formel hinterlegt.</div>
+        <div class="kpi-no-definition-hint">Kontaktiere den Support um diese KPI einzurichten.</div>
+      </div>
+    `;
+  }
+  
+  // Formel-Teile extrahieren (für visuelle Darstellung)
+  const formulaParts = parseFormulaForDisplay(kpiDef.formula, kpiDef.params);
+  
+  // Parameter-Cards generieren
+  let paramsHtml = '';
+  kpiDef.params.forEach((param, index) => {
+    const mapping = mappings[param.id];
+    const isConnected = !!mapping;
+    const statusClass = isConnected ? 'connected' : 'not-connected';
+    const statusText = isConnected ? '✓ Verbunden' : '⚠ Nicht verbunden';
+    const selectText = mapping ? mapping.displayName : 'Datenquelle auswählen...';
+    const selectBtnClass = isConnected ? 'has-value' : '';
+    
+    paramsHtml += `
+      <div class="kpi-param-card ${statusClass}">
+        <div class="kpi-param-header">
+          <div class="kpi-param-label">
+            <div class="kpi-param-icon">${param.icon || '📊'}</div>
+            <div class="kpi-param-name">${param.name}</div>
+          </div>
+          <div class="kpi-param-status ${statusClass}">${statusText}</div>
+        </div>
+        <div class="kpi-param-desc">${param.desc}</div>
+        <div class="kpi-param-select">
+          <button class="kpi-param-select-btn ${selectBtnClass}" onclick="openParamDropdown('${param.id}')">
+            <span class="select-text">${selectText}</span>
+            <span class="select-arrow">▼</span>
+          </button>
+          <div class="kpi-param-dropdown" id="dropdown-${param.id}">
+            <div class="kpi-param-dropdown-search">
+              <input type="text" placeholder="🔍 Suchen..." oninput="filterParamDropdown('${param.id}', this.value)">
+            </div>
+            <div class="kpi-dropdown-items" id="dropdown-items-${param.id}">
+              <!-- Wird dynamisch befüllt -->
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  // Prüfen ob alle Parameter verbunden sind
+  const allConnected = kpiDef.params.every(p => mappings[p.id]);
+  const saveDisabled = allConnected ? '' : 'disabled';
+  
+  return `
+    <div class="kpi-modal-header">
+      <div class="kpi-modal-title">
+        <h2>${kpiDef.name}</h2>
+        <button class="kpi-modal-close" onclick="closeKpiConfigModal()">✕</button>
+      </div>
+    </div>
+    
+    <div class="kpi-formula-box">
+      ${formulaParts}
+    </div>
+    
+    <div class="kpi-explanation">
+      <div class="kpi-explanation-text">
+        <span class="kpi-explanation-icon">💡</span>
+        <span class="kpi-explanation-content">${kpiDef.formulaDesc}</span>
+      </div>
+    </div>
+    
+    <div class="kpi-params-section">
+      <div class="kpi-params-title">Verbinde deine Daten</div>
+      ${paramsHtml}
+    </div>
+    
+    <div class="kpi-modal-footer">
+      <button class="kpi-save-btn" onclick="saveKpiConfigNew()" ${saveDisabled}>
+        <span class="btn-icon">💾</span>
+        <span>Speichern & Berechnen</span>
+      </button>
+    </div>
+  `;
+}
+
+// Formel visuell als Bruchstrich darstellen
+function parseFormulaForDisplay(formula, params) {
+  // Einfache Bruchdarstellung für (A ÷ B) × 100 etc.
+  if (formula.includes('÷') && params.length >= 2) {
+    const hasPercent = formula.includes('× 100') || formula.includes('×100');
+    const multiplier = hasPercent ? '<span class="kpi-formula-multiplier">× 100</span>' : '';
+    
+    return `
+      <div class="kpi-formula-visual">
+        <div class="kpi-formula-top">${params[0]?.name || 'Zähler'}</div>
+        <div class="kpi-formula-line"></div>
+        <div class="kpi-formula-bottom">${params[1]?.name || 'Nenner'}</div>
+      </div>
+      ${multiplier}
+    `;
+  }
+  
+  // Einfache Multiplikation A × B
+  if (formula.includes('×') && params.length >= 2 && !formula.includes('÷')) {
+    return `
+      <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+        <span style="color:var(--beige);font-weight:600;">${params[0]?.name || 'Wert A'}</span>
+        <span style="color:var(--text-dim);">×</span>
+        <span style="color:var(--beige);font-weight:600;">${params[1]?.name || 'Wert B'}</span>
+      </div>
+    `;
+  }
+  
+  // Fallback: Formel als Text
+  return `<div style="color:var(--beige);font-size:18px;font-weight:600;">${formula}</div>`;
+}
+
+// Dropdown öffnen
+function openParamDropdown(paramId) {
+  // Alle anderen schließen
+  document.querySelectorAll('.kpi-param-dropdown').forEach(d => d.classList.remove('open'));
+  
+  const dropdown = document.getElementById('dropdown-' + paramId);
+  dropdown.classList.add('open');
+  
+  // Items befüllen
+  renderParamDropdownItems(paramId);
+  
+  // Focus auf Suche
+  const searchInput = dropdown.querySelector('input');
+  if (searchInput) searchInput.focus();
+  
+  // Click outside schließt
+  setTimeout(() => {
+    document.addEventListener('click', closeAllDropdowns);
+  }, 10);
+}
+
+function closeAllDropdowns(e) {
+  if (!e.target.closest('.kpi-param-select')) {
+    document.querySelectorAll('.kpi-param-dropdown').forEach(d => d.classList.remove('open'));
+    document.removeEventListener('click', closeAllDropdowns);
+  }
+}
+
+// Dropdown-Items rendern
+function renderParamDropdownItems(paramId, filter = '') {
+  const container = document.getElementById('dropdown-items-' + paramId);
+  if (!container) return;
+  
+  let html = '';
+  const filterLower = filter.toLowerCase();
+  const currentMapping = currentKpiTarget?.paramMappings?.[paramId];
+  
+  // Standard KPIs
+  if (closeParameters?.standard?.length) {
+    const filtered = closeParameters.standard.filter(s => 
+      !filterLower || s.name.toLowerCase().includes(filterLower)
+    );
+    if (filtered.length) {
+      html += `<div class="kpi-dropdown-category">📊 Standard</div>`;
+      filtered.forEach(item => {
+        const isSelected = currentMapping?.id === item.id;
+        html += renderDropdownItem(item.id, item.icon || '📊', item.name, item.desc, isSelected, paramId);
+      });
+    }
+  }
+  
+  // Custom Activities
+  if (closeParameters?.customActivities?.length) {
+    const filtered = closeParameters.customActivities.filter(ca => 
+      !filterLower || ca.name.toLowerCase().includes(filterLower)
+    );
+    if (filtered.length) {
+      html += `<div class="kpi-dropdown-category">🎯 Custom Activities</div>`;
+      filtered.forEach(ca => {
+        const isSelected = currentMapping?.id === 'activity:' + ca.id;
+        html += renderDropdownItem('activity:' + ca.id, '🎯', ca.name, 'Anzahl zählen', isSelected, paramId);
+        
+        // Felder der Activity
+        if (ca.fields?.length) {
+          ca.fields.forEach(field => {
+            if (field.type === 'choices' && field.choices?.length) {
+              // Dropdown-Optionen einzeln
+              field.choices.forEach(choice => {
+                if (!filterLower || choice.toLowerCase().includes(filterLower) || field.name.toLowerCase().includes(filterLower)) {
+                  const choiceId = 'actfieldchoice:' + ca.id + ':' + field.id + ':' + encodeURIComponent(choice);
+                  const isChoiceSelected = currentMapping?.id === choiceId;
+                  html += renderDropdownItem(choiceId, '✓', `${field.name} = "${choice}"`, ca.name, isChoiceSelected, paramId);
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+  }
+  
+  // Opportunities
+  if (closeParameters?.opportunityStatuses?.length) {
+    const filtered = closeParameters.opportunityStatuses.filter(s => 
+      !filterLower || s.name.toLowerCase().includes(filterLower)
+    );
+    if (filtered.length) {
+      html += `<div class="kpi-dropdown-category">💰 Opportunities</div>`;
+      filtered.forEach(item => {
+        const isSelected = currentMapping?.id === item.id;
+        html += renderDropdownItem(item.id, '💰', item.name, item.desc || 'Opportunity Status', isSelected, paramId);
+      });
+    }
+  }
+  
+  // Lead Statuses
+  if (closeParameters?.leadStatuses?.length) {
+    const filtered = closeParameters.leadStatuses.filter(s => 
+      !filterLower || s.name.toLowerCase().includes(filterLower)
+    );
+    if (filtered.length) {
+      html += `<div class="kpi-dropdown-category">📋 Lead Status</div>`;
+      filtered.forEach(item => {
+        const isSelected = currentMapping?.id === item.id;
+        html += renderDropdownItem(item.id, '📋', item.name, item.desc || 'Lead Status', isSelected, paramId);
+      });
+    }
+  }
+  
+  if (!html) {
+    html = `<div style="padding:20px;text-align:center;color:var(--text-dim);">Keine Ergebnisse</div>`;
+  }
+  
+  container.innerHTML = html;
+}
+
+function renderDropdownItem(id, icon, name, hint, isSelected, paramId) {
+  const selectedClass = isSelected ? 'selected' : '';
+  const checkmark = isSelected ? '<span class="kpi-dropdown-item-check">✓</span>' : '';
+  
+  return `
+    <div class="kpi-dropdown-item ${selectedClass}" onclick="selectParamMapping('${paramId}', '${id}', '${name.replace(/'/g, "\\'")}')">
+      <span class="kpi-dropdown-item-icon">${icon}</span>
+      <div class="kpi-dropdown-item-info">
+        <div class="kpi-dropdown-item-name">${name}</div>
+        <div class="kpi-dropdown-item-hint">${hint}</div>
+      </div>
+      ${checkmark}
+    </div>
+  `;
+}
+
+// Filter Dropdown
+function filterParamDropdown(paramId, value) {
+  renderParamDropdownItems(paramId, value);
+}
+
+// Parameter-Mapping auswählen
+function selectParamMapping(paramId, sourceId, displayName) {
+  if (!currentKpiTarget) return;
+  
+  // Speichere Mapping
+  currentKpiTarget.paramMappings[paramId] = {
+    id: sourceId,
+    displayName: displayName
+  };
+  
+  // Modal neu rendern
+  const modal = document.getElementById('kpiConfigModal');
+  const content = modal.querySelector('.kpi-modal-content');
+  content.innerHTML = renderKpiModalContent(
+    currentKpiTarget.definition, 
+    currentKpiTarget.name,
+    currentKpiTarget.paramMappings
+  );
+  
+  // Dropdown schließen
+  document.querySelectorAll('.kpi-param-dropdown').forEach(d => d.classList.remove('open'));
+}
+
+// Speichern (neue Version)
+async function saveKpiConfigNew() {
+  if (!currentKpiTarget || !currentKpiTarget.definition) return;
+  
+  // Prüfen ob alle Parameter verbunden
+  const allConnected = currentKpiTarget.definition.params.every(p => currentKpiTarget.paramMappings[p.id]);
+  if (!allConnected) {
+    alert('Bitte verbinde alle Parameter bevor du speicherst.');
+    return;
+  }
+  
+  // Button auf "Speichert..." setzen
+  const saveBtn = document.querySelector('.kpi-save-btn');
+  const originalHtml = saveBtn.innerHTML;
+  saveBtn.innerHTML = '<span class="btn-icon">⏳</span><span>Speichert...</span>';
+  saveBtn.disabled = true;
+  
+  try {
+    // 1. Aktuelle Konfiguration laden
+    const savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
+    
+    // 2. Neue Konfiguration speichern
+    savedKpis[currentKpiTarget.id] = {
+      name: currentKpiTarget.name,
+      definition: currentKpiTarget.definition.name,
+      mappings: currentKpiTarget.paramMappings,
+      savedAt: new Date().toISOString()
+    };
+    
+    // 3. In Supabase speichern
+    if (currentUser && supabase) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ kpi_config: savedKpis })
+        .eq('id', currentUser.id);
+      
+      if (error) {
+        console.warn('Supabase Speichern fehlgeschlagen:', error);
+      } else {
+        console.log('✓ KPI Konfiguration in Supabase gespeichert');
+      }
+    }
+    
+    // 4. Lokal speichern
+    localStorage.setItem('ts_kpi_config', JSON.stringify(savedKpis));
+    console.log('✓ KPI Konfiguration gespeichert:', currentKpiTarget.id, currentKpiTarget.paramMappings);
+    
+    // 5. Kacheln markieren
+    markConfiguredKpis();
+    
+    // 6. Modal schließen
+    closeKpiConfigModal();
+    
+    // 7. Erfolgs-Feedback
+    // TODO: KPI-Wert berechnen und in Kachel anzeigen
+    
+  } catch (err) {
+    console.error('Fehler beim Speichern:', err);
+    saveBtn.innerHTML = originalHtml;
+    saveBtn.disabled = false;
+    alert('Fehler beim Speichern. Bitte erneut versuchen.');
+  }
 }
 
 // Schließe das Modal
@@ -3958,29 +4567,30 @@ function closeKpiConfigModal() {
 
 // Lade alle verfügbaren Parameter aus Close
 async function loadCloseParameters() {
-  const loading = document.getElementById('kpiConfigLoading');
-  const body = document.getElementById('kpiConfigBody');
-  
-  loading.style.display = 'block';
-  body.style.display = 'none';
+  // NEU: Keine UI-Elemente mehr - nur Daten laden
   
   if (!closeApiKey) {
-    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--warning);">⚠️ Close CRM nicht verbunden.<br><br>Bitte erst den API Key in den Einstellungen eingeben.</div>';
-    loading.style.display = 'none';
-    body.style.display = 'block';
-    return;
+    console.warn('⚠️ Close CRM nicht verbunden');
+    return false;
+  }
+  
+  // Falls bereits geladen, nicht nochmal laden
+  if (closeParameters && closeParameters.customActivities && closeParameters.customActivities.length > 0) {
+    console.log('✓ Close Parameter bereits geladen, überspringe...');
+    return true;
   }
   
   try {
+    console.log('📊 Lade Close Parameter...');
+    
     // 1. Parallel alle Parameter-Typen laden
-    // NEU: Wir laden jetzt auch explizit die Shared Fields und Activity Fields!
     const [
       customActivityTypes, 
       leadStatuses, 
       customFields, 
       pipelines,
-      sharedFieldsRes,        // Holt alle Shared Fields (wie "Termin No Show")
-      activityFieldsRes       // Holt alle regulären Activity Fields
+      sharedFieldsRes,
+      activityFieldsRes
     ] = await Promise.all([
       fetchCloseEndpoint('custom_activity_type/'),
       fetchCloseEndpoint('status/lead/'),
@@ -3990,7 +4600,7 @@ async function loadCloseParameters() {
       fetchCloseEndpoint('custom_field/activity/')    
     ]);
     
-    // Globale Liste aller existierenden Activity-Felder in deinem Close Account
+    // Globale Liste aller existierenden Activity-Felder
     const allPossibleFields = [...(sharedFieldsRes.data || []), ...(activityFieldsRes.data || [])];
     console.log('📦 Alle Shared + Activity Fields geladen:', allPossibleFields.length);
     
@@ -3998,22 +4608,16 @@ async function loadCloseParameters() {
     const customActivitiesWithFields = [];
     
     for (const ca of (customActivityTypes.data || [])) {
+      await new Promise(resolve => setTimeout(resolve, 150)); // Rate Limit
       
-      // HOTFIX: 150ms Pause einlegen, um das Close Rate Limit nicht zu sprengen
-      await new Promise(resolve => setTimeout(resolve, 150)); 
-      
-      // KORREKTUR: Wir rufen das SCHEMA der Custom Activity ab
-      // Das Schema enthält die Zuordnungen aller Felder (regulär UND shared)
       const schemaResponse = await fetchCloseEndpoint('custom_field_schema/activity/' + ca.id + '/');
       const schemaFields = schemaResponse.fields || []; 
       
-      // Wir matchen die Felder aus dem Schema mit unserer globalen Feld-Liste, 
-      // damit wir sicher an das "choices" Array (die Dropdown-Werte) herankommen.
       const fields = schemaFields.map(function(sf) {
-          return allPossibleFields.find(function(f) { return f.id === sf.id; }) || sf;
-      }).filter(function(f) { return f.type; }); // Nur gültige, gefundene Felder behalten
+        return allPossibleFields.find(function(f) { return f.id === sf.id; }) || sf;
+      }).filter(function(f) { return f.type; });
       
-      console.log('📋 Activity:', ca.name, '| Geladene Felder:', fields.map(function(f) { return f.name; }));
+      console.log('📋 Activity:', ca.name, '| Felder:', fields.map(function(f) { return f.name; }));
       
       customActivitiesWithFields.push({
         id: ca.id,
@@ -4031,10 +4635,9 @@ async function loadCloseParameters() {
       });
     }
     
-    console.log('✓ Custom Activities mit ALLEN Feldern erfolgreich gematcht!');
+    console.log('✓ Custom Activities mit Feldern geladen!');
     
     closeParameters = {
-      // Standard KPIs
       standard: [
         { id: 'std:calls', name: 'Anrufe', icon: '📞', desc: 'Anzahl ausgehender Anrufe', type: 'count' },
         { id: 'std:calls_duration', name: 'Gesprächszeit', icon: '⏱️', desc: 'Gesamtdauer aller Anrufe', type: 'duration' },
@@ -4045,11 +4648,7 @@ async function loadCloseParameters() {
         { id: 'std:opps_won', name: 'Gewonnene Deals', icon: '🏆', desc: 'Abgeschlossene Opportunities', type: 'count' },
         { id: 'std:opps_value', name: 'Deal-Wert', icon: '💰', desc: 'Gesamtwert gewonnener Deals', type: 'currency' }
       ],
-      
-      // Custom Activities mit Feldern (Jetzt inkl. Shared Dropdowns!)
       customActivities: customActivitiesWithFields,
-      
-      // Lead Statuses
       leadStatuses: (leadStatuses.data || []).map(function(ls) {
         return {
           id: 'status:' + ls.id,
@@ -4059,8 +4658,6 @@ async function loadCloseParameters() {
           type: 'count'
         };
       }),
-      
-      // Custom Fields (nur zählbare/messbare)
       customFields: (customFields.data || []).filter(function(cf) {
         return cf.type === 'number' || cf.type === 'choices' || cf.type === 'date';
       }).map(function(cf) {
@@ -4073,8 +4670,6 @@ async function loadCloseParameters() {
           choices: cf.choices || []
         };
       }),
-      
-      // Opportunity Statuses aus Pipelines
       opportunityStatuses: []
     };
     
@@ -4091,14 +4686,12 @@ async function loadCloseParameters() {
       });
     });
     
-    console.log('✓ Close Parameter geladen:', closeParameters);
-    renderKpiParameters();
+    console.log('✓ Close Parameter vollständig geladen:', closeParameters);
+    return true;
     
   } catch (error) {
     console.error('Fehler beim Laden der Parameter:', error);
-    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);">❌ Fehler beim Laden der Parameter.<br><br>' + error.message + '</div>';
-    loading.style.display = 'none';
-    body.style.display = 'block';
+    return false;
   }
 }
 
@@ -4118,270 +4711,17 @@ async function fetchCloseEndpoint(endpoint) {
   }
 }
 
-// Render die Parameter im Modal
-function renderKpiParameters() {
-  const loading = document.getElementById('kpiConfigLoading');
-  const body = document.getElementById('kpiConfigBody');
-  
-  loading.style.display = 'none';
-  body.style.display = 'block';
-  
-  // Gespeicherte Auswahl laden
-  const savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
-  const currentSelection = savedKpis[currentKpiTarget?.id] || null;
-  
-  let html = '';
-  
-  // Standard KPIs
-  html += renderCategory('📊', 'Standard KPIs', closeParameters.standard, currentSelection);
-  
-  // Custom Activities mit ihren Feldern
-  if (closeParameters.customActivities.length > 0) {
-    html += '<div class="kpi-category" data-category="custom-activities">';
-    html += '<div class="kpi-category-header"><span class="kpi-category-icon">🎯</span><span class="kpi-category-title">Custom Activities</span><span class="kpi-category-count">' + closeParameters.customActivities.length + '</span></div>';
-    
-    closeParameters.customActivities.forEach(ca => {
-      // Die Activity selbst (zählt Instanzen)
-      const actId = 'activity:' + ca.id;
-      const actSelected = currentSelection === actId ? 'selected' : '';
-      html += `<div class="kpi-option ${actSelected}" onclick="selectKpiParameter('${actId}')" data-search="${ca.name.toLowerCase()} ${ca.description.toLowerCase()}">
-        <span class="kpi-option-icon">🎯</span>
-        <div class="kpi-option-info">
-          <div class="kpi-option-name">${ca.name}</div>
-          <div class="kpi-option-desc">${ca.description || 'Anzahl dieser Activity zählen'}</div>
-        </div>
-        <span class="kpi-option-type">Activity</span>
-        <div class="kpi-option-check">${actSelected ? '✓' : ''}</div>
-      </div>`;
-      
-      // Die Felder der Activity
-      if (ca.fields.length > 0) {
-        html += '<div class="kpi-subfield">';
-        ca.fields.forEach(field => {
-          const fieldId = 'actfield:' + ca.id + ':' + field.id;
-          const fieldSelected = currentSelection === fieldId ? 'selected' : '';
-          const fieldTypeLabel = field.type === 'choices' ? 'Dropdown' : field.type === 'number' ? 'Zahl' : field.type;
-          
-          // Bei Dropdown-Feldern: Zeige das Feld selbst UND jede einzelne Option
-          if (field.type === 'choices' && field.choices && field.choices.length > 0) {
-            // Feld-Header (zählt alle mit diesem Feld)
-            html += `<div class="kpi-option ${fieldSelected}" onclick="selectKpiParameter('${fieldId}')" data-search="${field.name.toLowerCase()} ${ca.name.toLowerCase()} dropdown">
-              <span class="kpi-option-icon">📋</span>
-              <div class="kpi-option-info">
-                <div class="kpi-option-name">${field.name}</div>
-                <div class="kpi-option-desc">Alle mit diesem Feld ausgefüllt zählen</div>
-              </div>
-              <span class="kpi-option-type">Dropdown</span>
-              <div class="kpi-option-check">${fieldSelected ? '✓' : ''}</div>
-            </div>`;
-            
-            // Jede einzelne Option als auswählbar
-            html += '<div class="kpi-subfield-choices">';
-            field.choices.forEach(choice => {
-              const choiceId = 'actfieldchoice:' + ca.id + ':' + field.id + ':' + encodeURIComponent(choice);
-              const choiceSelected = currentSelection === choiceId ? 'selected' : '';
-              html += `<div class="kpi-option kpi-choice-option ${choiceSelected}" onclick="selectKpiParameter('${choiceId}')" data-search="${field.name.toLowerCase()} ${choice.toLowerCase()} ${ca.name.toLowerCase()}">
-                <span class="kpi-option-icon">✓</span>
-                <div class="kpi-option-info">
-                  <div class="kpi-option-name">${field.name} = "${choice}"</div>
-                  <div class="kpi-option-desc">Zähle Activities wo ${field.name} = ${choice}</div>
-                </div>
-                <span class="kpi-option-type">Option</span>
-                <div class="kpi-option-check">${choiceSelected ? '✓' : ''}</div>
-              </div>`;
-            });
-            html += '</div>';
-          } else {
-            // Normale Felder (Text, Number, etc.)
-            let fieldDesc = 'Feld in ' + ca.name;
-            html += `<div class="kpi-option ${fieldSelected}" onclick="selectKpiParameter('${fieldId}')" data-search="${field.name.toLowerCase()} ${ca.name.toLowerCase()}">
-              <span class="kpi-option-icon">📝</span>
-              <div class="kpi-option-info">
-                <div class="kpi-option-name">${field.name}</div>
-                <div class="kpi-option-desc">${fieldDesc}</div>
-              </div>
-              <span class="kpi-option-type">${fieldTypeLabel}</span>
-              <div class="kpi-option-check">${fieldSelected ? '✓' : ''}</div>
-            </div>`;
-          }
-        });
-        html += '</div>';
-      }
-    });
-    html += '</div>';
-  }
-  
-  // Lead Statuses
-  if (closeParameters.leadStatuses.length > 0) {
-    html += renderCategory('📋', 'Lead Status', closeParameters.leadStatuses, currentSelection);
-  }
-  
-  // Opportunity Statuses
-  if (closeParameters.opportunityStatuses.length > 0) {
-    html += renderCategory('📊', 'Opportunity Status', closeParameters.opportunityStatuses, currentSelection);
-  }
-  
-  // Custom Fields
-  if (closeParameters.customFields.length > 0) {
-    html += '<div class="kpi-category" data-category="custom-fields">';
-    html += '<div class="kpi-category-header"><span class="kpi-category-icon">🏷️</span><span class="kpi-category-title">Custom Fields (Lead)</span><span class="kpi-category-count">' + closeParameters.customFields.length + '</span></div>';
-    
-    closeParameters.customFields.forEach(cf => {
-      const selected = currentSelection === cf.id ? 'selected' : '';
-      
-      // Bei Dropdown-Feldern: Zeige das Feld UND jede einzelne Option
-      if (cf.type === 'choices' && cf.choices && cf.choices.length > 0) {
-        html += `<div class="kpi-option ${selected}" onclick="selectKpiParameter('${cf.id}')" data-search="${cf.name.toLowerCase()} dropdown">
-          <span class="kpi-option-icon">📋</span>
-          <div class="kpi-option-info">
-            <div class="kpi-option-name">${cf.name}</div>
-            <div class="kpi-option-desc">Alle Leads mit diesem Feld ausgefüllt</div>
-          </div>
-          <span class="kpi-option-type">Dropdown</span>
-          <div class="kpi-option-check">${selected ? '✓' : ''}</div>
-        </div>`;
-        
-        // Jede einzelne Option
-        html += '<div class="kpi-subfield-choices">';
-        cf.choices.forEach(choice => {
-          const choiceId = 'fieldchoice:' + cf.id.replace('field:', '') + ':' + encodeURIComponent(choice);
-          const choiceSelected = currentSelection === choiceId ? 'selected' : '';
-          html += `<div class="kpi-option kpi-choice-option ${choiceSelected}" onclick="selectKpiParameter('${choiceId}')" data-search="${cf.name.toLowerCase()} ${choice.toLowerCase()}">
-            <span class="kpi-option-icon">✓</span>
-            <div class="kpi-option-info">
-              <div class="kpi-option-name">${cf.name} = "${choice}"</div>
-              <div class="kpi-option-desc">Zähle Leads wo ${cf.name} = ${choice}</div>
-            </div>
-            <span class="kpi-option-type">Option</span>
-            <div class="kpi-option-check">${choiceSelected ? '✓' : ''}</div>
-          </div>`;
-        });
-        html += '</div>';
-      } else {
-        // Normale Felder (Number, Date, etc.)
-        html += `<div class="kpi-option ${selected}" onclick="selectKpiParameter('${cf.id}')" data-search="${cf.name.toLowerCase()} ${cf.desc.toLowerCase()}">
-          <span class="kpi-option-icon">${cf.icon}</span>
-          <div class="kpi-option-info">
-            <div class="kpi-option-name">${cf.name}</div>
-            <div class="kpi-option-desc">${cf.desc}</div>
-          </div>
-          <span class="kpi-option-type">${cf.type}</span>
-          <div class="kpi-option-check">${selected ? '✓' : ''}</div>
-        </div>`;
-      }
-    });
-    html += '</div>';
-  }
-  
-  body.innerHTML = html;
-  document.getElementById('kpiSaveBtn').disabled = !currentSelection;
-}
 
-// Helper: Render eine Kategorie
-function renderCategory(icon, title, items, currentSelection) {
-  if (!items || items.length === 0) return '';
-  
-  let html = '<div class="kpi-category">';
-  html += '<div class="kpi-category-header"><span class="kpi-category-icon">' + icon + '</span><span class="kpi-category-title">' + title + '</span><span class="kpi-category-count">' + items.length + '</span></div>';
-  
-  items.forEach(item => {
-    const selected = currentSelection === item.id ? 'selected' : '';
-    html += `<div class="kpi-option ${selected}" onclick="selectKpiParameter('${item.id}')" data-search="${item.name.toLowerCase()} ${(item.desc || '').toLowerCase()}">
-      <span class="kpi-option-icon">${item.icon}</span>
-      <div class="kpi-option-info">
-        <div class="kpi-option-name">${item.name}</div>
-        <div class="kpi-option-desc">${item.desc || ''}</div>
-      </div>
-      <span class="kpi-option-type">${item.type || ''}</span>
-      <div class="kpi-option-check">${selected ? '✓' : ''}</div>
-    </div>`;
-  });
-  
-  html += '</div>';
-  return html;
-}
+// ═══════════════════════════════════════════════════════════════════════════
+// ALTE FUNKTIONEN ENTFERNT (renderKpiParameters, renderCategory, 
+// selectKpiParameter, filterKpiParameters, saveKpiConfig)
+// Diese wurden durch das neue intuitive Modal-System ersetzt:
+// - openKpiConfigModal: Zeigt Formel + Parameter-Cards
+// - renderKpiModalContent: Rendert visuellen Bruchstrich
+// - selectParamMapping: Wählt Datenquelle für Parameter
+// - saveKpiConfigNew: Speichert Mappings in localStorage + Supabase
+// ═══════════════════════════════════════════════════════════════════════════
 
-// Wähle einen Parameter aus
-function selectKpiParameter(paramId) {
-  // Alle deselektieren
-  document.querySelectorAll('.kpi-option').forEach(el => {
-    el.classList.remove('selected');
-    el.querySelector('.kpi-option-check').textContent = '';
-  });
-  
-  // Gewählten selektieren
-  event.currentTarget.classList.add('selected');
-  event.currentTarget.querySelector('.kpi-option-check').textContent = '✓';
-  
-  // Temporär speichern
-  currentKpiTarget.selectedParam = paramId;
-  
-  // Save-Button aktivieren
-  document.getElementById('kpiSaveBtn').disabled = false;
-}
-
-// Filter Parameter nach Suchbegriff
-function filterKpiParameters() {
-  const search = document.getElementById('kpiSearchInput').value.toLowerCase().trim();
-  
-  document.querySelectorAll('.kpi-option').forEach(el => {
-    const searchData = el.dataset.search || '';
-    const match = !search || searchData.includes(search);
-    el.style.display = match ? 'flex' : 'none';
-  });
-  
-  // Kategorien ausblenden wenn alle Optionen versteckt
-  document.querySelectorAll('.kpi-category').forEach(cat => {
-    const visibleOptions = cat.querySelectorAll('.kpi-option:not([style*="display: none"])');
-    cat.style.display = visibleOptions.length > 0 ? 'block' : 'none';
-  });
-}
-
-// Speichere die KPI-Konfiguration (localStorage + Supabase)
-async function saveKpiConfig() {
-  if (!currentKpiTarget || !currentKpiTarget.selectedParam) return;
-  
-  // 1. Aktuelle Konfiguration aus localStorage holen
-  const savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
-  savedKpis[currentKpiTarget.id] = currentKpiTarget.selectedParam;
-  
-  // 2. Button auf "Speichert..." setzen
-  const saveBtn = document.getElementById('kpiSaveBtn');
-  const originalText = saveBtn.textContent;
-  saveBtn.textContent = 'Speichert...';
-  saveBtn.disabled = true;
-  
-  try {
-    // 3. In Supabase speichern (wenn User eingeloggt)
-    if (currentUser && supabase) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ kpi_config: savedKpis })
-        .eq('id', currentUser.id);
-      
-      if (error) {
-        console.warn('Supabase Speichern fehlgeschlagen:', error);
-        // Trotzdem lokal speichern
-      } else {
-        console.log('✓ KPI Konfiguration in Supabase gespeichert');
-      }
-    }
-    
-    // 4. Lokal speichern
-    localStorage.setItem('ts_kpi_config', JSON.stringify(savedKpis));
-    console.log('✓ KPI Konfiguration lokal gespeichert:', currentKpiTarget.id, '→', currentKpiTarget.selectedParam);
-    
-    // 5. Kacheln als konfiguriert markieren
-    markConfiguredKpis();
-    closeKpiConfigModal();
-    
-  } catch (err) {
-    console.error('Fehler beim Speichern:', err);
-    saveBtn.textContent = originalText;
-    saveBtn.disabled = false;
-    alert('Fehler beim Speichern. Bitte erneut versuchen.');
-  }
-}
 
 // Beim Laden: Markiere bereits konfigurierte Kacheln
 function markConfiguredKpis() {
