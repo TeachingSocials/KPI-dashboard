@@ -149,6 +149,7 @@
     .stats-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
     .stat-item { background: var(--bg-panel); border: 1px solid var(--border); padding: 16px; text-align: center; }
     .stat-value { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+    .stat-value .stat-no-data { color: var(--text-dim); opacity: 0.5; font-weight: 400; }
     .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
     
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
@@ -165,6 +166,7 @@
     .kpi-change { font-weight: 600; }
     .kpi-change.positive { color: var(--success); }
     .kpi-change.negative { color: var(--danger); }
+    .kpi-change.neutral { color: var(--text-dim); font-weight: 400; opacity: 0.6; }
     .sparkline { display: flex; align-items: flex-end; gap: 3px; height: 25px; }
     .spark-bar { flex: 1; background: var(--text-dim); border-radius: 1px; opacity: 0.5; }
     
@@ -2303,33 +2305,37 @@ function getRoleLabel(role) {
 // Stats-Panel für Person generieren
 function getPersonStatsHtml(role, person) {
   // Placeholder-Daten - werden später aus Close geladen
+  const noData = '<span class="stat-no-data">—</span>';
+  const noDataPct = '<span class="stat-no-data">— %</span>';
+  const noDataEur = '<span class="stat-no-data">€ —</span>';
+  
   if (role === 'opener') {
     return `
-      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Anrufe</div></div>
-      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Erreicht</div></div>
-      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Übergaben</div></div>
-      <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Quote</div></div>
+      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">📞 Anrufe</div></div>
+      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">✅ Erreicht</div></div>
+      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">➡️ Übergaben</div></div>
+      <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">📊 Quote</div></div>
     `;
   } else if (role === 'setter') {
     return `
-      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Gebuchte Termine</div></div>
-      <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Erscheinungsquote</div></div>
-      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Qualifiziert</div></div>
-      <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Weitergabe</div></div>
+      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">📅 Gebuchte Termine</div></div>
+      <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">✅ Erscheinungsquote</div></div>
+      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">🎯 Qualifiziert</div></div>
+      <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">➡️ Weitergabe</div></div>
     `;
   } else if (role === 'closer') {
     return `
-      <div class="stat-item"><div class="stat-value">€--</div><div class="stat-label">Umsatz</div></div>
-      <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Abschlussquote</div></div>
-      <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Abschlüsse</div></div>
-      <div class="stat-item"><div class="stat-value">€--</div><div class="stat-label">Ø Auftrag</div></div>
+      <div class="stat-item"><div class="stat-value">${noDataEur}</div><div class="stat-label">💰 Umsatz</div></div>
+      <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">✅ Abschlussquote</div></div>
+      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">🤝 Abschlüsse</div></div>
+      <div class="stat-item"><div class="stat-value">${noDataEur}</div><div class="stat-label">📊 Ø Auftrag</div></div>
     `;
   }
   return `
-    <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Aktivitäten</div></div>
-    <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Leads</div></div>
-    <div class="stat-item"><div class="stat-value">--</div><div class="stat-label">Anrufe</div></div>
-    <div class="stat-item"><div class="stat-value">--%</div><div class="stat-label">Zielerreichung</div></div>
+    <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">📋 Aktivitäten</div></div>
+    <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">👥 Leads</div></div>
+    <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">📞 Anrufe</div></div>
+    <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">🎯 Zielerreichung</div></div>
   `;
 }
 
@@ -2340,33 +2346,33 @@ function getPersonKpisHtml(role, person) {
   
   if (role === 'opener') {
     return `
-      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → SETTER</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Kontakte die beim Terminierer nicht erscheinen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter 15%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">🎯 ÜBERGABE-QUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erreichte → Übergaben</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 50%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">⏱️ Ø GESPRÄCHSZEIT</div><div class="kpi-value">--:--</div><div class="kpi-subtitle">Minuten pro Gespräch</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Optimal: 3-5 Min</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">📊 VERBINDLICHKEIT</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Terminierungs-Termine eingehalten</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 85%</span></div></div>
+      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → SETTER</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Kontakte die beim Terminierer nicht erscheinen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter 15%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">🎯 ÜBERGABE-QUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erreichte → Übergaben</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 50%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">⏱️ Ø GESPRÄCHSZEIT</div><div class="kpi-value">--:--</div><div class="kpi-subtitle">Minuten pro Gespräch</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Optimal: 3-5 Min</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📊 VERBINDLICHKEIT</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Terminierungs-Termine eingehalten</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 85%</span></div></div>
     `;
   } else if (role === 'setter') {
     return `
-      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ QUALIFIZIERUNGS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Kontakte die zum Qualifizierungsgespräch erscheinen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 75%</span></div></div>
-      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → CLOSER</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Qualifizierte die beim Abschließer fehlen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter 12%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">🎯 QUALIFIZIERUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erschienene → Qualifiziert</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 75%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS BUCHUNG</div><div class="kpi-value">-- Tage</div><div class="kpi-subtitle">Übergabe → Termin gebucht</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter 3 Tage</span></div></div>
+      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ QUALIFIZIERUNGS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Kontakte die zum Qualifizierungsgespräch erscheinen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 75%</span></div></div>
+      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → CLOSER</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Qualifizierte die beim Abschließer fehlen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter 12%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">🎯 QUALIFIZIERUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erschienene → Qualifiziert</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 75%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS BUCHUNG</div><div class="kpi-value">-- Tage</div><div class="kpi-subtitle">Übergabe → Termin gebucht</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter 3 Tage</span></div></div>
     `;
   } else if (role === 'closer') {
     return `
-      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ ABSCHLUSS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Qualifizierte die zum Abschluss erscheinen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 88%</span></div></div>
-      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → Betreuung</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Neukunden die beim AM-Ersttermin fehlen</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter 10%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">💰 Ø AUFTRAGSWERT</div><div class="kpi-value">€--</div><div class="kpi-subtitle">Durchschnitt pro Transaktion</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: €8.000</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">💎 PREMIUM-QUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Hochpreis Abschlüsse</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 40%</span></div></div>
+      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ ABSCHLUSS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Qualifizierte die zum Abschluss erscheinen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 88%</span></div></div>
+      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → Betreuung</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Neukunden die beim AM-Ersttermin fehlen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter 10%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">💰 Ø AUFTRAGSWERT</div><div class="kpi-value">€--</div><div class="kpi-subtitle">Durchschnitt pro Transaktion</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: €8.000</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">💎 PREMIUM-QUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Hochpreis Abschlüsse</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 40%</span></div></div>
     `;
   }
   
   // Gesamt: Alle wichtigen KPIs
   return `
-    <div class="kpi-card"><div class="kpi-header">📅 ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Durchschnitt alle Termine</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 80%</span></div></div>
-    <div class="kpi-card"><div class="kpi-header">💰 KOSTEN PRO TERMIN</div><div class="kpi-value">€--</div><div class="kpi-subtitle">Qualifizierte Termine (KPT)</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: unter €150</span></div></div>
-    <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS ABSCHLUSS</div><div class="kpi-value">-- Tage</div><div class="kpi-subtitle">Erstkontakt → Vertrag</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 14 Tage</span></div></div>
-    <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erschienene → Abschluss</div><div class="kpi-footer"><span class="kpi-change">--</span><span>Ziel: 30%</span></div></div>
+    <div class="kpi-card"><div class="kpi-header">📅 ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Durchschnitt alle Termine</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 80%</span></div></div>
+    <div class="kpi-card"><div class="kpi-header">💰 KOSTEN PRO TERMIN</div><div class="kpi-value">€--</div><div class="kpi-subtitle">Qualifizierte Termine (KPT)</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter €150</span></div></div>
+    <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS ABSCHLUSS</div><div class="kpi-value">-- Tage</div><div class="kpi-subtitle">Erstkontakt → Vertrag</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 14 Tage</span></div></div>
+    <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erschienene → Abschluss</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 30%</span></div></div>
   `;
 }
 
