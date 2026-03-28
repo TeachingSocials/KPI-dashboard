@@ -89,6 +89,19 @@
     
     .section-title { font-family: 'Orbitron', sans-serif; font-size: 12px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
     
+    /* Time Range Selector - Super einfach für User */
+    .time-range-selector { display: flex; gap: 4px; background: var(--bg-dark); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+    .time-btn { padding: 8px 14px; background: transparent; border: none; color: var(--text-dim); font-size: 12px; font-weight: 500; border-radius: 8px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .time-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    .time-btn.active { background: var(--beige); color: var(--bg-dark); font-weight: 600; }
+    
+    /* Kachel-spezifischer Zeitraum (erscheint beim Hover) */
+    .kpi-card .kpi-time-toggle { position: absolute; top: 6px; left: 6px; font-size: 10px; opacity: 0; transition: opacity 0.15s; display: flex; gap: 2px; }
+    .kpi-card:hover .kpi-time-toggle { opacity: 1; }
+    .kpi-time-btn { padding: 3px 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-dim); font-size: 9px; border-radius: 4px; cursor: pointer; }
+    .kpi-time-btn:hover { border-color: var(--beige); color: var(--beige); }
+    .kpi-time-btn.active { background: var(--beige); color: var(--bg-dark); border-color: var(--beige); }
+    
     .stats-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
     .stat-item { background: var(--bg-panel); border: 1px solid var(--border); padding: 16px; text-align: center; }
     .stat-value { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 3px; }
@@ -1031,7 +1044,21 @@
     </div>
     <div id="vertrieb-team-view">
       <div id="vertrieb-gesamt-team" class="sub-content active">
-        <div class="section-title">📊 VERTRIEB KENNZAHLEN</div>
+        <div class="section-header-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="section-title" style="margin:0;">📊 VERTRIEB KENNZAHLEN</div>
+          <div class="time-range-selector" id="globalTimeRange">
+            <button class="time-btn" data-range="today">Heute</button>
+            <button class="time-btn" data-range="week">Diese Woche</button>
+            <button class="time-btn active" data-range="month">Dieser Monat</button>
+            <button class="time-btn" data-range="last_month">Letzter Monat</button>
+            <button class="time-btn" data-range="quarter">Quartal</button>
+          </div>
+        </div>
+        <div class="time-range-info" id="timeRangeInfo" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+          <span>📅</span>
+          <span id="timeRangeLabel">01.03.2026 – 28.03.2026</span>
+          <span style="color:var(--beige);margin-left:auto;">vs. Vorperiode</span>
+        </div>
         <div class="stats-panel">
           <div class="stat-item"><div class="stat-value" id="kpi-umsatz">-</div><div class="stat-label">Umsatz (gewonnen)</div></div>
           <div class="stat-item"><div class="stat-value" id="kpi-leads">-</div><div class="stat-label">Leads</div></div>
@@ -1920,7 +1947,88 @@ if (typeof window.supabase !== 'undefined') {
 // =====================================================
 // GLOBAL STATE & CONFIG
 // =====================================================
-var state = { branche: null, selectedWerkzeuge: [], currentVertriebRole: 'gesamt', currentVertriebView: 'team', currentKundenView: 'team', bausteinType: 'kpi', bausteinSource: 'close', bausteinMetric: null, bausteinDisplay: 'Große Zahl', formulaA: '', formulaB: '', formulaOp: '÷' };
+var state = { branche: null, selectedWerkzeuge: [], currentVertriebRole: 'gesamt', currentVertriebView: 'team', currentKundenView: 'team', bausteinType: 'kpi', bausteinSource: 'close', bausteinMetric: null, bausteinDisplay: 'Große Zahl', formulaA: '', formulaB: '', formulaOp: '÷', timeRange: 'month' };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ZEITRAUM-LOGIK - Super einfach für User
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Zeitraum-Definitionen (für Menschen verständlich)
+const TIME_RANGES = {
+  today: { label: 'Heute', getRange: () => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return { start, end: now, label: formatDateDE(start) };
+  }},
+  week: { label: 'Diese Woche', getRange: () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay() || 7; // Sonntag = 7
+    const start = new Date(now);
+    start.setDate(now.getDate() - dayOfWeek + 1); // Montag
+    start.setHours(0, 0, 0, 0);
+    return { start, end: now, label: formatDateDE(start) + ' – ' + formatDateDE(now) };
+  }},
+  month: { label: 'Dieser Monat', getRange: () => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { start, end: now, label: formatDateDE(start) + ' – ' + formatDateDE(now) };
+  }},
+  last_month: { label: 'Letzter Monat', getRange: () => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    return { start, end, label: formatDateDE(start) + ' – ' + formatDateDE(end) };
+  }},
+  quarter: { label: 'Quartal', getRange: () => {
+    const now = new Date();
+    const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+    const start = new Date(now.getFullYear(), quarterMonth, 1);
+    return { start, end: now, label: 'Q' + (Math.floor(now.getMonth() / 3) + 1) + ' ' + now.getFullYear() };
+  }}
+};
+
+// Deutsches Datumsformat
+function formatDateDE(date) {
+  return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// Zeitraum ändern (global für alle Kacheln)
+function setGlobalTimeRange(range) {
+  state.timeRange = range;
+  
+  // Buttons aktualisieren
+  document.querySelectorAll('.time-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.range === range);
+  });
+  
+  // Label aktualisieren
+  const rangeInfo = TIME_RANGES[range];
+  if (rangeInfo) {
+    const { label } = rangeInfo.getRange();
+    const labelEl = document.getElementById('timeRangeLabel');
+    if (labelEl) labelEl.textContent = label;
+  }
+  
+  // Speichern
+  localStorage.setItem('ts_time_range', range);
+  
+  // TODO: KPI-Werte neu berechnen
+  console.log('⏱️ Zeitraum geändert:', range, TIME_RANGES[range]?.getRange());
+}
+
+// Initialisiere Zeitraum-Buttons
+function initTimeRangeSelector() {
+  // Gespeicherten Zeitraum laden
+  const savedRange = localStorage.getItem('ts_time_range') || 'month';
+  
+  // Event-Listener für globale Buttons
+  document.querySelectorAll('#globalTimeRange .time-btn').forEach(btn => {
+    btn.addEventListener('click', () => setGlobalTimeRange(btn.dataset.range));
+  });
+  
+  // Initial setzen
+  setGlobalTimeRange(savedRange);
+}
 var branchenLabels = { coaching: 'Coaching', versicherung: 'Versicherungsmakler', finanzen: 'Finanzmakler', immobilien: 'Projektentwickler', kapital: 'Kapitalanlage' };
 var currentUser = null;
 
@@ -4085,6 +4193,9 @@ async function openKpiConfigModal(targetId, targetName) {
   const savedKpis = JSON.parse(localStorage.getItem('ts_kpi_config') || '{}');
   if (savedKpis[targetId]) {
     currentKpiTarget.paramMappings = savedKpis[targetId].mappings || {};
+    currentKpiTarget.timeRange = savedKpis[targetId].timeRange || state.timeRange || 'month';
+  } else {
+    currentKpiTarget.timeRange = state.timeRange || 'month';
   }
   
   // Modal erstellen falls nicht vorhanden
@@ -4179,6 +4290,16 @@ async function openKpiConfigModal(targetId, targetName) {
       .kpi-save-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
       .kpi-save-btn .btn-icon { font-size:18px; }
       
+      /* Zeitraum-Auswahl im Modal */
+      .kpi-time-section { padding:0 28px 20px; }
+      .kpi-time-selector { display:flex; gap:6px; flex-wrap:wrap; }
+      .kpi-time-option { padding:10px 16px; background:var(--bg-dark); border:2px solid var(--border); border-radius:10px; color:var(--text-dim); font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:8px; }
+      .kpi-time-option:hover { border-color:rgba(192,173,148,0.5); color:var(--text); }
+      .kpi-time-option.active { border-color:var(--beige); background:rgba(192,173,148,0.1); color:#fff; }
+      .kpi-time-option .time-icon { font-size:14px; }
+      .kpi-time-hint { font-size:11px; color:var(--text-dim); margin-top:10px; display:flex; align-items:center; gap:6px; }
+      .kpi-time-hint .hint-icon { font-size:12px; }
+      
       /* Fallback wenn keine Definition */
       .kpi-no-definition { padding:40px 28px; text-align:center; }
       .kpi-no-definition-icon { font-size:48px; margin-bottom:16px; opacity:0.5; }
@@ -4269,6 +4390,9 @@ function renderKpiModalContent(kpiDef, targetName, mappings) {
   const allConnected = kpiDef.params.every(p => mappings[p.id]);
   const saveDisabled = allConnected ? '' : 'disabled';
   
+  // Aktueller Zeitraum für diese Kachel (oder global)
+  const kpiTimeRange = currentKpiTarget?.timeRange || state.timeRange || 'month';
+  
   return `
     <div class="kpi-modal-header">
       <div class="kpi-modal-title">
@@ -4291,6 +4415,31 @@ function renderKpiModalContent(kpiDef, targetName, mappings) {
     <div class="kpi-params-section">
       <div class="kpi-params-title">Verbinde deine Daten</div>
       ${paramsHtml}
+    </div>
+    
+    <div class="kpi-time-section">
+      <div class="kpi-params-title">Zeitraum wählen</div>
+      <div class="kpi-time-selector">
+        <div class="kpi-time-option ${kpiTimeRange === 'today' ? 'active' : ''}" onclick="setKpiTimeRange('today')">
+          <span class="time-icon">📅</span> Heute
+        </div>
+        <div class="kpi-time-option ${kpiTimeRange === 'week' ? 'active' : ''}" onclick="setKpiTimeRange('week')">
+          <span class="time-icon">📆</span> Diese Woche
+        </div>
+        <div class="kpi-time-option ${kpiTimeRange === 'month' ? 'active' : ''}" onclick="setKpiTimeRange('month')">
+          <span class="time-icon">🗓️</span> Dieser Monat
+        </div>
+        <div class="kpi-time-option ${kpiTimeRange === 'last_month' ? 'active' : ''}" onclick="setKpiTimeRange('last_month')">
+          <span class="time-icon">⏮️</span> Letzter Monat
+        </div>
+        <div class="kpi-time-option ${kpiTimeRange === 'quarter' ? 'active' : ''}" onclick="setKpiTimeRange('quarter')">
+          <span class="time-icon">📊</span> Quartal
+        </div>
+      </div>
+      <div class="kpi-time-hint">
+        <span class="hint-icon">ℹ️</span>
+        <span>Der Wert wird für diesen Zeitraum berechnet. Vergleich immer vs. Vorperiode.</span>
+      </div>
     </div>
     
     <div class="kpi-modal-footer">
@@ -4494,6 +4643,33 @@ function selectParamMapping(paramId, sourceId, displayName) {
   document.querySelectorAll('.kpi-param-dropdown').forEach(d => d.classList.remove('open'));
 }
 
+// Zeitraum für diese Kachel setzen
+function setKpiTimeRange(range) {
+  if (!currentKpiTarget) return;
+  
+  // Speichere Zeitraum für diese Kachel
+  currentKpiTarget.timeRange = range;
+  
+  // UI aktualisieren
+  document.querySelectorAll('.kpi-time-option').forEach(opt => {
+    opt.classList.toggle('active', opt.textContent.toLowerCase().includes(
+      range === 'today' ? 'heute' :
+      range === 'week' ? 'woche' :
+      range === 'month' ? 'monat' :
+      range === 'last_month' ? 'letzter' :
+      range === 'quarter' ? 'quartal' : ''
+    ));
+  });
+  
+  // Einfacher: onclick direkt mit range
+  document.querySelectorAll('.kpi-time-option').forEach(opt => {
+    const optRange = opt.getAttribute('onclick')?.match(/setKpiTimeRange\('(\w+)'\)/)?.[1];
+    opt.classList.toggle('active', optRange === range);
+  });
+  
+  console.log('⏱️ Kachel-Zeitraum gesetzt:', range);
+}
+
 // Speichern (neue Version)
 async function saveKpiConfigNew() {
   if (!currentKpiTarget || !currentKpiTarget.definition) return;
@@ -4520,6 +4696,7 @@ async function saveKpiConfigNew() {
       name: currentKpiTarget.name,
       definition: currentKpiTarget.definition.name,
       mappings: currentKpiTarget.paramMappings,
+      timeRange: currentKpiTarget.timeRange || state.timeRange || 'month',
       savedAt: new Date().toISOString()
     };
     
@@ -4769,6 +4946,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initCloseConnection, 500);
   setTimeout(renderEmployeeGrids, 1000);
   setTimeout(markConfiguredKpis, 1500);
+  setTimeout(initTimeRangeSelector, 100); // Zeitraum-Selector früh initialisieren
 });
 </script>
 </body>
