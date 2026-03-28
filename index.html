@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teaching Socials Übersicht</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="stripe-key" content="">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root { --bg-dark: #0d1117; --bg-nav: #060809; --bg-panel: #151d28; --bg-card: #1c2636; --beige: #C0AD94; --text: #e0e0e0; --text-dim: #6b7a8a; --border: #2a3a4a; --success: #4ade80; --warning: #fbbf24; --danger: #f87171; --purple: #a855f7; --pink: #E1306C; }
@@ -71,6 +72,10 @@
     .header-right { display: flex; align-items: center; gap: 24px; font-size: 12px; color: var(--text-dim); }
     .live-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; margin-right: 4px; animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+    .loading-spinner { display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--beige);border-radius:50%;animation:spin 0.6s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .toast-notification { position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:10000;animation:fadeIn 0.3s; }
     
     .nav { display: flex; gap: 0; margin-bottom: 16px; background: var(--bg-nav); flex-wrap: wrap; border: 1px solid var(--border); }
     .nav-btn { padding: 10px 16px; background: transparent; border: none; color: var(--text-dim); font-family: inherit; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--border); }
@@ -583,11 +588,11 @@
       .header-actions { gap: 8px; }
       .header-btn { padding: 6px 10px; font-size: 10px; }
       .nav { padding: 8px; gap: 4px; overflow-x: auto; flex-wrap: nowrap; justify-content: flex-start; }
-      .nav-btn { padding: 6px 10px; font-size: 10px; white-space: nowrap; flex-shrink: 0; }
+      .nav-btn { padding: 8px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; min-height: 44px; }
       .sub-nav { flex-wrap: nowrap; overflow-x: auto; gap: 4px; padding-bottom: 8px; }
-      .sub-nav-btn { padding: 6px 10px; font-size: 10px; white-space: nowrap; }
+      .sub-nav-btn { padding: 8px 12px; font-size: 12px; white-space: nowrap; min-height: 40px; }
       .toggle-group { flex-wrap: nowrap; }
-      .toggle-btn { padding: 5px 8px; font-size: 10px; }
+      .toggle-btn { padding: 8px 12px; font-size: 12px; min-height: 40px; }
       
       /* KPIs & Cards Mobile */
       .kpi-grid, .progress-grid, .stats-panel { grid-template-columns: 1fr; }
@@ -621,7 +626,7 @@
       .login-card { padding: 16px; }
       .login-logo { font-size: 18px; }
       .branche-grid { grid-template-columns: 1fr 1fr; }
-      .nav-btn { padding: 6px 8px; font-size: 10px; }
+      .nav-btn { padding: 8px 10px; font-size: 11px; min-height: 44px; }
       .kpi-value { font-size: 18px; }
       .pricing-grid { gap: 12px; }
     }
@@ -644,12 +649,12 @@
     
     <form class="login-form" id="loginForm">
       <div class="login-field">
-        <label class="login-label">E-Mail-Adresse</label>
-        <input type="email" class="login-input" id="loginEmail" placeholder="name@unternehmen.de" required>
+        <label class="login-label" for="loginEmail">E-Mail-Adresse</label>
+        <input type="email" class="login-input" id="loginEmail" placeholder="name@unternehmen.de" required aria-required="true">
       </div>
       <div class="login-field">
-        <label class="login-label">Passwort</label>
-        <input type="password" class="login-input" id="loginPassword" placeholder="••••••••" required onkeypress="if(event.key==='Enter')handleLogin()">
+        <label class="login-label" for="loginPassword">Passwort</label>
+        <input type="password" class="login-input" id="loginPassword" placeholder="••••••••" required aria-required="true" onkeypress="if(event.key==='Enter')handleLogin()">
       </div>
       <div class="login-options">
         <label class="login-remember">
@@ -1067,7 +1072,7 @@
     <div class="header-right"><span><span class="live-dot"></span>ECHTZEIT</span><span>CLOSE CRM <span style="color:var(--success)">●</span></span><span id="clock"></span><button onclick="handleLogout()" style="padding:6px 11px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:11px;cursor:pointer;border-radius:4px;margin-left:8px;" onmouseover="this.style.borderColor='var(--beige)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">Abmelden</button></div>
   </header>
 
-  <nav class="nav">
+  <nav class="nav" role="navigation" aria-label="Hauptnavigation">
     <button class="nav-btn active" onclick="showTab('vertrieb', this)">📊 Vertrieb</button>
     <button class="nav-btn" onclick="showTab('kunden', this)">👥 Kunden</button>
     <button class="nav-btn" onclick="showTab('soziale-medien', this)">📱 Social</button>
@@ -2172,8 +2177,10 @@ function setGlobalTimeRange(range) {
   // Speichern
   localStorage.setItem('ts_time_range', range);
   
-  // TODO: KPI-Werte neu berechnen
-  console.log('⏱️ Zeitraum geändert:', range, TIME_RANGES[range]?.getRange());
+  // KPI-Werte neu berechnen für den gewählten Zeitraum
+  if (closeApiKey) {
+    loadAndDisplayCloseKPIs();
+  }
 }
 
 // Initialisiere Zeitraum-Buttons
@@ -2220,7 +2227,11 @@ function setPersonTimeRange(role, range) {
   // Speichern
   localStorage.setItem('ts_person_time_' + role, range);
   
-  // TODO: KPI-Werte neu laden für die ausgewählte Person
+  // KPI-Werte neu laden für die ausgewählte Person
+  var personSelect = document.getElementById('person-select-' + role);
+  if (personSelect && personSelect.value) {
+    selectPerson(role, personSelect.value);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2504,8 +2515,8 @@ function showForgotPassword(event) {
 function showDemo(event) {
   event.preventDefault();
   document.getElementById('loginEmail').value = 'demo@teaching-socials.de';
-  document.getElementById('loginPassword').value = 'demo123';
-  alert('Demo-Zugangsdaten eingefügt!\n\nKlicke jetzt auf "Anmelden".');
+  document.getElementById('loginPassword').value = 'demo2024!';
+  document.getElementById('loginBtn').click();
 }
 
 async function handleLogout() {
@@ -2837,13 +2848,9 @@ var cardElement = null;
 var ibanElement = null;
 var currentPaymentMethod = 'card';
 
-// Stripe Public Key - ERSETZEN MIT DEINEM LIVE KEY!
-// Test: pk_test_... | Live: pk_live_...
-var STRIPE_PUBLIC_KEY = 'pk_test_DEIN_PUBLIC_KEY_HIER';
-
-// Supabase Edge Function URL für Payment Intent
-// ERSETZEN MIT DEINER SUPABASE URL!
-var SUPABASE_PAYMENT_URL = 'https://DEIN-PROJEKT.supabase.co/functions/v1/create-payment-intent';
+// Stripe Konfiguration - wird aus Supabase oder meta-Tags geladen
+var STRIPE_PUBLIC_KEY = document.querySelector('meta[name="stripe-key"]')?.content || 'pk_test_DEIN_PUBLIC_KEY_HIER';
+var SUPABASE_PAYMENT_URL = SUPABASE_URL + '/functions/v1/create-payment-intent';
 
 function initStripeElements() {
   // Nur initialisieren wenn Stripe geladen ist
@@ -3728,17 +3735,51 @@ function updatePreview() {
   }
 }
 
-function createBaustein() {
-  var name = document.getElementById('baustein-name').value || state.bausteinMetric || 'Neues Baustein';
+async function createBaustein() {
+  var name = document.getElementById('baustein-name').value || state.bausteinMetric || 'Neuer Baustein';
   if (!state.bausteinMetric) { alert('Bitte wähle eine Kennzahl aus.'); return; }
-  alert('Baustein "' + name + '" wurde erstellt!\n\nTyp: ' + state.bausteinType + '\nDatenquelle: ' + state.bausteinSource + '\nKennzahl: ' + state.bausteinMetric);
+
+  var baustein = {
+    name: name,
+    type: state.bausteinType,
+    source: state.bausteinSource,
+    metric: state.bausteinMetric,
+    display: state.bausteinDisplay,
+    formulaA: state.formulaA,
+    formulaB: state.formulaB,
+    formulaOp: state.formulaOp,
+    createdAt: new Date().toISOString()
+  };
+
+  // In localStorage speichern
+  var bausteine = JSON.parse(localStorage.getItem('ts_bausteine') || '[]');
+  bausteine.push(baustein);
+  localStorage.setItem('ts_bausteine', JSON.stringify(bausteine));
+
+  // In Supabase speichern wenn verbunden
+  if (currentUser && supabase) {
+    try {
+      await supabase.from('profiles').update({ custom_widgets: bausteine }).eq('id', currentUser.id);
+      console.log('✓ Baustein in Supabase gespeichert');
+    } catch (e) {
+      console.warn('Supabase Speichern fehlgeschlagen:', e);
+    }
+  }
+
+  // Erfolgs-Feedback
+  var notification = document.createElement('div');
+  notification.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--success);color:var(--bg-dark);padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:10000;';
+  notification.textContent = '✓ Baustein "' + name + '" erstellt';
+  document.body.appendChild(notification);
+  setTimeout(function() { notification.remove(); }, 3000);
+
   closeBausteinModal();
 }
 
 // =====================================================
 // CLOSE CRM API INTEGRATION
 // =====================================================
-var closeApiKey = localStorage.getItem('ts_close_api_key') || '';
+var closeApiKey = sessionStorage.getItem('ts_close_api_key') || '';
 var closeTeamMembers = [];
 
 // Initialize Close connection on page load
@@ -3797,7 +3838,7 @@ async function connectCloseAPI() {
     
     // Success! Save API key
     closeApiKey = apiKey;
-    localStorage.setItem('ts_close_api_key', apiKey);
+    sessionStorage.setItem('ts_close_api_key', apiKey);
     
     console.log('✓ Close verbunden:', firstName, lastName);
     
@@ -4311,14 +4352,59 @@ function openEmployeeModalDynamic(memberId) {
   document.getElementById('modal-emp-strengths').innerHTML = kpiCount > 0 ?
     '<div style="color:var(--text-dim);">' + kpiCount + ' KPIs konfiguriert. Werte werden aus Close CRM geladen.</div>' :
     '<div style="color:var(--text-dim);">Konfiguriere KPIs um Stärken zu analysieren.</div>';
-  
-  document.getElementById('modal-emp-improvements').innerHTML = 
+
+  document.getElementById('modal-emp-improvements').innerHTML =
     '<div style="color:var(--text-dim);">Verbesserungsvorschläge werden basierend auf KPI-Zielen generiert.</div>';
-  
-  document.getElementById('modal-emp-recommendations').innerHTML = 
+
+  document.getElementById('modal-emp-recommendations').innerHTML =
     '<div style="color:var(--text-dim);">Empfehlungen erscheinen nach KPI-Konfiguration und Datenanalyse.</div>';
-  
+
   document.getElementById('employeeModal').classList.add('active');
+
+  // Lade echte Daten aus Close für diesen Mitarbeiter
+  if (closeApiKey && memberId) {
+    loadEmployeeCloseData(memberId, member);
+  }
+}
+
+// Lade Close CRM Daten für einen spezifischen Mitarbeiter
+async function loadEmployeeCloseData(memberId, member) {
+  try {
+    var range = TIME_RANGES[state.timeRange];
+    var dateRange = range ? range.getRange() : TIME_RANGES.month.getRange();
+    var dateFrom = dateRange.start.toISOString().split('T')[0];
+    var dateTo = dateRange.end.toISOString().split('T')[0];
+
+    // Parallel: Calls und Emails für diesen User laden
+    var [callsData, emailsData] = await Promise.all([
+      fetchCloseEndpoint('activity/?_type=Call&user_id=' + memberId + '&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/?_type=Email&user_id=' + memberId + '&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0')
+    ]);
+
+    var calls = callsData.total_results || 0;
+    var emails = emailsData.total_results || 0;
+
+    // Aktualisiere Stats im Modal
+    var statsCards = document.querySelectorAll('#modal-emp-stats .emp-modal-stat-card');
+    statsCards.forEach(function(card) {
+      var label = card.querySelector('.emp-modal-stat-label');
+      var value = card.querySelector('.emp-modal-stat-value');
+      if (!label || !value) return;
+
+      var labelText = label.textContent.toLowerCase();
+      if (labelText.includes('anruf') || labelText.includes('call')) {
+        value.textContent = calls.toLocaleString('de-DE');
+      } else if (labelText.includes('mail') || labelText.includes('email')) {
+        value.textContent = emails.toLocaleString('de-DE');
+      }
+    });
+
+    // Update rank/goal based on calls
+    document.getElementById('modal-rank').textContent = calls + ' Aktivitäten';
+
+  } catch (e) {
+    console.warn('Employee data load failed:', e);
+  }
 }
 
 // Refresh team
@@ -4332,7 +4418,7 @@ function disconnectCloseAPI() {
   
   closeApiKey = '';
   closeTeamMembers = [];
-  localStorage.removeItem('ts_close_api_key');
+  sessionStorage.removeItem('ts_close_api_key');
   
   updateCloseConnectionStatus(false);
   document.getElementById('closeApiKeyInput').value = '';
@@ -4369,78 +4455,59 @@ function showCloseError(message) {
 // CLOSE KPI DATA FETCHING
 // =====================================================
 async function fetchCloseKPIs(period) {
-  if (!closeApiKey) {
-    console.log('Close nicht verbunden - zeige Demo-Daten');
-    return null;
-  }
-  
+  if (!closeApiKey) return null;
+
   try {
-    // Fetch ALL calls (no date filter)
-    var callsResponse = await fetch('/api/close-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        endpoint: 'activity/?_type=Call&_limit=0',
-        apiKey: closeApiKey 
-      })
+    var range = TIME_RANGES[period || state.timeRange];
+    var dateRange = range ? range.getRange() : TIME_RANGES.month.getRange();
+    var dateFrom = dateRange.start.toISOString().split('T')[0];
+    var dateTo = dateRange.end.toISOString().split('T')[0];
+
+    console.log('📊 Fetching Close KPIs:', dateFrom, '→', dateTo);
+
+    // Parallel fetch all data with date filters
+    var [callsData, emailsData, oppsData, leadsData] = await Promise.all([
+      fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/?_type=Email&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('opportunity/'),
+      fetchCloseEndpoint('lead/?_limit=0')
+    ]);
+
+    // Filter opportunities by date range
+    var allOpps = oppsData.data || [];
+    var filteredOpps = allOpps.filter(function(o) {
+      var created = o.date_created || o.created;
+      if (!created) return false;
+      var d = created.split('T')[0];
+      return d >= dateFrom && d <= dateTo;
     });
-    var callsData = await callsResponse.json();
-    console.log('Calls response:', callsData);
-    
-    // Fetch ALL emails
-    var emailsResponse = await fetch('/api/close-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        endpoint: 'activity/?_type=Email&_limit=0',
-        apiKey: closeApiKey 
-      })
-    });
-    var emailsData = await emailsResponse.json();
-    console.log('Emails response:', emailsData);
-    
-    // Fetch ALL opportunities
-    var oppsResponse = await fetch('/api/close-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        endpoint: 'opportunity/',
-        apiKey: closeApiKey 
-      })
-    });
-    var oppsData = await oppsResponse.json();
-    console.log('Opportunities response:', oppsData);
-    
-    // Fetch ALL leads
-    var leadsResponse = await fetch('/api/close-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        endpoint: 'lead/?_limit=0',
-        apiKey: closeApiKey 
-      })
-    });
-    var leadsData = await leadsResponse.json();
-    console.log('Leads response:', leadsData);
-    
-    // Calculate KPIs
-    var wonOpps = (oppsData.data || []).filter(function(o) { return o.status_type === 'won'; });
-    var activeOpps = (oppsData.data || []).filter(function(o) { return o.status_type === 'active'; });
+
+    var wonOpps = filteredOpps.filter(function(o) { return o.status_type === 'won'; });
+    var activeOpps = allOpps.filter(function(o) { return o.status_type === 'active'; });
     var totalRevenue = wonOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
     var pipelineValue = activeOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
-    
+
+    // Filter leads by date
+    var allLeads = leadsData.data || [];
+    var filteredLeads = allLeads.filter(function(l) {
+      var created = l.date_created || l.created;
+      if (!created) return false;
+      var d = created.split('T')[0];
+      return d >= dateFrom && d <= dateTo;
+    });
+
     return {
       ausgehendeAnrufe: callsData.total_results || 0,
       gesendeteMails: emailsData.total_results || 0,
-      neueLeads: leadsData.total_results || 0,
+      neueLeads: filteredLeads.length,
       pipelineValue: pipelineValue,
       offeneDeals: activeOpps.length,
       abschluesse: wonOpps.length,
       umsatz: totalRevenue,
       durchschnAuftragswert: wonOpps.length > 0 ? Math.round(totalRevenue / wonOpps.length) : 0,
-      abschlussquote: oppsData.data?.length > 0 ? Math.round(wonOpps.length / oppsData.data.length * 100) : 0
+      abschlussquote: filteredOpps.length > 0 ? Math.round(wonOpps.length / filteredOpps.length * 100) : 0
     };
-    
+
   } catch (error) {
     console.error('Close KPI fetch error:', error);
     return null;
@@ -4449,28 +4516,37 @@ async function fetchCloseKPIs(period) {
 
 // Load and display Close KPIs in dashboard
 async function loadAndDisplayCloseKPIs() {
-  console.log('Loading Close KPIs...');
-  var kpis = await fetchCloseKPIs('month');
-  
+  // Show loading state
+  ['kpi-umsatz', 'kpi-leads', 'kpi-anrufe', 'kpi-abschluesse'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = '<span style="opacity:0.5;font-size:14px;">Lädt...</span>';
+  });
+
+  var kpis = await fetchCloseKPIs(state.timeRange);
+
   if (!kpis) {
-    console.log('No KPIs returned');
+    ['kpi-umsatz', 'kpi-leads', 'kpi-anrufe', 'kpi-abschluesse'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = '-';
+    });
     return;
   }
-  
-  console.log('✓ Close KPIs geladen:', kpis);
-  
-  // Update KPI elements by ID
+
+  // Update main KPI elements
   var umsatzEl = document.getElementById('kpi-umsatz');
   var leadsEl = document.getElementById('kpi-leads');
   var anrufeEl = document.getElementById('kpi-anrufe');
   var abschluesseEl = document.getElementById('kpi-abschluesse');
-  
-  if (umsatzEl) umsatzEl.textContent = '€' + Math.round(kpis.umsatz / 100).toLocaleString('de-DE');
+
+  if (umsatzEl) umsatzEl.textContent = formatCurrency(kpis.umsatz);
   if (leadsEl) leadsEl.textContent = kpis.neueLeads.toLocaleString('de-DE');
   if (anrufeEl) anrufeEl.textContent = kpis.ausgehendeAnrufe.toLocaleString('de-DE');
   if (abschluesseEl) abschluesseEl.textContent = kpis.abschluesse.toLocaleString('de-DE');
-  
-  console.log('✓ KPIs in UI aktualisiert - Umsatz:', kpis.umsatz, 'Leads:', kpis.neueLeads, 'Anrufe:', kpis.ausgehendeAnrufe, 'Abschlüsse:', kpis.abschluesse);
+
+  // Store latest KPIs for person view
+  window._latestKpis = kpis;
+
+  console.log('✓ KPIs aktualisiert:', kpis);
 }
 
 // Format currency for display
@@ -5152,8 +5228,20 @@ async function saveKpiConfigNew() {
     // 6. Modal schließen
     closeKpiConfigModal();
     
-    // 7. Erfolgs-Feedback
-    // TODO: KPI-Wert berechnen und in Kachel anzeigen
+    // 7. KPI-Wert berechnen und in Kachel anzeigen
+    if (closeApiKey) {
+      loadAndDisplayCloseKPIs();
+    }
+
+    // 8. Erfolgs-Feedback
+    var card = document.querySelector('.kpi-card .kpi-header');
+    if (card) {
+      var notification = document.createElement('div');
+      notification.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--success);color:var(--bg-dark);padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:10000;animation:fadeIn 0.3s;';
+      notification.textContent = '✓ KPI konfiguriert und gespeichert';
+      document.body.appendChild(notification);
+      setTimeout(function() { notification.remove(); }, 3000);
+    }
     
   } catch (err) {
     console.error('Fehler beim Speichern:', err);
