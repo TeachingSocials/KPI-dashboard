@@ -91,9 +91,14 @@
     
     /* Time Range Selector - Super einfach für User */
     .time-range-selector { display: flex; gap: 4px; background: var(--bg-dark); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+    .time-range-selector.time-range-small { padding: 3px; gap: 3px; flex-wrap: wrap; }
+    .time-range-selector.time-range-small .time-btn { padding: 6px 10px; font-size: 11px; }
     .time-btn { padding: 8px 14px; background: transparent; border: none; color: var(--text-dim); font-size: 12px; font-weight: 500; border-radius: 8px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
     .time-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
     .time-btn.active { background: var(--beige); color: var(--bg-dark); font-weight: 600; }
+    
+    /* Person Controls Container */
+    .person-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     
     /* Kachel-spezifischer Zeitraum (erscheint beim Hover) */
     .kpi-card .kpi-time-toggle { position: absolute; top: 6px; left: 6px; font-size: 10px; opacity: 0; transition: opacity 0.15s; display: flex; gap: 2px; }
@@ -1190,9 +1195,12 @@
             </select>
             <div class="time-range-selector time-range-small" id="personTimeRange-gesamt">
               <button class="time-btn" data-range="today" onclick="setPersonTimeRange('gesamt', 'today')">Heute</button>
-              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('gesamt', 'week')">Woche</button>
+              <button class="time-btn" data-range="yesterday" onclick="setPersonTimeRange('gesamt', 'yesterday')">Gestern</button>
+              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('gesamt', 'week')">Diese Woche</button>
+              <button class="time-btn" data-range="last_week" onclick="setPersonTimeRange('gesamt', 'last_week')">Letzte W.</button>
               <button class="time-btn active" data-range="month" onclick="setPersonTimeRange('gesamt', 'month')">Monat</button>
               <button class="time-btn" data-range="last_month" onclick="setPersonTimeRange('gesamt', 'last_month')">Letzt. M.</button>
+              <button class="time-btn" data-range="quarter" onclick="setPersonTimeRange('gesamt', 'quarter')">Quartal</button>
             </div>
           </div>
         </div>
@@ -1212,9 +1220,12 @@
             </select>
             <div class="time-range-selector time-range-small" id="personTimeRange-opener">
               <button class="time-btn" data-range="today" onclick="setPersonTimeRange('opener', 'today')">Heute</button>
-              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('opener', 'week')">Woche</button>
+              <button class="time-btn" data-range="yesterday" onclick="setPersonTimeRange('opener', 'yesterday')">Gestern</button>
+              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('opener', 'week')">Diese Woche</button>
+              <button class="time-btn" data-range="last_week" onclick="setPersonTimeRange('opener', 'last_week')">Letzte W.</button>
               <button class="time-btn active" data-range="month" onclick="setPersonTimeRange('opener', 'month')">Monat</button>
               <button class="time-btn" data-range="last_month" onclick="setPersonTimeRange('opener', 'last_month')">Letzt. M.</button>
+              <button class="time-btn" data-range="quarter" onclick="setPersonTimeRange('opener', 'quarter')">Quartal</button>
             </div>
           </div>
         </div>
@@ -1234,9 +1245,12 @@
             </select>
             <div class="time-range-selector time-range-small" id="personTimeRange-setter">
               <button class="time-btn" data-range="today" onclick="setPersonTimeRange('setter', 'today')">Heute</button>
-              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('setter', 'week')">Woche</button>
+              <button class="time-btn" data-range="yesterday" onclick="setPersonTimeRange('setter', 'yesterday')">Gestern</button>
+              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('setter', 'week')">Diese Woche</button>
+              <button class="time-btn" data-range="last_week" onclick="setPersonTimeRange('setter', 'last_week')">Letzte W.</button>
               <button class="time-btn active" data-range="month" onclick="setPersonTimeRange('setter', 'month')">Monat</button>
               <button class="time-btn" data-range="last_month" onclick="setPersonTimeRange('setter', 'last_month')">Letzt. M.</button>
+              <button class="time-btn" data-range="quarter" onclick="setPersonTimeRange('setter', 'quarter')">Quartal</button>
             </div>
           </div>
         </div>
@@ -1256,9 +1270,12 @@
             </select>
             <div class="time-range-selector time-range-small" id="personTimeRange-closer">
               <button class="time-btn" data-range="today" onclick="setPersonTimeRange('closer', 'today')">Heute</button>
-              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('closer', 'week')">Woche</button>
+              <button class="time-btn" data-range="yesterday" onclick="setPersonTimeRange('closer', 'yesterday')">Gestern</button>
+              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('closer', 'week')">Diese Woche</button>
+              <button class="time-btn" data-range="last_week" onclick="setPersonTimeRange('closer', 'last_week')">Letzte W.</button>
               <button class="time-btn active" data-range="month" onclick="setPersonTimeRange('closer', 'month')">Monat</button>
               <button class="time-btn" data-range="last_month" onclick="setPersonTimeRange('closer', 'last_month')">Letzt. M.</button>
+              <button class="time-btn" data-range="quarter" onclick="setPersonTimeRange('closer', 'quarter')">Quartal</button>
             </div>
           </div>
         </div>
@@ -2083,6 +2100,12 @@ const TIME_RANGES = {
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return { start, end: now, label: formatDateDE(start) };
   }},
+  yesterday: { label: 'Gestern', getRange: () => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59);
+    return { start, end, label: formatDateDE(start) };
+  }},
   week: { label: 'Diese Woche', getRange: () => {
     const now = new Date();
     const dayOfWeek = now.getDay() || 7; // Sonntag = 7
@@ -2090,6 +2113,18 @@ const TIME_RANGES = {
     start.setDate(now.getDate() - dayOfWeek + 1); // Montag
     start.setHours(0, 0, 0, 0);
     return { start, end: now, label: formatDateDE(start) + ' – ' + formatDateDE(now) };
+  }},
+  last_week: { label: 'Letzte Woche', getRange: () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay() || 7;
+    const thisMonday = new Date(now);
+    thisMonday.setDate(now.getDate() - dayOfWeek + 1);
+    const lastMonday = new Date(thisMonday);
+    lastMonday.setDate(thisMonday.getDate() - 7);
+    const lastSunday = new Date(thisMonday);
+    lastSunday.setDate(thisMonday.getDate() - 1);
+    lastSunday.setHours(23, 59, 59);
+    return { start: lastMonday, end: lastSunday, label: formatDateDE(lastMonday) + ' – ' + formatDateDE(lastSunday) };
   }},
   month: { label: 'Dieser Monat', getRange: () => {
     const now = new Date();
@@ -2151,6 +2186,39 @@ function initTimeRangeSelector() {
   
   // Initial setzen
   setGlobalTimeRange(savedRange);
+}
+
+// Speichert Zeitraum pro Rolle für Personen-Ansicht
+var personTimeRanges = {
+  gesamt: 'month',
+  opener: 'month',
+  setter: 'month',
+  closer: 'month'
+};
+
+// Zeitraum für Personen-Ansicht setzen
+function setPersonTimeRange(role, range) {
+  personTimeRanges[role] = range;
+  
+  // Buttons aktualisieren
+  const selector = document.getElementById('personTimeRange-' + role);
+  if (selector) {
+    selector.querySelectorAll('.time-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.range === range);
+    });
+  }
+  
+  // Zeitraum-Info anzeigen
+  const rangeInfo = TIME_RANGES[range];
+  if (rangeInfo) {
+    const { label } = rangeInfo.getRange();
+    console.log('⏱️ Personen-Zeitraum (' + role + '):', range, '→', label);
+  }
+  
+  // Speichern
+  localStorage.setItem('ts_person_time_' + role, range);
+  
+  // TODO: KPI-Werte neu laden für die ausgewählte Person
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
