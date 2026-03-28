@@ -1,37 +1,35 @@
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  const { endpoint, method = 'GET', apiKey, params } = req.body
+
+  const ALLOWED = [
+    'activity/', 'lead/', 'opportunity/', 'pipeline/', 'user/', 'me/',
+    'status/lead/', 'custom_activity_type/', 'custom_field/',
+    'lead_status/', 'contact/', 'sequence/', 'smart_view/'
+  ]
+
+  const allowed = ALLOWED.some(a => endpoint?.startsWith(a) || endpoint === a.replace('/',''))
+  if (!allowed) return res.status(404).json({ error: 'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.' })
 
   try {
-    const { endpoint, apiKey } = req.body;
-
-    if (!apiKey || !endpoint) {
-      return res.status(400).json({ error: 'Missing apiKey or endpoint' });
-    }
-
-    const base64Key = Buffer.from(apiKey + ':').toString('base64');
-
-    const closeResponse = await fetch(`https://api.close.com/api/v1/${endpoint}`, {
-      method: 'GET',
+    const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+    const url = `https://api.close.com/api/v1/${endpoint}${qs}`
+    const resp = await fetch(url, {
+      method,
       headers: {
-        'Authorization': 'Basic ' + base64Key,
+        'Authorization': 'Basic ' + Buffer.from(apiKey + ':').toString('base64'),
         'Content-Type': 'application/json'
       }
-    });
-
-    const data = await closeResponse.json();
-    return res.status(closeResponse.status).json(data);
-
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+    })
+    const data = await resp.json()
+    return res.status(resp.status).json(data)
+  } catch (e) {
+    return res.status(500).json({ error: e.message })
   }
 }
