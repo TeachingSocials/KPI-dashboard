@@ -121,6 +121,26 @@
     .person-name { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
     .person-role { font-size: 13px; color: var(--beige); }
     
+    /* Person Controls (Dropdown + Zeitraum nebeneinander) */
+    .person-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .time-range-small { padding: 3px; }
+    .time-range-small .time-btn { padding: 6px 10px; font-size: 11px; }
+    
+    /* Ziel-Eingabe im Modal */
+    .kpi-goal-section { padding: 0 28px 20px; }
+    .kpi-goal-card { background: var(--bg-dark); border: 2px solid var(--border); border-radius: 14px; padding: 18px; }
+    .kpi-goal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .kpi-goal-icon { font-size: 20px; }
+    .kpi-goal-title { font-size: 15px; font-weight: 600; color: #fff; }
+    .kpi-goal-inputs { display: flex; gap: 16px; flex-wrap: wrap; }
+    .kpi-goal-input-group { flex: 1; min-width: 120px; }
+    .kpi-goal-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; }
+    .kpi-goal-input { width: 100%; padding: 12px 14px; background: var(--bg-panel); border: 2px solid var(--border); border-radius: 10px; color: #fff; font-size: 16px; font-weight: 600; text-align: center; }
+    .kpi-goal-input:focus { outline: none; border-color: var(--beige); }
+    .kpi-goal-input::placeholder { color: var(--text-dim); font-weight: 400; }
+    .kpi-goal-unit { font-size: 12px; color: var(--text-dim); text-align: center; margin-top: 4px; }
+    .kpi-goal-hint { font-size: 11px; color: var(--text-dim); margin-top: 12px; display: flex; align-items: center; gap: 6px; }
+    
     .stats-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
     .stat-item { background: var(--bg-panel); border: 1px solid var(--border); padding: 16px; text-align: center; }
     .stat-value { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 3px; }
@@ -1164,10 +1184,16 @@
       <div id="vertrieb-gesamt-mitarbeiter" class="sub-content active">
         <div class="person-view-header">
           <div class="section-title" style="margin:0;">👤 PERSONEN-KENNZAHLEN</div>
-          <div class="person-selector">
+          <div class="person-controls">
             <select id="person-select-gesamt" class="person-dropdown" onchange="selectPerson('gesamt', this.value)">
               <option value="">Mitarbeiter wählen...</option>
             </select>
+            <div class="time-range-selector time-range-small" id="personTimeRange-gesamt">
+              <button class="time-btn" data-range="today" onclick="setPersonTimeRange('gesamt', 'today')">Heute</button>
+              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('gesamt', 'week')">Woche</button>
+              <button class="time-btn active" data-range="month" onclick="setPersonTimeRange('gesamt', 'month')">Monat</button>
+              <button class="time-btn" data-range="last_month" onclick="setPersonTimeRange('gesamt', 'last_month')">Letzt. M.</button>
+            </div>
           </div>
         </div>
         <div id="person-kpis-gesamt" class="person-kpis-container">
@@ -1180,10 +1206,16 @@
       <div id="vertrieb-opener-mitarbeiter" class="sub-content">
         <div class="person-view-header">
           <div class="section-title" style="margin:0;">📞 AKQUISITION - PERSONEN</div>
-          <div class="person-selector">
+          <div class="person-controls">
             <select id="person-select-opener" class="person-dropdown" onchange="selectPerson('opener', this.value)">
               <option value="">Mitarbeiter wählen...</option>
             </select>
+            <div class="time-range-selector time-range-small" id="personTimeRange-opener">
+              <button class="time-btn" data-range="today" onclick="setPersonTimeRange('opener', 'today')">Heute</button>
+              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('opener', 'week')">Woche</button>
+              <button class="time-btn active" data-range="month" onclick="setPersonTimeRange('opener', 'month')">Monat</button>
+              <button class="time-btn" data-range="last_month" onclick="setPersonTimeRange('opener', 'last_month')">Letzt. M.</button>
+            </div>
           </div>
         </div>
         <div id="person-kpis-opener" class="person-kpis-container">
@@ -1196,10 +1228,16 @@
       <div id="vertrieb-setter-mitarbeiter" class="sub-content">
         <div class="person-view-header">
           <div class="section-title" style="margin:0;">📅 TERMINIERUNG - PERSONEN</div>
-          <div class="person-selector">
+          <div class="person-controls">
             <select id="person-select-setter" class="person-dropdown" onchange="selectPerson('setter', this.value)">
               <option value="">Mitarbeiter wählen...</option>
             </select>
+            <div class="time-range-selector time-range-small" id="personTimeRange-setter">
+              <button class="time-btn" data-range="today" onclick="setPersonTimeRange('setter', 'today')">Heute</button>
+              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('setter', 'week')">Woche</button>
+              <button class="time-btn active" data-range="month" onclick="setPersonTimeRange('setter', 'month')">Monat</button>
+              <button class="time-btn" data-range="last_month" onclick="setPersonTimeRange('setter', 'last_month')">Letzt. M.</button>
+            </div>
           </div>
         </div>
         <div id="person-kpis-setter" class="person-kpis-container">
@@ -1212,10 +1250,16 @@
       <div id="vertrieb-closer-mitarbeiter" class="sub-content">
         <div class="person-view-header">
           <div class="section-title" style="margin:0;">💰 ABSCHLUSS - PERSONEN</div>
-          <div class="person-selector">
+          <div class="person-controls">
             <select id="person-select-closer" class="person-dropdown" onchange="selectPerson('closer', this.value)">
               <option value="">Mitarbeiter wählen...</option>
             </select>
+            <div class="time-range-selector time-range-small" id="personTimeRange-closer">
+              <button class="time-btn" data-range="today" onclick="setPersonTimeRange('closer', 'today')">Heute</button>
+              <button class="time-btn" data-range="week" onclick="setPersonTimeRange('closer', 'week')">Woche</button>
+              <button class="time-btn active" data-range="month" onclick="setPersonTimeRange('closer', 'month')">Monat</button>
+              <button class="time-btn" data-range="last_month" onclick="setPersonTimeRange('closer', 'last_month')">Letzt. M.</button>
+            </div>
           </div>
         </div>
         <div id="person-kpis-closer" class="person-kpis-container">
@@ -4436,8 +4480,12 @@ async function openKpiConfigModal(targetId, targetName) {
   if (savedKpis[targetId]) {
     currentKpiTarget.paramMappings = savedKpis[targetId].mappings || {};
     currentKpiTarget.timeRange = savedKpis[targetId].timeRange || state.timeRange || 'month';
+    currentKpiTarget.goal = savedKpis[targetId].goal || null;
+    currentKpiTarget.goalWarning = savedKpis[targetId].goalWarning || null;
   } else {
     currentKpiTarget.timeRange = state.timeRange || 'month';
+    currentKpiTarget.goal = null;
+    currentKpiTarget.goalWarning = null;
   }
   
   // Modal erstellen falls nicht vorhanden
@@ -4684,6 +4732,32 @@ function renderKpiModalContent(kpiDef, targetName, mappings) {
       </div>
     </div>
     
+    <div class="kpi-goal-section">
+      <div class="kpi-params-title">Ziel festlegen</div>
+      <div class="kpi-goal-card">
+        <div class="kpi-goal-header">
+          <span class="kpi-goal-icon">🎯</span>
+          <span class="kpi-goal-title">Was ist das Ziel für diese Kennzahl?</span>
+        </div>
+        <div class="kpi-goal-inputs">
+          <div class="kpi-goal-input-group">
+            <label class="kpi-goal-label">Zielwert</label>
+            <input type="number" class="kpi-goal-input" id="kpiGoalValue" placeholder="z.B. 80" value="${currentKpiTarget?.goal || ''}" onchange="updateKpiGoal(this.value)">
+            <div class="kpi-goal-unit">${kpiDef.unit || '%'}</div>
+          </div>
+          <div class="kpi-goal-input-group">
+            <label class="kpi-goal-label">Warnung unter</label>
+            <input type="number" class="kpi-goal-input" id="kpiGoalWarning" placeholder="z.B. 70" value="${currentKpiTarget?.goalWarning || ''}" onchange="updateKpiGoalWarning(this.value)" style="border-color:var(--warning);">
+            <div class="kpi-goal-unit">Gelbe Markierung</div>
+          </div>
+        </div>
+        <div class="kpi-goal-hint">
+          <span class="hint-icon">💡</span>
+          <span>Wenn der Wert unter dem Ziel liegt, wird die Kachel ${kpiDef.direction === 'lower_better' ? 'grün' : 'rot'} markiert.</span>
+        </div>
+      </div>
+    </div>
+    
     <div class="kpi-modal-footer">
       <button class="kpi-save-btn" onclick="saveKpiConfigNew()" ${saveDisabled}>
         <span class="btn-icon">💾</span>
@@ -4912,6 +4986,42 @@ function setKpiTimeRange(range) {
   console.log('⏱️ Kachel-Zeitraum gesetzt:', range);
 }
 
+// Zeitraum für Personen-Ansicht setzen
+function setPersonTimeRange(role, range) {
+  // Buttons aktualisieren
+  const container = document.getElementById('personTimeRange-' + role);
+  if (container) {
+    container.querySelectorAll('.time-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.range === range);
+    });
+  }
+  
+  // Speichern
+  localStorage.setItem('ts_person_time_' + role, range);
+  
+  // Neu laden wenn Person ausgewählt
+  const select = document.getElementById('person-select-' + role);
+  if (select && select.value) {
+    selectPerson(role, select.value);
+  }
+  
+  console.log('⏱️ Personen-Zeitraum gesetzt:', role, range);
+}
+
+// Zielwert im Modal aktualisieren
+function updateKpiGoal(value) {
+  if (!currentKpiTarget) return;
+  currentKpiTarget.goal = value ? parseFloat(value) : null;
+  console.log('🎯 Ziel gesetzt:', currentKpiTarget.goal);
+}
+
+// Warnungs-Schwelle aktualisieren
+function updateKpiGoalWarning(value) {
+  if (!currentKpiTarget) return;
+  currentKpiTarget.goalWarning = value ? parseFloat(value) : null;
+  console.log('⚠️ Warnung gesetzt:', currentKpiTarget.goalWarning);
+}
+
 // Speichern (neue Version)
 async function saveKpiConfigNew() {
   if (!currentKpiTarget || !currentKpiTarget.definition) return;
@@ -4939,6 +5049,8 @@ async function saveKpiConfigNew() {
       definition: currentKpiTarget.definition.name,
       mappings: currentKpiTarget.paramMappings,
       timeRange: currentKpiTarget.timeRange || state.timeRange || 'month',
+      goal: currentKpiTarget.goal || null,
+      goalWarning: currentKpiTarget.goalWarning || null,
       savedAt: new Date().toISOString()
     };
     
