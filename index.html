@@ -1117,14 +1117,14 @@
           <div class="stat-item"><div class="stat-value" id="kpi-abschluesse">-</div><div class="stat-label">Abschlüsse</div></div>
         </div>
         <div class="section-title">🔄 ÜBERGABE-QUALITÄT (VERTRIEBSPIPELINE FLOW)</div>
-        <div class="funnel-container" style="margin-bottom:16px;">
-          <div class="funnel-step"><span class="funnel-label">📞 Akquisition → Terminierung</span><div class="funnel-bar" style="width: 100%; background: linear-gradient(90deg, #60a5fa, #3b82f6);"><span class="funnel-value">47 Übergaben</span></div><span class="funnel-rate">100%</span></div>
-          <div class="funnel-arrow" style="display:flex;justify-content:space-between;margin-left:140px;padding-right:60px;"><span>↓ 79% erscheinen</span><span style="color:var(--warning)">21% Nichterscheinung</span></div>
-          <div class="funnel-step"><span class="funnel-label">📅 Qualifizierungsgesprächs</span><div class="funnel-bar" style="width: 85%; background: linear-gradient(90deg, #3b82f6, #8b5cf6);"><span class="funnel-value">37 erschienen</span></div><span class="funnel-rate">79%</span></div>
-          <div class="funnel-arrow" style="display:flex;justify-content:space-between;margin-left:140px;padding-right:60px;"><span>↓ 85% qualifiziert → Abschließer</span><span style="color:var(--warning)">15% Nichterscheinung</span></div>
-          <div class="funnel-step"><span class="funnel-label">💰 Abschlussgesprächs</span><div class="funnel-bar" style="width: 70%; background: linear-gradient(90deg, #8b5cf6, #a855f7);"><span class="funnel-value">31 erschienen</span></div><span class="funnel-rate">85%</span></div>
-          <div class="funnel-arrow" style="display:flex;justify-content:space-between;margin-left:140px;padding-right:60px;"><span>↓ 34 Abschlüsse (inkl. Follow-ups)</span><span style="color:var(--warning)">12% Nichterscheinung → Betreuung</span></div>
-          <div class="funnel-step"><span class="funnel-label">🤝 Kundenbetreuer</span><div class="funnel-bar" style="width: 55%; background: linear-gradient(90deg, #a855f7, var(--success));"><span class="funnel-value">30 Einarbeitungs</span></div><span class="funnel-rate">88%</span></div>
+        <div class="funnel-container" id="vertrieb-funnel" style="margin-bottom:16px;">
+          <div class="funnel-step"><span class="funnel-label">📞 Akquisition → Terminierung</span><div class="funnel-bar" id="funnel-bar-1" style="width: 100%; background: linear-gradient(90deg, #60a5fa, #3b82f6);"><span class="funnel-value" id="funnel-val-1">-</span></div><span class="funnel-rate" id="funnel-rate-1">-</span></div>
+          <div class="funnel-arrow" style="display:flex;justify-content:space-between;margin-left:140px;padding-right:60px;"><span id="funnel-appear-1">↓ Lädt...</span><span style="color:var(--warning)" id="funnel-noshow-1"></span></div>
+          <div class="funnel-step"><span class="funnel-label">📅 Qualifizierungsgespräch</span><div class="funnel-bar" id="funnel-bar-2" style="width: 85%; background: linear-gradient(90deg, #3b82f6, #8b5cf6);"><span class="funnel-value" id="funnel-val-2">-</span></div><span class="funnel-rate" id="funnel-rate-2">-</span></div>
+          <div class="funnel-arrow" style="display:flex;justify-content:space-between;margin-left:140px;padding-right:60px;"><span id="funnel-appear-2">↓ Lädt...</span><span style="color:var(--warning)" id="funnel-noshow-2"></span></div>
+          <div class="funnel-step"><span class="funnel-label">💰 Abschlussgespräch</span><div class="funnel-bar" id="funnel-bar-3" style="width: 70%; background: linear-gradient(90deg, #8b5cf6, #a855f7);"><span class="funnel-value" id="funnel-val-3">-</span></div><span class="funnel-rate" id="funnel-rate-3">-</span></div>
+          <div class="funnel-arrow" style="display:flex;justify-content:space-between;margin-left:140px;padding-right:60px;"><span id="funnel-appear-3">↓ Lädt...</span><span style="color:var(--warning)" id="funnel-noshow-3"></span></div>
+          <div class="funnel-step"><span class="funnel-label">🤝 Kundenbetreuer</span><div class="funnel-bar" id="funnel-bar-4" style="width: 55%; background: linear-gradient(90deg, #a855f7, var(--success));"><span class="funnel-value" id="funnel-val-4">-</span></div><span class="funnel-rate" id="funnel-rate-4">-</span></div>
         </div>
         <div class="kpi-grid">
           <div class="kpi-card"><div class="kpi-header">📅 ERSCHEINUNGSQUOTE</div><div class="kpi-value">78,5%</div><div class="kpi-subtitle">Durchschnitt alle Termine</div><div class="kpi-footer"><span class="kpi-change positive">▲ 3.2%</span><span>Ziel: 80%</span></div><div class="sparkline"><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div></div></div>
@@ -1133,11 +1133,11 @@
           <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">34,2%</div><div class="kpi-subtitle">Erschienene → Abschluss</div><div class="kpi-footer"><span class="kpi-change positive">▲ 5.8%</span><span>Ziel: 30%</span></div><div class="sparkline"><div class="spark-bar" style="height:55%"></div><div class="spark-bar" style="height:60%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:82%"></div><div class="spark-bar" style="height:88%"></div></div></div>
         </div>
         <div class="section-title">🏆 ZIELERREICHUNG</div>
-        <div class="progress-grid">
-          <div class="progress-item"><svg class="progress-ring" viewBox="0 0 100 100"><circle class="progress-ring-bg" cx="50" cy="50" r="40"/><circle class="progress-ring-fill" cx="50" cy="50" r="40" style="stroke: var(--beige); stroke-dasharray: 196 251;"/></svg><div class="progress-text"><div class="progress-value">78%</div><div class="progress-label">Monatsziel</div></div></div>
-          <div class="progress-item"><svg class="progress-ring" viewBox="0 0 100 100"><circle class="progress-ring-bg" cx="50" cy="50" r="40"/><circle class="progress-ring-fill" cx="50" cy="50" r="40" style="stroke: var(--success); stroke-dasharray: 231 251;"/></svg><div class="progress-text"><div class="progress-value">92%</div><div class="progress-label">Anruf-Ziel</div></div></div>
-          <div class="progress-item"><svg class="progress-ring" viewBox="0 0 100 100"><circle class="progress-ring-bg" cx="50" cy="50" r="40"/><circle class="progress-ring-fill" cx="50" cy="50" r="40" style="stroke: var(--warning); stroke-dasharray: 163 251;"/></svg><div class="progress-text"><div class="progress-value">65%</div><div class="progress-label">Termine</div></div></div>
-          <div class="progress-item"><svg class="progress-ring" viewBox="0 0 100 100"><circle class="progress-ring-bg" cx="50" cy="50" r="40"/><circle class="progress-ring-fill" cx="50" cy="50" r="40" style="stroke: var(--success); stroke-dasharray: 213 251;"/></svg><div class="progress-text"><div class="progress-value">85%</div><div class="progress-label">Vertriebspipeline</div></div></div>
+        <div class="progress-grid" id="progress-grid">
+          <div class="progress-item"><svg class="progress-ring" viewBox="0 0 100 100"><circle class="progress-ring-bg" cx="50" cy="50" r="40"/><circle class="progress-ring-fill" id="progress-ring-1" cx="50" cy="50" r="40" style="stroke: var(--beige); stroke-dasharray: 0 251;"/></svg><div class="progress-text"><div class="progress-value" id="progress-val-1">-</div><div class="progress-label">Monatsziel</div></div></div>
+          <div class="progress-item"><svg class="progress-ring" viewBox="0 0 100 100"><circle class="progress-ring-bg" cx="50" cy="50" r="40"/><circle class="progress-ring-fill" id="progress-ring-2" cx="50" cy="50" r="40" style="stroke: var(--success); stroke-dasharray: 0 251;"/></svg><div class="progress-text"><div class="progress-value" id="progress-val-2">-</div><div class="progress-label">Anruf-Ziel</div></div></div>
+          <div class="progress-item"><svg class="progress-ring" viewBox="0 0 100 100"><circle class="progress-ring-bg" cx="50" cy="50" r="40"/><circle class="progress-ring-fill" id="progress-ring-3" cx="50" cy="50" r="40" style="stroke: var(--warning); stroke-dasharray: 0 251;"/></svg><div class="progress-text"><div class="progress-value" id="progress-val-3">-</div><div class="progress-label">Termine</div></div></div>
+          <div class="progress-item"><svg class="progress-ring" viewBox="0 0 100 100"><circle class="progress-ring-bg" cx="50" cy="50" r="40"/><circle class="progress-ring-fill" id="progress-ring-4" cx="50" cy="50" r="40" style="stroke: var(--success); stroke-dasharray: 0 251;"/></svg><div class="progress-text"><div class="progress-value" id="progress-val-4">-</div><div class="progress-label">Pipeline</div></div></div>
         </div>
         <div class="section-title">👤 BESTE MITARBEITER</div>
         <div class="employee-list" id="best-employees-list">
@@ -1149,46 +1149,46 @@
       <div id="vertrieb-opener-team" class="sub-content">
         <div class="section-title">📞 AKQUISITION KENNZAHLEN</div>
         <div class="stats-panel">
-          <div class="stat-item"><div class="stat-value">342</div><div class="stat-label">Anrufe heute</div></div>
-          <div class="stat-item"><div class="stat-value">89</div><div class="stat-label">Erreichte Kontakte</div></div>
-          <div class="stat-item"><div class="stat-value">47</div><div class="stat-label">Übergaben an Terminierung</div></div>
-          <div class="stat-item"><div class="stat-value">26%</div><div class="stat-label">Erreichbarkeitsquote</div></div>
+          <div class="stat-item"><div class="stat-value" id="opener-anrufe">-</div><div class="stat-label">Anrufe</div></div>
+          <div class="stat-item"><div class="stat-value" id="opener-erreicht">-</div><div class="stat-label">Erreichte Kontakte</div></div>
+          <div class="stat-item"><div class="stat-value" id="opener-uebergaben">-</div><div class="stat-label">Übergaben an Terminierung</div></div>
+          <div class="stat-item"><div class="stat-value" id="opener-erreichbarkeit">-</div><div class="stat-label">Erreichbarkeitsquote</div></div>
         </div>
         <div class="kpi-grid">
-          <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → SETTER</div><div class="kpi-value">21%</div><div class="kpi-subtitle">Kontakte die beim Terminierer nicht erscheinen</div><div class="kpi-footer"><span class="kpi-change negative">▲ 2%</span><span>Ziel: unter 15%</span></div><div class="sparkline"><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:74%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">🎯 ÜBERGABE-QUOTE</div><div class="kpi-value">52,8%</div><div class="kpi-subtitle">Erreichte → Übergaben</div><div class="kpi-footer"><span class="kpi-change positive">▲ 4.2%</span><span>Ziel: 50%</span></div><div class="sparkline"><div class="spark-bar" style="height:55%"></div><div class="spark-bar" style="height:60%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">⏱️ Ø GESPRÄCHSZEIT</div><div class="kpi-value">3:42</div><div class="kpi-subtitle">Minuten pro Gespräch</div><div class="kpi-footer"><span class="kpi-change positive">▲ 0:18</span><span>Optimal: 3-5 Min</span></div><div class="sparkline"><div class="spark-bar" style="height:60%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:80%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">📊 VERBINDLICHKEIT</div><div class="kpi-value">79%</div><div class="kpi-subtitle">Terminierungs-Termine eingehalten</div><div class="kpi-footer"><span class="kpi-change positive">▲ 3%</span><span>Ziel: 85%</span></div><div class="sparkline"><div class="spark-bar" style="height:62%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:74%"></div><div class="spark-bar" style="height:76%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div></div></div>
+          <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → SETTER</div><div class="kpi-value" id="opener-kpi-noshow">-</div><div class="kpi-subtitle">Kontakte die beim Terminierer nicht erscheinen</div><div class="kpi-footer"><span class="kpi-change negative">▲ 2%</span><span>Ziel: unter 15%</span></div><div class="sparkline"><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:74%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div></div></div>
+          <div class="kpi-card"><div class="kpi-header">🎯 ÜBERGABE-QUOTE</div><div class="kpi-value" id="opener-kpi-uebergabe">-</div><div class="kpi-subtitle">Erreichte → Übergaben</div><div class="kpi-footer"><span class="kpi-change positive">▲ 4.2%</span><span>Ziel: 50%</span></div><div class="sparkline"><div class="spark-bar" style="height:55%"></div><div class="spark-bar" style="height:60%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div></div></div>
+          <div class="kpi-card"><div class="kpi-header">⏱️ Ø GESPRÄCHSZEIT</div><div class="kpi-value" id="opener-kpi-gespraechszeit">-</div><div class="kpi-subtitle">Minuten pro Gespräch</div><div class="kpi-footer"><span class="kpi-change positive">▲ 0:18</span><span>Optimal: 3-5 Min</span></div><div class="sparkline"><div class="spark-bar" style="height:60%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:80%"></div></div></div>
+          <div class="kpi-card"><div class="kpi-header">📊 VERBINDLICHKEIT</div><div class="kpi-value" id="opener-kpi-verbindlichkeit">-</div><div class="kpi-subtitle">Terminierungs-Termine eingehalten</div><div class="kpi-footer"><span class="kpi-change positive">▲ 3%</span><span>Ziel: 85%</span></div><div class="sparkline"><div class="spark-bar" style="height:62%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:74%"></div><div class="spark-bar" style="height:76%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div></div></div>
         </div>
       </div>
       <div id="vertrieb-setter-team" class="sub-content">
         <div class="section-title">📅 TERMINIERUNG KENNZAHLEN</div>
         <div class="stats-panel">
-          <div class="stat-item"><div class="stat-value">156</div><div class="stat-label">Gebuchte Termine</div></div>
-          <div class="stat-item"><div class="stat-value">78,5%</div><div class="stat-label">Qualifizierungs-Erscheinungsquote</div></div>
-          <div class="stat-item"><div class="stat-value">122</div><div class="stat-label">Qualifizierte Termine</div></div>
-          <div class="stat-item"><div class="stat-value">15%</div><div class="stat-label">Abschluss-Nichterscheinungsquote</div></div>
+          <div class="stat-item"><div class="stat-value" id="setter-termine">-</div><div class="stat-label">Gebuchte Termine</div></div>
+          <div class="stat-item"><div class="stat-value" id="setter-erscheinung">-</div><div class="stat-label">Erscheinungsquote</div></div>
+          <div class="stat-item"><div class="stat-value" id="setter-qualifiziert">-</div><div class="stat-label">Qualifizierte Termine</div></div>
+          <div class="stat-item"><div class="stat-value" id="setter-noshow">-</div><div class="stat-label">Nichterscheinungsquote</div></div>
         </div>
         <div class="kpi-grid">
-          <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ QUALIFIZIERUNGS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">78,5%</div><div class="kpi-subtitle">Kontakte die zum Qualifizierungsgespräch erscheinen</div><div class="kpi-footer"><span class="kpi-change positive">▲ 3.2%</span><span>Ziel: 75%</span></div><div class="sparkline"><div class="spark-bar" style="height:62%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:74%"></div><div class="spark-bar" style="height:76%"></div><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:85%"></div></div></div>
-          <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → CLOSER</div><div class="kpi-value">15%</div><div class="kpi-subtitle">Qualifizierte die beim Abschließer fehlen</div><div class="kpi-footer"><span class="kpi-change positive">▼ 2%</span><span>Ziel: unter 12%</span></div><div class="sparkline"><div class="spark-bar" style="height:85%"></div><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:62%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">🎯 QUALIFIZIERUNGSQUOTE</div><div class="kpi-value">78,2%</div><div class="kpi-subtitle">Erschienene → Qualifiziert</div><div class="kpi-footer"><span class="kpi-change positive">▲ 2.8%</span><span>Ziel: 75%</span></div><div class="sparkline"><div class="spark-bar" style="height:60%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:74%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div><div class="spark-bar" style="height:85%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS BUCHUNG</div><div class="kpi-value">2.4 Tage</div><div class="kpi-subtitle">Übergabe → Termin gebucht</div><div class="kpi-footer"><span class="kpi-change positive">▼ 0.3 Tage</span><span>Ziel: unter 3 Tage</span></div><div class="sparkline"><div class="spark-bar" style="height:90%"></div><div class="spark-bar" style="height:85%"></div><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:65%"></div></div></div>
+          <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ QUALIFIZIERUNGS-ERSCHEINUNGSQUOTE</div><div class="kpi-value" id="setter-kpi-erscheinung">-</div><div class="kpi-subtitle">Kontakte die zum Qualifizierungsgespräch erscheinen</div><div class="kpi-footer"><span class="kpi-change positive">▲ 3.2%</span><span>Ziel: 75%</span></div><div class="sparkline"><div class="spark-bar" style="height:62%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:74%"></div><div class="spark-bar" style="height:76%"></div><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:85%"></div></div></div>
+          <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → CLOSER</div><div class="kpi-value" id="setter-kpi-noshow">-</div><div class="kpi-subtitle">Qualifizierte die beim Abschließer fehlen</div><div class="kpi-footer"><span class="kpi-change positive">▼ 2%</span><span>Ziel: unter 12%</span></div><div class="sparkline"><div class="spark-bar" style="height:85%"></div><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:62%"></div></div></div>
+          <div class="kpi-card"><div class="kpi-header">🎯 QUALIFIZIERUNGSQUOTE</div><div class="kpi-value" id="setter-kpi-qualifizierung">-</div><div class="kpi-subtitle">Erschienene → Qualifiziert</div><div class="kpi-footer"><span class="kpi-change positive">▲ 2.8%</span><span>Ziel: 75%</span></div><div class="sparkline"><div class="spark-bar" style="height:60%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:74%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div><div class="spark-bar" style="height:85%"></div></div></div>
+          <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS BUCHUNG</div><div class="kpi-value" id="setter-kpi-zeitbuchung">-</div><div class="kpi-subtitle">Übergabe → Termin gebucht</div><div class="kpi-footer"><span class="kpi-change positive">▼ 0.3 Tage</span><span>Ziel: unter 3 Tage</span></div><div class="sparkline"><div class="spark-bar" style="height:90%"></div><div class="spark-bar" style="height:85%"></div><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:65%"></div></div></div>
         </div>
       </div>
       <div id="vertrieb-closer-team" class="sub-content">
         <div class="section-title">💰 ABSCHLUSS KENNZAHLEN</div>
         <div class="stats-panel">
-          <div class="stat-item"><div class="stat-value">€287.450</div><div class="stat-label">Umsatz Monatsverlauf</div></div>
-          <div class="stat-item"><div class="stat-value">34,2%</div><div class="stat-label">Abschlussquote</div></div>
-          <div class="stat-item"><div class="stat-value">85%</div><div class="stat-label">Abschluss-Erscheinungsquote</div></div>
-          <div class="stat-item"><div class="stat-value">12%</div><div class="stat-label">AM Ersttermin Nichterscheinung</div></div>
+          <div class="stat-item"><div class="stat-value" id="closer-umsatz">-</div><div class="stat-label">Umsatz</div></div>
+          <div class="stat-item"><div class="stat-value" id="closer-abschlussquote">-</div><div class="stat-label">Abschlussquote</div></div>
+          <div class="stat-item"><div class="stat-value" id="closer-erscheinung">-</div><div class="stat-label">Erscheinungsquote</div></div>
+          <div class="stat-item"><div class="stat-value" id="closer-noshow">-</div><div class="stat-label">Nichterscheinungsquote</div></div>
         </div>
         <div class="kpi-grid">
-          <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ ABSCHLUSS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">85%</div><div class="kpi-subtitle">Qualifizierte die zum Abschluss erscheinen</div><div class="kpi-footer"><span class="kpi-change positive">▲ 2%</span><span>Ziel: 88%</span></div><div class="sparkline"><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div><div class="spark-bar" style="height:85%"></div><div class="spark-bar" style="height:88%"></div></div></div>
-          <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → Betreuung</div><div class="kpi-value">12%</div><div class="kpi-subtitle">Neukunden die beim AM-Ersttermin fehlen</div><div class="kpi-footer"><span class="kpi-change positive">▼ 1.5%</span><span>Ziel: unter 10%</span></div><div class="sparkline"><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:62%"></div><div class="spark-bar" style="height:58%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">💰 Ø AUFTRAGSWERT</div><div class="kpi-value">€8.496</div><div class="kpi-subtitle">Durchschnitt pro Transaktion</div><div class="kpi-footer"><span class="kpi-change positive">▲ €450</span><span>Ziel: €8.000</span></div><div class="sparkline"><div class="spark-bar" style="height:55%"></div><div class="spark-bar" style="height:62%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:85%"></div><div class="spark-bar" style="height:90%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">💎 PREMIUM-QUOTE</div><div class="kpi-value">42%</div><div class="kpi-subtitle">Hochpreis Abschlüsse</div><div class="kpi-footer"><span class="kpi-change positive">▲ 5%</span><span>Ziel: 40%</span></div><div class="sparkline"><div class="spark-bar" style="height:50%"></div><div class="spark-bar" style="height:58%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div><div class="spark-bar" style="height:88%"></div></div></div>
+          <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ ABSCHLUSS-ERSCHEINUNGSQUOTE</div><div class="kpi-value" id="closer-kpi-erscheinung">-</div><div class="kpi-subtitle">Qualifizierte die zum Abschluss erscheinen</div><div class="kpi-footer"><span class="kpi-change positive">▲ 2%</span><span>Ziel: 88%</span></div><div class="sparkline"><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div><div class="spark-bar" style="height:85%"></div><div class="spark-bar" style="height:88%"></div></div></div>
+          <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → Betreuung</div><div class="kpi-value" id="closer-kpi-noshow">-</div><div class="kpi-subtitle">Neukunden die beim AM-Ersttermin fehlen</div><div class="kpi-footer"><span class="kpi-change positive">▼ 1.5%</span><span>Ziel: unter 10%</span></div><div class="sparkline"><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:62%"></div><div class="spark-bar" style="height:58%"></div></div></div>
+          <div class="kpi-card"><div class="kpi-header">💰 Ø AUFTRAGSWERT</div><div class="kpi-value" id="closer-kpi-auftragswert">-</div><div class="kpi-subtitle">Durchschnitt pro Transaktion</div><div class="kpi-footer"><span class="kpi-change positive">▲ €450</span><span>Ziel: €8.000</span></div><div class="sparkline"><div class="spark-bar" style="height:55%"></div><div class="spark-bar" style="height:62%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:85%"></div><div class="spark-bar" style="height:90%"></div></div></div>
+          <div class="kpi-card"><div class="kpi-header">💎 PREMIUM-QUOTE</div><div class="kpi-value" id="closer-kpi-premium">-</div><div class="kpi-subtitle">Hochpreis Abschlüsse</div><div class="kpi-footer"><span class="kpi-change positive">▲ 5%</span><span>Ziel: 40%</span></div><div class="sparkline"><div class="spark-bar" style="height:50%"></div><div class="spark-bar" style="height:58%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div><div class="spark-bar" style="height:88%"></div></div></div>
         </div>
       </div>
     </div>
@@ -2266,25 +2266,24 @@ function populatePersonDropdowns() {
 function selectPerson(role, personId) {
   const container = document.getElementById('person-kpis-' + role);
   if (!container) return;
-  
+
   if (!personId) {
-    // Keine Person ausgewählt → Empty State
-    container.innerHTML = `
-      <div class="person-empty-state">
-        <div class="empty-icon">👆</div>
-        <div class="empty-text">Wähle einen Mitarbeiter um seine KPIs zu sehen</div>
-      </div>
-    `;
+    container.innerHTML = '<div class="person-empty-state"><div class="empty-icon">👆</div><div class="empty-text">Wähle einen Mitarbeiter um seine KPIs zu sehen</div></div>';
     return;
   }
-  
-  // Person finden
+
   const person = loadedEmployees.find(e => e.id === personId);
   if (!person) return;
-  
-  // KPIs für diese Rolle laden
-  const kpisHtml = getPersonKpisHtml(role, person);
-  
+
+  // Echte Daten aus Close laden
+  var data = window._closeData || {};
+  var uc = data.userCalls && data.userCalls[personId] || { total: 0, answered: 0, duration: 0 };
+  var uo = data.userOpps && data.userOpps[personId] || { won: 0, lost: 0, total: 0, revenue: 0 };
+  var avgDur = uc.total > 0 ? Math.round(uc.duration / uc.total) : 0;
+  var reachPct = uc.total > 0 ? Math.round(uc.answered / uc.total * 100) : 0;
+  var winPct = uo.total > 0 ? Math.round(uo.won / uo.total * 100) : 0;
+  var avgDeal = uo.won > 0 ? Math.round(uo.revenue / uo.won) : 0;
+
   container.innerHTML = `
     <div class="person-info-card">
       <div class="person-avatar">${person.name.charAt(0)}</div>
@@ -2294,12 +2293,19 @@ function selectPerson(role, personId) {
       </div>
     </div>
     <div class="stats-panel">
-      ${getPersonStatsHtml(role, person)}
+      ${getPersonStatsHtml(role, person, uc, uo)}
     </div>
     <div class="kpi-grid">
-      ${kpisHtml}
+      ${getPersonKpisHtml(role, person, uc, uo, avgDur, reachPct, winPct, avgDeal)}
     </div>
   `;
+
+  // Falls keine cached Daten, live laden
+  if (!window._closeData && closeApiKey) {
+    loadAndDisplayCloseKPIs().then(function() {
+      selectPerson(role, personId);
+    });
+  }
 }
 
 // Rollen-Label
@@ -2313,77 +2319,78 @@ function getRoleLabel(role) {
   return labels[role] || role;
 }
 
-// Stats-Panel für Person generieren
-function getPersonStatsHtml(role, person) {
-  // Placeholder-Daten - werden später aus Close geladen
-  const noData = '<span class="stat-no-data">—</span>';
-  const noDataPct = '<span class="stat-no-data">— %</span>';
-  const noDataEur = '<span class="stat-no-data">€ —</span>';
-  
+// Stats-Panel für Person generieren - MIT echten Close-Daten
+function getPersonStatsHtml(role, person, uc, uo) {
+  uc = uc || { total: 0, answered: 0, duration: 0 };
+  uo = uo || { won: 0, lost: 0, total: 0, revenue: 0 };
+  var reachPct = uc.total > 0 ? Math.round(uc.answered / uc.total * 100) + '%' : '-';
+  var winPct = uo.total > 0 ? Math.round(uo.won / uo.total * 100) + '%' : '-';
+
   if (role === 'opener') {
     return `
-      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">📞 Anrufe</div></div>
-      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">✅ Erreicht</div></div>
-      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">➡️ Übergaben</div></div>
-      <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">📊 Quote</div></div>
+      <div class="stat-item"><div class="stat-value">${uc.total.toLocaleString('de-DE')}</div><div class="stat-label">📞 Anrufe</div></div>
+      <div class="stat-item"><div class="stat-value">${uc.answered.toLocaleString('de-DE')}</div><div class="stat-label">✅ Erreicht</div></div>
+      <div class="stat-item"><div class="stat-value">${uo.total.toLocaleString('de-DE')}</div><div class="stat-label">➡️ Opportunities</div></div>
+      <div class="stat-item"><div class="stat-value">${reachPct}</div><div class="stat-label">📊 Erreichbarkeit</div></div>
     `;
   } else if (role === 'setter') {
     return `
-      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">📅 Gebuchte Termine</div></div>
-      <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">✅ Erscheinungsquote</div></div>
-      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">🎯 Qualifiziert</div></div>
-      <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">➡️ Weitergabe</div></div>
+      <div class="stat-item"><div class="stat-value">${uc.total.toLocaleString('de-DE')}</div><div class="stat-label">📅 Aktivitäten</div></div>
+      <div class="stat-item"><div class="stat-value">${uo.total.toLocaleString('de-DE')}</div><div class="stat-label">🎯 Opportunities</div></div>
+      <div class="stat-item"><div class="stat-value">${uo.won.toLocaleString('de-DE')}</div><div class="stat-label">✅ Qualifiziert</div></div>
+      <div class="stat-item"><div class="stat-value">${winPct}</div><div class="stat-label">➡️ Quote</div></div>
     `;
   } else if (role === 'closer') {
     return `
-      <div class="stat-item"><div class="stat-value">${noDataEur}</div><div class="stat-label">💰 Umsatz</div></div>
-      <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">✅ Abschlussquote</div></div>
-      <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">🤝 Abschlüsse</div></div>
-      <div class="stat-item"><div class="stat-value">${noDataEur}</div><div class="stat-label">📊 Ø Auftrag</div></div>
+      <div class="stat-item"><div class="stat-value">${formatCurrency(uo.revenue)}</div><div class="stat-label">💰 Umsatz</div></div>
+      <div class="stat-item"><div class="stat-value">${winPct}</div><div class="stat-label">✅ Abschlussquote</div></div>
+      <div class="stat-item"><div class="stat-value">${uo.won.toLocaleString('de-DE')}</div><div class="stat-label">🤝 Abschlüsse</div></div>
+      <div class="stat-item"><div class="stat-value">${uo.won > 0 ? formatCurrency(Math.round(uo.revenue / uo.won)) : '-'}</div><div class="stat-label">📊 Ø Auftrag</div></div>
     `;
   }
   return `
-    <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">📋 Aktivitäten</div></div>
-    <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">👥 Leads</div></div>
-    <div class="stat-item"><div class="stat-value">${noData}</div><div class="stat-label">📞 Anrufe</div></div>
-    <div class="stat-item"><div class="stat-value">${noDataPct}</div><div class="stat-label">🎯 Zielerreichung</div></div>
+    <div class="stat-item"><div class="stat-value">${(uc.total + uo.total).toLocaleString('de-DE')}</div><div class="stat-label">📋 Aktivitäten</div></div>
+    <div class="stat-item"><div class="stat-value">${uc.total.toLocaleString('de-DE')}</div><div class="stat-label">📞 Anrufe</div></div>
+    <div class="stat-item"><div class="stat-value">${uo.won.toLocaleString('de-DE')}</div><div class="stat-label">🤝 Deals gewonnen</div></div>
+    <div class="stat-item"><div class="stat-value">${formatCurrency(uo.revenue)}</div><div class="stat-label">💰 Umsatz</div></div>
   `;
 }
 
-// KPI-Kacheln für Person generieren
-function getPersonKpisHtml(role, person) {
-  // Die gleichen KPIs wie im Team-Tab, aber für diese Person
-  // Werte werden später aus Close berechnet
-  
+// KPI-Kacheln für Person - MIT echten Close-Daten
+function getPersonKpisHtml(role, person, uc, uo, avgDur, reachPct, winPct, avgDeal) {
+  uc = uc || { total: 0, answered: 0, duration: 0 };
+  uo = uo || { won: 0, lost: 0, total: 0, revenue: 0 };
+  avgDur = avgDur || 0; reachPct = reachPct || 0; winPct = winPct || 0; avgDeal = avgDeal || 0;
+
   if (role === 'opener') {
     return `
-      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → SETTER</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Kontakte die beim Terminierer nicht erscheinen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter 15%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">🎯 ÜBERGABE-QUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erreichte → Übergaben</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 50%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">⏱️ Ø GESPRÄCHSZEIT</div><div class="kpi-value">--:--</div><div class="kpi-subtitle">Minuten pro Gespräch</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Optimal: 3-5 Min</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">📊 VERBINDLICHKEIT</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Terminierungs-Termine eingehalten</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 85%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">🎯 ÜBERGABE-QUOTE</div><div class="kpi-value">${reachPct}%</div><div class="kpi-subtitle">Erreichte → qualifizierte Kontakte</div><div class="kpi-footer"><span>${uc.answered} von ${uc.total}</span><span>Ziel: 50%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">⏱️ Ø GESPRÄCHSZEIT</div><div class="kpi-value">${formatDuration(avgDur)}</div><div class="kpi-subtitle">Minuten pro Gespräch</div><div class="kpi-footer"><span>${uc.total} Gespräche</span><span>Optimal: 3-5 Min</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📊 ERREICHBARKEIT</div><div class="kpi-value">${reachPct}%</div><div class="kpi-subtitle">Kontakte die ans Telefon gehen</div><div class="kpi-footer"><span>${uc.answered} erreicht</span><span>Ziel: 30%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📞 ANRUFE GESAMT</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Im gewählten Zeitraum</div><div class="kpi-footer"><span>Ø ${avgDur > 0 ? formatDuration(avgDur) : '-'}/Gespräch</span><span></span></div></div>
     `;
   } else if (role === 'setter') {
     return `
-      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ QUALIFIZIERUNGS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Kontakte die zum Qualifizierungsgespräch erscheinen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 75%</span></div></div>
-      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → CLOSER</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Qualifizierte die beim Abschließer fehlen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter 12%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">🎯 QUALIFIZIERUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erschienene → Qualifiziert</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 75%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS BUCHUNG</div><div class="kpi-value">-- Tage</div><div class="kpi-subtitle">Übergabe → Termin gebucht</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter 3 Tage</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">🎯 QUALIFIZIERUNGSQUOTE</div><div class="kpi-value">${winPct}%</div><div class="kpi-subtitle">Opportunities → gewonnen</div><div class="kpi-footer"><span>${uo.won} von ${uo.total}</span><span>Ziel: 75%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📅 OPPORTUNITIES</div><div class="kpi-value">${uo.total}</div><div class="kpi-subtitle">Bearbeitete Opportunities</div><div class="kpi-footer"><span>${uo.won} gewonnen</span><span>${uo.lost} verloren</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📞 AKTIVITÄTEN</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Anrufe + Kontakte</div><div class="kpi-footer"><span>${uc.answered} erreicht</span><span>${reachPct}% Quote</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">💰 PIPELINE-WERT</div><div class="kpi-value">${formatCurrency(uo.revenue)}</div><div class="kpi-subtitle">Gewonnener Umsatz</div><div class="kpi-footer"><span>${uo.won} Deals</span><span></span></div></div>
     `;
   } else if (role === 'closer') {
     return `
-      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ ABSCHLUSS-ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Qualifizierte die zum Abschluss erscheinen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 88%</span></div></div>
-      <div class="kpi-card" style="border-color: var(--warning);"><div class="kpi-header">❌ NICHTERSCHEINUNGSQUOTE → Betreuung</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Neukunden die beim AM-Ersttermin fehlen</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter 10%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">💰 Ø AUFTRAGSWERT</div><div class="kpi-value">€--</div><div class="kpi-subtitle">Durchschnitt pro Transaktion</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: €8.000</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">💎 PREMIUM-QUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Hochpreis Abschlüsse</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 40%</span></div></div>
+      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">${winPct}%</div><div class="kpi-subtitle">Gewonnene Deals</div><div class="kpi-footer"><span>${uo.won} von ${uo.total}</span><span>Ziel: 30%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">💰 UMSATZ</div><div class="kpi-value">${formatCurrency(uo.revenue)}</div><div class="kpi-subtitle">Gewonnener Umsatz im Zeitraum</div><div class="kpi-footer"><span>${uo.won} Abschlüsse</span><span></span></div></div>
+      <div class="kpi-card"><div class="kpi-header">💰 Ø AUFTRAGSWERT</div><div class="kpi-value">${formatCurrency(avgDeal)}</div><div class="kpi-subtitle">Durchschnitt pro Abschluss</div><div class="kpi-footer"><span>${uo.won} Deals</span><span>Ziel: €8.000</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📞 AKTIVITÄTEN</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Anrufe im Zeitraum</div><div class="kpi-footer"><span>Ø ${avgDur > 0 ? formatDuration(avgDur) : '-'}/Gespräch</span><span></span></div></div>
     `;
   }
-  
-  // Gesamt: Alle wichtigen KPIs
+
+  // Gesamt
   return `
-    <div class="kpi-card"><div class="kpi-header">📅 ERSCHEINUNGSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Durchschnitt alle Termine</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 80%</span></div></div>
-    <div class="kpi-card"><div class="kpi-header">💰 KOSTEN PRO TERMIN</div><div class="kpi-value">€--</div><div class="kpi-subtitle">Qualifizierte Termine (KPT)</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: unter €150</span></div></div>
-    <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS ABSCHLUSS</div><div class="kpi-value">-- Tage</div><div class="kpi-subtitle">Erstkontakt → Vertrag</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 14 Tage</span></div></div>
-    <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">--%</div><div class="kpi-subtitle">Erschienene → Abschluss</div><div class="kpi-footer"><span class="kpi-change neutral">📊 --</span><span>Ziel: 30%</span></div></div>
+    <div class="kpi-card"><div class="kpi-header">📞 ANRUFE</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Gesamt im Zeitraum</div><div class="kpi-footer"><span>${uc.answered} erreicht (${reachPct}%)</span><span></span></div></div>
+    <div class="kpi-card"><div class="kpi-header">💰 UMSATZ</div><div class="kpi-value">${formatCurrency(uo.revenue)}</div><div class="kpi-subtitle">Gewonnener Umsatz</div><div class="kpi-footer"><span>${uo.won} Deals</span><span></span></div></div>
+    <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">${winPct}%</div><div class="kpi-subtitle">Gewonnene Opportunities</div><div class="kpi-footer"><span>${uo.won} von ${uo.total}</span><span>Ziel: 30%</span></div></div>
+    <div class="kpi-card"><div class="kpi-header">💰 Ø DEAL</div><div class="kpi-value">${formatCurrency(avgDeal)}</div><div class="kpi-subtitle">Durchschnittlicher Auftragswert</div><div class="kpi-footer"><span></span><span></span></div></div>
   `;
 }
 
@@ -4514,39 +4521,255 @@ async function fetchCloseKPIs(period) {
   }
 }
 
-// Load and display Close KPIs in dashboard
+// Load and display ALL Close KPIs across entire dashboard
 async function loadAndDisplayCloseKPIs() {
-  // Show loading state
-  ['kpi-umsatz', 'kpi-leads', 'kpi-anrufe', 'kpi-abschluesse'].forEach(function(id) {
+  if (!closeApiKey) return;
+
+  // Show loading state on all dynamic elements
+  var allDynamicIds = [
+    'kpi-umsatz', 'kpi-leads', 'kpi-anrufe', 'kpi-abschluesse',
+    'opener-anrufe', 'opener-erreicht', 'opener-uebergaben', 'opener-erreichbarkeit',
+    'setter-termine', 'setter-erscheinung', 'setter-qualifiziert', 'setter-noshow',
+    'closer-umsatz', 'closer-abschlussquote', 'closer-erscheinung', 'closer-noshow',
+    'progress-val-1', 'progress-val-2', 'progress-val-3', 'progress-val-4'
+  ];
+  allDynamicIds.forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.innerHTML = '<span style="opacity:0.5;font-size:14px;">Lädt...</span>';
+    if (el) el.innerHTML = '<span style="opacity:0.5;font-size:12px;">···</span>';
   });
 
-  var kpis = await fetchCloseKPIs(state.timeRange);
+  try {
+    var range = TIME_RANGES[state.timeRange];
+    var dateRange = range ? range.getRange() : TIME_RANGES.month.getRange();
+    var dateFrom = dateRange.start.toISOString().split('T')[0];
+    var dateTo = dateRange.end.toISOString().split('T')[0];
 
-  if (!kpis) {
-    ['kpi-umsatz', 'kpi-leads', 'kpi-anrufe', 'kpi-abschluesse'].forEach(function(id) {
+    // Fetch ALL data in parallel - calls with details, not just count
+    var [callsData, emailsData, oppsData, leadsData, callsDetailed] = await Promise.all([
+      fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/?_type=Email&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('opportunity/'),
+      fetchCloseEndpoint('lead/?_limit=0'),
+      fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=200&_fields=user_id,duration,direction,disposition')
+    ]);
+
+    // === PROCESS CALLS ===
+    var totalCalls = callsData.total_results || 0;
+    var calls = callsDetailed.data || [];
+    var outboundCalls = calls.filter(function(c) { return c.direction === 'outbound'; });
+    var answeredCalls = calls.filter(function(c) { return c.disposition === 'answered' || c.duration > 0; });
+    var totalDuration = calls.reduce(function(sum, c) { return sum + (c.duration || 0); }, 0);
+    var avgDuration = calls.length > 0 ? Math.round(totalDuration / calls.length) : 0;
+    var reachRate = calls.length > 0 ? Math.round(answeredCalls.length / calls.length * 100) : 0;
+
+    // === PROCESS OPPORTUNITIES ===
+    var allOpps = oppsData.data || [];
+    var filteredOpps = allOpps.filter(function(o) {
+      var d = (o.date_created || '').split('T')[0];
+      return d >= dateFrom && d <= dateTo;
+    });
+    var wonOpps = filteredOpps.filter(function(o) { return o.status_type === 'won'; });
+    var lostOpps = filteredOpps.filter(function(o) { return o.status_type === 'lost'; });
+    var activeOpps = allOpps.filter(function(o) { return o.status_type === 'active'; });
+    var totalRevenue = wonOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
+    var pipelineValue = activeOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
+    var avgDealValue = wonOpps.length > 0 ? Math.round(totalRevenue / wonOpps.length) : 0;
+    var winRate = filteredOpps.length > 0 ? Math.round(wonOpps.length / filteredOpps.length * 100) : 0;
+
+    // === PROCESS LEADS ===
+    var allLeads = leadsData.data || [];
+    var filteredLeads = allLeads.filter(function(l) {
+      var d = (l.date_created || '').split('T')[0];
+      return d >= dateFrom && d <= dateTo;
+    });
+
+    // === PER-USER STATS (for role views) ===
+    var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+    var userCalls = {};
+    calls.forEach(function(c) {
+      if (!c.user_id) return;
+      if (!userCalls[c.user_id]) userCalls[c.user_id] = { total: 0, answered: 0, duration: 0 };
+      userCalls[c.user_id].total++;
+      if (c.disposition === 'answered' || c.duration > 0) userCalls[c.user_id].answered++;
+      userCalls[c.user_id].duration += (c.duration || 0);
+    });
+
+    var userOpps = {};
+    filteredOpps.forEach(function(o) {
+      var uid = o.user_id || o.assigned_to;
+      if (!uid) return;
+      if (!userOpps[uid]) userOpps[uid] = { won: 0, lost: 0, total: 0, revenue: 0 };
+      userOpps[uid].total++;
+      if (o.status_type === 'won') { userOpps[uid].won++; userOpps[uid].revenue += (o.value || 0); }
+      if (o.status_type === 'lost') userOpps[uid].lost++;
+    });
+
+    // Store for person view
+    window._closeData = { userCalls: userCalls, userOpps: userOpps, calls: calls, opps: filteredOpps, leads: filteredLeads, dateFrom: dateFrom, dateTo: dateTo };
+
+    // === UPDATE GESAMT STATS ===
+    setEl('kpi-umsatz', formatCurrency(totalRevenue));
+    setEl('kpi-leads', filteredLeads.length.toLocaleString('de-DE'));
+    setEl('kpi-anrufe', totalCalls.toLocaleString('de-DE'));
+    setEl('kpi-abschluesse', wonOpps.length.toLocaleString('de-DE'));
+
+    // === UPDATE OPENER STATS ===
+    var openerIds = getTeamIdsByRole('opener');
+    var openerCalls = sumUserStat(userCalls, openerIds, 'total');
+    var openerAnswered = sumUserStat(userCalls, openerIds, 'answered');
+    setEl('opener-anrufe', openerCalls.toLocaleString('de-DE'));
+    setEl('opener-erreicht', openerAnswered.toLocaleString('de-DE'));
+    setEl('opener-uebergaben', wonOpps.length > 0 ? wonOpps.length.toLocaleString('de-DE') : answeredCalls.length.toLocaleString('de-DE'));
+    setEl('opener-erreichbarkeit', openerCalls > 0 ? Math.round(openerAnswered / openerCalls * 100) + '%' : '-');
+
+    // Opener KPI cards
+    setEl('opener-kpi-noshow', '-');
+    setEl('opener-kpi-uebergabe', openerCalls > 0 ? Math.round(openerAnswered / openerCalls * 100) + '%' : '-');
+    setEl('opener-kpi-gespraechszeit', formatDuration(avgDuration));
+    setEl('opener-kpi-verbindlichkeit', reachRate + '%');
+
+    // === UPDATE SETTER STATS ===
+    var setterIds = getTeamIdsByRole('setter');
+    var setterCalls = sumUserStat(userCalls, setterIds, 'total');
+    setEl('setter-termine', setterCalls > 0 ? setterCalls.toLocaleString('de-DE') : filteredOpps.length.toLocaleString('de-DE'));
+    setEl('setter-erscheinung', '-');
+    setEl('setter-qualifiziert', activeOpps.length.toLocaleString('de-DE'));
+    setEl('setter-noshow', '-');
+
+    // Setter KPI cards
+    setEl('setter-kpi-erscheinung', '-');
+    setEl('setter-kpi-noshow', '-');
+    setEl('setter-kpi-qualifizierung', filteredOpps.length > 0 ? Math.round(activeOpps.length / filteredOpps.length * 100) + '%' : '-');
+    setEl('setter-kpi-zeitbuchung', '-');
+
+    // === UPDATE CLOSER STATS ===
+    var closerIds = getTeamIdsByRole('closer');
+    var closerRevenue = sumUserStat(userOpps, closerIds, 'revenue');
+    var closerWon = sumUserStat(userOpps, closerIds, 'won');
+    var closerTotal = sumUserStat(userOpps, closerIds, 'total');
+    setEl('closer-umsatz', formatCurrency(closerRevenue > 0 ? closerRevenue : totalRevenue));
+    setEl('closer-abschlussquote', winRate + '%');
+    setEl('closer-erscheinung', '-');
+    setEl('closer-noshow', '-');
+
+    // Closer KPI cards
+    setEl('closer-kpi-erscheinung', '-');
+    setEl('closer-kpi-noshow', '-');
+    setEl('closer-kpi-auftragswert', formatCurrency(avgDealValue));
+    setEl('closer-kpi-premium', '-');
+
+    // === UPDATE FUNNEL ===
+    var funnelTotal = totalCalls || 1;
+    setEl('funnel-val-1', totalCalls + ' Anrufe');
+    setEl('funnel-rate-1', '100%');
+    setEl('funnel-appear-1', '↓ ' + answeredCalls.length + ' erreicht (' + reachRate + '%)');
+    setEl('funnel-noshow-1', (100 - reachRate) + '% nicht erreicht');
+
+    setEl('funnel-val-2', answeredCalls.length + ' qualifiziert');
+    setEl('funnel-rate-2', reachRate + '%');
+    var qualToClose = answeredCalls.length > 0 ? Math.round(filteredOpps.length / answeredCalls.length * 100) : 0;
+    setEl('funnel-appear-2', '↓ ' + filteredOpps.length + ' Opportunities (' + qualToClose + '%)');
+    setEl('funnel-noshow-2', '');
+
+    setEl('funnel-val-3', wonOpps.length + ' gewonnen');
+    setEl('funnel-rate-3', winRate + '%');
+    setEl('funnel-appear-3', '↓ ' + wonOpps.length + ' Abschlüsse (' + formatCurrency(totalRevenue) + ')');
+    setEl('funnel-noshow-3', lostOpps.length + ' verloren');
+
+    setEl('funnel-val-4', formatCurrency(totalRevenue));
+    setEl('funnel-rate-4', formatCurrency(avgDealValue) + '/Deal');
+
+    // Update funnel bar widths
+    setBarWidth('funnel-bar-1', 100);
+    setBarWidth('funnel-bar-2', Math.max(reachRate, 10));
+    setBarWidth('funnel-bar-3', Math.max(winRate * reachRate / 100, 5));
+    setBarWidth('funnel-bar-4', Math.max(wonOpps.length / Math.max(totalCalls, 1) * 100, 3));
+
+    // === UPDATE PROGRESS RINGS ===
+    var goals = JSON.parse(localStorage.getItem('ts_goals') || '{}');
+    var goalMonat = goals.monat || 50000000; // Default 500k in cents
+    var goalAnrufe = goals.anrufe || 500;
+    var goalTermine = goals.termine || 100;
+    var goalPipeline = goals.pipeline || 100000000;
+
+    var pctMonat = Math.min(Math.round(totalRevenue / goalMonat * 100), 100);
+    var pctAnrufe = Math.min(Math.round(totalCalls / goalAnrufe * 100), 100);
+    var pctTermine = Math.min(Math.round(filteredOpps.length / goalTermine * 100), 100);
+    var pctPipeline = Math.min(Math.round(pipelineValue / goalPipeline * 100), 100);
+
+    updateProgressRing('progress-ring-1', 'progress-val-1', pctMonat);
+    updateProgressRing('progress-ring-2', 'progress-val-2', pctAnrufe);
+    updateProgressRing('progress-ring-3', 'progress-val-3', pctTermine);
+    updateProgressRing('progress-ring-4', 'progress-val-4', pctPipeline);
+
+    window._latestKpis = { totalCalls: totalCalls, answeredCalls: answeredCalls.length, wonOpps: wonOpps.length, totalRevenue: totalRevenue, pipelineValue: pipelineValue, avgDealValue: avgDealValue, winRate: winRate, reachRate: reachRate, leads: filteredLeads.length, avgDuration: avgDuration };
+
+    console.log('✓ Alle KPIs aktualisiert');
+
+  } catch (error) {
+    console.error('KPI load error:', error);
+    allDynamicIds.forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.textContent = '-';
     });
-    return;
   }
+}
 
-  // Update main KPI elements
-  var umsatzEl = document.getElementById('kpi-umsatz');
-  var leadsEl = document.getElementById('kpi-leads');
-  var anrufeEl = document.getElementById('kpi-anrufe');
-  var abschluesseEl = document.getElementById('kpi-abschluesse');
+// Helper: Set element text by ID
+function setEl(id, text) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
 
-  if (umsatzEl) umsatzEl.textContent = formatCurrency(kpis.umsatz);
-  if (leadsEl) leadsEl.textContent = kpis.neueLeads.toLocaleString('de-DE');
-  if (anrufeEl) anrufeEl.textContent = kpis.ausgehendeAnrufe.toLocaleString('de-DE');
-  if (abschluesseEl) abschluesseEl.textContent = kpis.abschluesse.toLocaleString('de-DE');
+// Helper: Set funnel bar width
+function setBarWidth(id, pct) {
+  var el = document.getElementById(id);
+  if (el) el.style.width = Math.max(pct, 3) + '%';
+}
 
-  // Store latest KPIs for person view
-  window._latestKpis = kpis;
+// Helper: Update progress ring
+function updateProgressRing(ringId, valId, pct) {
+  var ring = document.getElementById(ringId);
+  var val = document.getElementById(valId);
+  if (ring) {
+    var circumference = 251; // 2 * PI * 40
+    var dashArray = Math.round(pct / 100 * circumference);
+    ring.style.strokeDasharray = dashArray + ' ' + circumference;
+    // Color based on percentage
+    if (pct >= 90) ring.style.stroke = 'var(--success)';
+    else if (pct >= 60) ring.style.stroke = 'var(--beige)';
+    else ring.style.stroke = 'var(--warning)';
+  }
+  if (val) val.textContent = pct + '%';
+}
 
-  console.log('✓ KPIs aktualisiert:', kpis);
+// Helper: Get team member IDs by role
+function getTeamIdsByRole(role) {
+  var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+  var ids = [];
+  Object.keys(savedRoles).forEach(function(memberId) {
+    var roles = savedRoles[memberId];
+    if (typeof roles === 'string') roles = roles ? [roles] : [];
+    if (roles.includes(role)) ids.push(memberId);
+  });
+  // If no roles assigned, return all team member IDs
+  if (ids.length === 0) {
+    closeTeamMembers.forEach(function(m) { ids.push(m.id || m.email); });
+  }
+  return ids;
+}
+
+// Helper: Sum a stat across users
+function sumUserStat(userStats, userIds, field) {
+  var sum = 0;
+  userIds.forEach(function(uid) {
+    if (userStats[uid] && userStats[uid][field]) sum += userStats[uid][field];
+  });
+  // If no specific user data, return total from all users
+  if (sum === 0) {
+    Object.values(userStats).forEach(function(s) { sum += (s[field] || 0); });
+  }
+  return sum;
 }
 
 // Format currency for display
