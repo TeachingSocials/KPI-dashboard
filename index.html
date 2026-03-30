@@ -4008,16 +4008,30 @@ async function loadCloseTeam() {
     
     const orgData = await orgResponse.json();
     const memberships = orgData.memberships || [];
-    
-    console.log('Close memberships (aktiv):', memberships.length);
-    
-    // Zeige ALLE aktiven Memberships an - OHNE Filter
+
+    console.log('Close memberships:', memberships.length, memberships.map(function(m) { return { id: m.id, user_id: m.user_id, user: m.user_id || m.id, name: (m.user_first_name || m.first_name || '') + ' ' + (m.user_last_name || m.last_name || '') }; }));
+
+    // Step 3: Lade auch /user/ Endpoint für korrekte User-IDs
+    var usersData = await fetchCloseEndpoint('user/');
+    var usersMap = {};
+    (usersData.data || []).forEach(function(u) {
+      usersMap[u.id] = u;
+      if (u.email) usersMap[u.email] = u;
+    });
+    console.log('Close users:', Object.keys(usersMap).length, usersData.data?.map(function(u) { return u.id + ' = ' + u.first_name + ' ' + u.last_name; }));
+
+    // Membership → User zuordnen (user_id aus /user/ Endpoint hat Vorrang)
     closeTeamMembers = memberships.map(function(m) {
+      var email = m.user_email || m.email || '';
+      var userFromApi = usersMap[m.user_id] || usersMap[email] || null;
+      var userId = userFromApi ? userFromApi.id : (m.user_id || m.id);
+
       return {
-        id: m.user_id || m.id,
-        first_name: m.user_first_name || m.first_name || '',
-        last_name: m.user_last_name || m.last_name || '',
-        email: m.user_email || m.email || '',
+        id: userId,
+        membership_id: m.id,
+        first_name: userFromApi ? userFromApi.first_name : (m.user_first_name || m.first_name || ''),
+        last_name: userFromApi ? userFromApi.last_name : (m.user_last_name || m.last_name || ''),
+        email: email,
         image: m.user_image || m.image || null
       };
     });
@@ -4925,15 +4939,16 @@ let currentParamBeingConfigured = null; // Welcher Parameter wird gerade konfigu
 // Wir nutzen jetzt KPI_DEFINITIONS (definiert weiter oben im Script).
 // Die neue findKpiDefinition Funktion ist ebenfalls oben definiert.
 
-// Event Listener für alle KPI-Karten
+// Event Listener für KPI-Karten (nur Team-View, NICHT Person-View)
 document.addEventListener('click', function(e) {
   const kpiCard = e.target.closest('.kpi-card');
-  if (kpiCard) {
-    const header = kpiCard.querySelector('.kpi-header');
-    const kpiName = header ? header.textContent.trim() : 'KPI';
-    const kpiId = kpiName.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 50);
-    openKpiConfigModal(kpiId, kpiName);
-  }
+  if (!kpiCard) return;
+  // Ignoriere KPI-Cards innerhalb der Person-KPI-Container (dynamisch generiert)
+  if (kpiCard.closest('.person-kpis-container')) return;
+  const header = kpiCard.querySelector('.kpi-header');
+  const kpiName = header ? header.textContent.trim() : 'KPI';
+  const kpiId = kpiName.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 50);
+  openKpiConfigModal(kpiId, kpiName);
 });
 
 // Öffne das KPI-Konfigurations-Modal
