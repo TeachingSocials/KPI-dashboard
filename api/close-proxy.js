@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   const ALLOWED_PREFIXES = [
     'activity/', 'lead/', 'opportunity/', 'pipeline/', 'user/', 'me/',
-    'status/lead/', 'status/opportunity/',
+    'organization/', 'status/lead/', 'status/opportunity/',
     'custom_activity_type/', 'custom_field/', 'custom_field_schema/',
     'contact/', 'sequence/', 'smart_view/', 'report/'
   ];

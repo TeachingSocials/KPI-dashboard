@@ -1127,10 +1127,10 @@
           <div class="funnel-step"><span class="funnel-label">🤝 Kundenbetreuer</span><div class="funnel-bar" id="funnel-bar-4" style="width: 55%; background: linear-gradient(90deg, #a855f7, var(--success));"><span class="funnel-value" id="funnel-val-4">-</span></div><span class="funnel-rate" id="funnel-rate-4">-</span></div>
         </div>
         <div class="kpi-grid">
-          <div class="kpi-card"><div class="kpi-header">📅 ERSCHEINUNGSQUOTE</div><div class="kpi-value">78,5%</div><div class="kpi-subtitle">Durchschnitt alle Termine</div><div class="kpi-footer"><span class="kpi-change positive">▲ 3.2%</span><span>Ziel: 80%</span></div><div class="sparkline"><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:82%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">💰 KOSTEN PRO TERMIN</div><div class="kpi-value">€127</div><div class="kpi-subtitle">Qualifizierte Termine (KPT)</div><div class="kpi-footer"><span class="kpi-change positive">▼ €18</span><span>Ziel: unter €150</span></div><div class="sparkline"><div class="spark-bar" style="height:90%"></div><div class="spark-bar" style="height:85%"></div><div class="spark-bar" style="height:80%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:65%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">⏱️ ZEIT BIS ABSCHLUSS</div><div class="kpi-value">12 Tage</div><div class="kpi-subtitle">Erstkontakt → Vertrag</div><div class="kpi-footer"><span class="kpi-change positive">▼ 2 Tage</span><span>Ziel: 14 Tage</span></div><div class="sparkline"><div class="spark-bar" style="height:95%"></div><div class="spark-bar" style="height:88%"></div><div class="spark-bar" style="height:82%"></div><div class="spark-bar" style="height:78%"></div><div class="spark-bar" style="height:72%"></div><div class="spark-bar" style="height:68%"></div><div class="spark-bar" style="height:62%"></div></div></div>
-          <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">34,2%</div><div class="kpi-subtitle">Erschienene → Abschluss</div><div class="kpi-footer"><span class="kpi-change positive">▲ 5.8%</span><span>Ziel: 30%</span></div><div class="sparkline"><div class="spark-bar" style="height:55%"></div><div class="spark-bar" style="height:60%"></div><div class="spark-bar" style="height:65%"></div><div class="spark-bar" style="height:70%"></div><div class="spark-bar" style="height:75%"></div><div class="spark-bar" style="height:82%"></div><div class="spark-bar" style="height:88%"></div></div></div>
+          <div class="kpi-card"><div class="kpi-header">📅 ERSCHEINUNGSQUOTE</div><div class="kpi-value" id="gesamt-erscheinungsquote">-</div><div class="kpi-subtitle">Erreichte / Anrufe gesamt</div><div class="kpi-footer"><span class="kpi-change neutral" id="gesamt-erscheinungsquote-change"></span><span>Ziel: 80%</span></div></div>
+          <div class="kpi-card"><div class="kpi-header">💰 Ø AUFTRAGSWERT</div><div class="kpi-value" id="gesamt-auftragswert">-</div><div class="kpi-subtitle">Durchschnitt pro gewonnenem Deal</div><div class="kpi-footer"><span class="kpi-change neutral" id="gesamt-auftragswert-change"></span><span></span></div></div>
+          <div class="kpi-card"><div class="kpi-header">📊 PIPELINE-WERT</div><div class="kpi-value" id="gesamt-pipeline">-</div><div class="kpi-subtitle">Offene Opportunities</div><div class="kpi-footer"><span class="kpi-change neutral" id="gesamt-pipeline-change"></span><span></span></div></div>
+          <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value" id="gesamt-abschlussquote">-</div><div class="kpi-subtitle">Gewonnene / Alle Opportunities</div><div class="kpi-footer"><span class="kpi-change neutral" id="gesamt-abschlussquote-change"></span><span>Ziel: 30%</span></div></div>
         </div>
         <div class="section-title">🏆 ZIELERREICHUNG</div>
         <div class="progress-grid" id="progress-grid">
@@ -2533,6 +2533,9 @@ async function handleLogout() {
     console.error('Logout error:', error);
   }
   currentUser = null;
+  window._closeData = {};
+  window._latestKpis = null;
+  sessionStorage.removeItem('ts_close_api_key');
   document.getElementById('dashboard').classList.remove('active');
   document.getElementById('onboarding').style.display = 'none';
   document.getElementById('registerScreen').style.display = 'none';
@@ -4544,8 +4547,8 @@ async function loadAndDisplayCloseKPIs() {
     var dateFrom = dateRange.start.toISOString().split('T')[0];
     var dateTo = dateRange.end.toISOString().split('T')[0];
 
-    // Fetch ALL data in parallel - calls with details, not just count
-    var [callsData, emailsData, oppsData, leadsData, callsDetailed] = await Promise.all([
+    // Fetch ALL data in parallel
+    var [callsData, emailsData, oppsData, leadsData, callsPage1] = await Promise.all([
       fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
       fetchCloseEndpoint('activity/?_type=Email&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
       fetchCloseEndpoint('opportunity/'),
@@ -4553,9 +4556,21 @@ async function loadAndDisplayCloseKPIs() {
       fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=200&_fields=user_id,duration,direction,disposition')
     ]);
 
-    // === PROCESS CALLS ===
+    // === PROCESS CALLS (mit Pagination für >200) ===
     var totalCalls = callsData.total_results || 0;
-    var calls = callsDetailed.data || [];
+    var calls = callsPage1.data || [];
+    // Lade weitere Seiten wenn nötig
+    if (totalCalls > 200 && calls.length >= 200) {
+      var pages = Math.ceil(totalCalls / 200);
+      var pagePromises = [];
+      for (var p = 1; p < Math.min(pages, 5); p++) { // Max 1000 Calls (5 Seiten)
+        pagePromises.push(fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,duration,direction,disposition'));
+      }
+      var additionalPages = await Promise.all(pagePromises);
+      additionalPages.forEach(function(page) {
+        if (page.data) calls = calls.concat(page.data);
+      });
+    }
     var outboundCalls = calls.filter(function(c) { return c.direction === 'outbound'; });
     var answeredCalls = calls.filter(function(c) { return c.disposition === 'answered' || c.duration > 0; });
     var totalDuration = calls.reduce(function(sum, c) { return sum + (c.duration || 0); }, 0);
@@ -4570,9 +4585,10 @@ async function loadAndDisplayCloseKPIs() {
     });
     var wonOpps = filteredOpps.filter(function(o) { return o.status_type === 'won'; });
     var lostOpps = filteredOpps.filter(function(o) { return o.status_type === 'lost'; });
-    var activeOpps = allOpps.filter(function(o) { return o.status_type === 'active'; });
+    var activeOpps = filteredOpps.filter(function(o) { return o.status_type === 'active'; });
+    var allActiveOpps = allOpps.filter(function(o) { return o.status_type === 'active'; });
     var totalRevenue = wonOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
-    var pipelineValue = activeOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
+    var pipelineValue = allActiveOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
     var avgDealValue = wonOpps.length > 0 ? Math.round(totalRevenue / wonOpps.length) : 0;
     var winRate = filteredOpps.length > 0 ? Math.round(wonOpps.length / filteredOpps.length * 100) : 0;
 
@@ -4613,13 +4629,20 @@ async function loadAndDisplayCloseKPIs() {
     setEl('kpi-anrufe', totalCalls.toLocaleString('de-DE'));
     setEl('kpi-abschluesse', wonOpps.length.toLocaleString('de-DE'));
 
+    // === UPDATE GESAMT KPI CARDS ===
+    setEl('gesamt-erscheinungsquote', reachRate + '%');
+    setEl('gesamt-auftragswert', formatCurrency(avgDealValue));
+    setEl('gesamt-pipeline', formatCurrency(pipelineValue));
+    setEl('gesamt-abschlussquote', winRate + '%');
+
     // === UPDATE OPENER STATS ===
     var openerIds = getTeamIdsByRole('opener');
     var openerCalls = sumUserStat(userCalls, openerIds, 'total');
     var openerAnswered = sumUserStat(userCalls, openerIds, 'answered');
+    var openerOpps = sumUserStat(userOpps, openerIds, 'total');
     setEl('opener-anrufe', openerCalls.toLocaleString('de-DE'));
     setEl('opener-erreicht', openerAnswered.toLocaleString('de-DE'));
-    setEl('opener-uebergaben', wonOpps.length > 0 ? wonOpps.length.toLocaleString('de-DE') : answeredCalls.length.toLocaleString('de-DE'));
+    setEl('opener-uebergaben', openerOpps.toLocaleString('de-DE'));
     setEl('opener-erreichbarkeit', openerCalls > 0 ? Math.round(openerAnswered / openerCalls * 100) + '%' : '-');
 
     // Opener KPI cards
@@ -4762,11 +4785,15 @@ function getTeamIdsByRole(role) {
 // Helper: Sum a stat across users
 function sumUserStat(userStats, userIds, field) {
   var sum = 0;
+  var hasData = false;
   userIds.forEach(function(uid) {
-    if (userStats[uid] && userStats[uid][field]) sum += userStats[uid][field];
+    if (userStats[uid] && userStats[uid][field] !== undefined) {
+      sum += userStats[uid][field];
+      hasData = true;
+    }
   });
-  // If no specific user data, return total from all users
-  if (sum === 0) {
+  // If no specific user data found, return total from all users
+  if (!hasData) {
     Object.values(userStats).forEach(function(s) { sum += (s[field] || 0); });
   }
   return sum;
@@ -4804,15 +4831,7 @@ function getDateRange(period) {
   return { from: from, to: to };
 }
 
-// Format currency (Close stores in cents)
-function formatCurrency(value) {
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value / 100);
-}
+// (formatCurrency bereits oben definiert)
 
 // =====================================================
 // KPI PARAMETER CONFIGURATION MODAL
