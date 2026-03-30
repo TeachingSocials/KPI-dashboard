@@ -4441,8 +4441,8 @@ async function loadEmployeeCloseData(memberId, member) {
 
     // Parallel: Calls und Emails für diesen User laden
     var [callsData, emailsData] = await Promise.all([
-      fetchCloseEndpoint('activity/?_type=Call&user_id=' + memberId + '&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Email&user_id=' + memberId + '&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0')
+      fetchCloseEndpoint('activity/call/?user_id=' + memberId + '&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/email/?user_id=' + memberId + '&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0')
     ]);
 
     var calls = callsData.total_results || 0;
@@ -4531,8 +4531,8 @@ async function fetchCloseKPIs(period) {
 
     // Parallel fetch all data with date filters
     var [callsData, emailsData, oppsData, leadsData] = await Promise.all([
-      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Email&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/call/?date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/email/?date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
       fetchCloseEndpoint('opportunity/'),
       fetchCloseEndpoint('lead/?_limit=0')
     ]);
@@ -4613,10 +4613,10 @@ async function loadAndDisplayCloseKPIs() {
 
     // Fetch ALL data in parallel — KEINE _limit=0, immer Details laden
     var [emailsData, oppsData, leadsData, callsPage1] = await Promise.all([
-      fetchCloseEndpoint('activity/?_type=Email&date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/email/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=0'),
       fetchCloseEndpoint('opportunity/'),
       fetchCloseEndpoint('lead/?_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_fields=user_id,created_by,duration,direction,disposition')
+      fetchCloseEndpoint('activity/call/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_fields=user_id,created_by,duration,direction,disposition')
     ]);
 
     // === PROCESS CALLS (mit Pagination für >200) ===
@@ -4624,7 +4624,7 @@ async function loadAndDisplayCloseKPIs() {
     if (calls.length >= 200) {
       // Lade weitere Seiten
       for (var p = 1; p < 5; p++) {
-        var nextPage = await fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,created_by,duration,direction,disposition');
+        var nextPage = await fetchCloseEndpoint('activity/call/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,created_by,duration,direction,disposition');
         if (!nextPage.data || nextPage.data.length === 0) break;
         calls = calls.concat(nextPage.data);
         if (nextPage.data.length < 200) break;
