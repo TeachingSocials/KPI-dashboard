@@ -2244,19 +2244,25 @@ function setPersonTimeRange(role, range) {
 // Speichert geladene Mitarbeiter
 var loadedEmployees = [];
 
-// Befülle alle Personen-Dropdowns mit Mitarbeitern
+// Befülle Personen-Dropdowns — nur Mitarbeiter mit passender Rolle
 function populatePersonDropdowns() {
   const dropdowns = ['gesamt', 'opener', 'setter', 'closer'];
-  
+  var savedRoles = JSON.parse(localStorage.getItem('ts_team_roles') || '{}');
+
   dropdowns.forEach(role => {
     const select = document.getElementById('person-select-' + role);
     if (!select) return;
-    
-    // Erst leeren (außer erste Option)
+
     select.innerHTML = '<option value="">Mitarbeiter wählen...</option>';
-    
-    // Mitarbeiter hinzufügen
+
     loadedEmployees.forEach(emp => {
+      // Für "gesamt" alle zeigen, sonst nur Mitarbeiter mit passender Rolle
+      if (role !== 'gesamt') {
+        var memberRoles = savedRoles[emp.id];
+        if (typeof memberRoles === 'string') memberRoles = memberRoles ? [memberRoles] : [];
+        if (!Array.isArray(memberRoles)) memberRoles = [];
+        if (!memberRoles.includes(role)) return; // Rolle nicht zugewiesen → überspringen
+      }
       const option = document.createElement('option');
       option.value = emp.id;
       option.textContent = emp.name;
@@ -4611,12 +4617,14 @@ async function loadAndDisplayCloseKPIs() {
 
     console.log('📊 Zeitraum:', state.timeRange, '| API:', apiFrom, '→', apiTo, '| Filter:', originalFrom, '→', originalTo);
 
-    // Fetch ALL data in parallel — KEINE _limit=0, immer Details laden
+    // Fetch ALL data in parallel
+    var callEndpoint = 'activity/call/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_fields=user_id,created_by,duration,direction,disposition';
+    console.log('🔗 Call endpoint:', callEndpoint);
     var [emailsData, oppsData, leadsData, callsPage1] = await Promise.all([
       fetchCloseEndpoint('activity/email/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=0'),
       fetchCloseEndpoint('opportunity/'),
       fetchCloseEndpoint('lead/?_limit=0'),
-      fetchCloseEndpoint('activity/call/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_fields=user_id,created_by,duration,direction,disposition')
+      fetchCloseEndpoint(callEndpoint)
     ]);
 
     // === PROCESS CALLS (mit Pagination für >200) ===
@@ -4630,7 +4638,9 @@ async function loadAndDisplayCloseKPIs() {
         if (nextPage.data.length < 200) break;
       }
     }
-    var totalCalls = calls.length; // Echte Anzahl, nicht total_results
+    var totalCalls = calls.length;
+    console.log('📞 API Response callsPage1:', JSON.stringify(callsPage1).substring(0, 500));
+    console.log('📞 Calls geladen:', totalCalls, '| Erstes Objekt:', calls[0] ? JSON.stringify(calls[0]) : 'KEINE CALLS');
     var outboundCalls = calls.filter(function(c) { return c.direction === 'outbound'; });
     var answeredCalls = calls.filter(function(c) { return c.disposition === 'answered' || c.duration > 0; });
     var totalDuration = calls.reduce(function(sum, c) { return sum + (c.duration || 0); }, 0);
