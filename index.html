@@ -4387,8 +4387,8 @@ async function loadEmployeeCloseData(memberId, member) {
 
     // Parallel: Calls und Emails für diesen User laden
     var [callsData, emailsData] = await Promise.all([
-      fetchCloseEndpoint('activity/?_type=Call&user_id=' + memberId + '&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Email&user_id=' + memberId + '&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0')
+      fetchCloseEndpoint('activity/?_type=Call&user_id=' + memberId + '&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/?_type=Email&user_id=' + memberId + '&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0')
     ]);
 
     var calls = callsData.total_results || 0;
@@ -4477,8 +4477,8 @@ async function fetchCloseKPIs(period) {
 
     // Parallel fetch all data with date filters
     var [callsData, emailsData, oppsData, leadsData] = await Promise.all([
-      fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Email&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/?_type=Email&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
       fetchCloseEndpoint('opportunity/'),
       fetchCloseEndpoint('lead/?_limit=0')
     ]);
@@ -4549,11 +4549,11 @@ async function loadAndDisplayCloseKPIs() {
 
     // Fetch ALL data in parallel
     var [callsData, emailsData, oppsData, leadsData, callsPage1] = await Promise.all([
-      fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Email&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/?_type=Email&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
       fetchCloseEndpoint('opportunity/'),
       fetchCloseEndpoint('lead/?_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=200&_fields=user_id,duration,direction,disposition')
+      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_fields=user_id,duration,direction,disposition')
     ]);
 
     // === PROCESS CALLS (mit Pagination für >200) ===
@@ -4564,7 +4564,7 @@ async function loadAndDisplayCloseKPIs() {
       var pages = Math.ceil(totalCalls / 200);
       var pagePromises = [];
       for (var p = 1; p < Math.min(pages, 5); p++) { // Max 1000 Calls (5 Seiten)
-        pagePromises.push(fetchCloseEndpoint('activity/?_type=Call&date_created__gte=' + dateFrom + '&date_created__lte=' + dateTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,duration,direction,disposition'));
+        pagePromises.push(fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,duration,direction,disposition'));
       }
       var additionalPages = await Promise.all(pagePromises);
       additionalPages.forEach(function(page) {
