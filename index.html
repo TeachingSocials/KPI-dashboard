@@ -3985,27 +3985,18 @@ async function loadCloseTeam() {
 
     console.log('Close memberships:', memberships.length, memberships.map(function(m) { return { id: m.id, user_id: m.user_id, user: m.user_id || m.id, name: (m.user_first_name || m.first_name || '') + ' ' + (m.user_last_name || m.last_name || '') }; }));
 
-    // Step 3: Lade auch /user/ Endpoint für korrekte User-IDs
-    var usersData = await fetchCloseEndpoint('user/');
-    var usersMap = {};
-    (usersData.data || []).forEach(function(u) {
-      usersMap[u.id] = u;
-      if (u.email) usersMap[u.email] = u;
-    });
-    console.log('Close users:', Object.keys(usersMap).length, usersData.data?.map(function(u) { return u.id + ' = ' + u.first_name + ' ' + u.last_name; }));
-
-    // Membership → User zuordnen (user_id aus /user/ Endpoint hat Vorrang)
+    // Memberships direkt verwenden - user_id ist bereits enthalten
     closeTeamMembers = memberships.map(function(m) {
-      var email = m.user_email || m.email || '';
-      var userFromApi = usersMap[m.user_id] || usersMap[email] || null;
-      var userId = userFromApi ? userFromApi.id : (m.user_id || m.id);
+      // Close Membership-Objekte enthalten user_id (= die ID die Activities nutzen)
+      var userId = m.user_id || m.id;
+      console.log('👤 Team member:', userId, '=', (m.user_first_name || m.first_name || ''), (m.user_last_name || m.last_name || ''), '| membership:', m.id);
 
       return {
         id: userId,
         membership_id: m.id,
-        first_name: userFromApi ? userFromApi.first_name : (m.user_first_name || m.first_name || ''),
-        last_name: userFromApi ? userFromApi.last_name : (m.user_last_name || m.last_name || ''),
-        email: email,
+        first_name: m.user_first_name || m.first_name || '',
+        last_name: m.user_last_name || m.last_name || '',
+        email: m.user_email || m.email || '',
         image: m.user_image || m.image || null
       };
     });
