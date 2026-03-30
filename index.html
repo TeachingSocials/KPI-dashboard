@@ -2227,16 +2227,12 @@ function setPersonTimeRange(role, range) {
   // Speichern
   localStorage.setItem('ts_person_time_' + role, range);
   
-  // KPI-Werte neu laden für die ausgewählte Person (mit neuem Zeitraum)
+  // Globalen Zeitraum auch ändern und Daten neu laden
+  state.timeRange = range;
   var personSelect = document.getElementById('person-select-' + role);
   if (personSelect && personSelect.value && closeApiKey) {
-    // Live-Daten für diesen Zeitraum laden
-    fetchPersonData(personSelect.value, range).then(function(data) {
-      if (data) {
-        window._personData = window._personData || {};
-        window._personData[personSelect.value] = data;
-        selectPerson(role, personSelect.value);
-      }
+    loadAndDisplayCloseKPIs().then(function() {
+      selectPerson(role, personSelect.value);
     });
   }
 }
@@ -2269,55 +2265,45 @@ function populatePersonDropdowns() {
   });
 }
 
-// Wenn Mitarbeiter ausgewählt wird
-// Live Close-Daten für eine Person und einen Zeitraum laden
-async function fetchPersonData(personId, timeRange) {
-  if (!closeApiKey) return null;
-  try {
-    var range = TIME_RANGES[timeRange || state.timeRange];
-    var dateRange = range ? range.getRange() : TIME_RANGES.month.getRange();
-    var startDate = new Date(dateRange.start);
-    startDate.setDate(startDate.getDate() - 1);
-    var endDate = new Date(dateRange.end);
-    endDate.setDate(endDate.getDate() + 1);
-    var dateFrom = startDate.toISOString().split('T')[0];
-    var dateTo = endDate.toISOString().split('T')[0];
+// Person-Daten aus dem globalen Cache extrahieren
+// Nutzt window._closeData das in loadAndDisplayCloseKPIs befüllt wird
+function getPersonDataFromCache(personId) {
+  var data = window._closeData || {};
+  var calls = data.calls || [];
+  var opps = data.opps || [];
 
-    // Close nutzt user_id für Activities, assigned_to für manche Opportunities
-    var [callsData, oppsData, oppsAssigned] = await Promise.all([
-      fetchCloseEndpoint('activity/?_type=Call&user_id=' + personId + '&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_fields=user_id,duration,direction,disposition'),
-      fetchCloseEndpoint('opportunity/?user_id=' + personId),
-      fetchCloseEndpoint('opportunity/?assigned_to=' + personId)
-    ]);
-
-    // Merge opportunities (deduplicate by id)
-    var allOppsMerged = [...(oppsData.data || [])];
-    var existingIds = new Set(allOppsMerged.map(function(o) { return o.id; }));
-    (oppsAssigned.data || []).forEach(function(o) {
-      if (!existingIds.has(o.id)) allOppsMerged.push(o);
-    });
-
-    var calls = callsData.data || [];
-    var answered = calls.filter(function(c) { return c.disposition === 'answered' || c.duration > 0; });
-    var totalDur = calls.reduce(function(s, c) { return s + (c.duration || 0); }, 0);
-
-    var allOpps = allOppsMerged;
-    var filteredOpps = allOpps.filter(function(o) {
-      var d = (o.date_created || '').split('T')[0];
-      return d >= startDate.toISOString().split('T')[0] && d <= endDate.toISOString().split('T')[0];
-    });
-    var won = filteredOpps.filter(function(o) { return o.status_type === 'won'; });
-    var lost = filteredOpps.filter(function(o) { return o.status_type === 'lost'; });
-    var revenue = won.reduce(function(s, o) { return s + (o.value || 0); }, 0);
-
-    return {
-      calls: { total: calls.length, answered: answered.length, duration: totalDur },
-      opps: { won: won.length, lost: lost.length, total: filteredOpps.length, revenue: revenue }
-    };
-  } catch (e) {
-    console.error('Person data fetch error:', e);
-    return null;
+  // Filtere ALLE Calls/Opps für diese Person (mehrere ID-Formate prüfen)
+  var member = closeTeamMembers.find(function(m) { return m.id === personId; });
+  var possibleIds = [personId];
+  if (member) {
+    if (member.membership_id) possibleIds.push(member.membership_id);
+    if (member.email) possibleIds.push(member.email);
   }
+
+  var personCalls = calls.filter(function(c) {
+    return possibleIds.indexOf(c.user_id) >= 0 || possibleIds.indexOf(c.created_by) >= 0;
+  });
+  var personOpps = opps.filter(function(o) {
+    return possibleIds.indexOf(o.user_id) >= 0 || possibleIds.indexOf(o.assigned_to) >= 0 || possibleIds.indexOf(o.created_by) >= 0;
+  });
+
+  var answered = personCalls.filter(function(c) { return c.disposition === 'answered' || c.duration > 0; });
+  var totalDur = personCalls.reduce(function(s, c) { return s + (c.duration || 0); }, 0);
+  var won = personOpps.filter(function(o) { return o.status_type === 'won'; });
+  var lost = personOpps.filter(function(o) { return o.status_type === 'lost'; });
+  var revenue = won.reduce(function(s, o) { return s + (o.value || 0); }, 0);
+
+  console.log('👤 Person data for', personId, ':', {
+    possibleIds: possibleIds,
+    callsTotal: personCalls.length,
+    allCallUserIds: [...new Set(calls.map(function(c) { return c.user_id; }))].slice(0, 10),
+    oppsTotal: personOpps.length
+  });
+
+  return {
+    calls: { total: personCalls.length, answered: answered.length, duration: totalDur },
+    opps: { won: won.length, lost: lost.length, total: personOpps.length, revenue: revenue }
+  };
 }
 
 function selectPerson(role, personId) {
@@ -2332,17 +2318,11 @@ function selectPerson(role, personId) {
   const person = loadedEmployees.find(e => e.id === personId);
   if (!person) return;
 
-  // Zuerst personspezifische Daten prüfen, dann globale
-  var personData = window._personData && window._personData[personId];
-  var data = window._closeData || {};
-  var uc, uo;
-  if (personData) {
-    uc = personData.calls;
-    uo = personData.opps;
-  } else {
-    uc = data.userCalls && data.userCalls[personId] || { total: 0, answered: 0, duration: 0 };
-    uo = data.userOpps && data.userOpps[personId] || { won: 0, lost: 0, total: 0, revenue: 0 };
-  }
+  // Daten aus globalem Cache filtern (client-side, zuverlässiger als per-User API)
+  var pd = getPersonDataFromCache(personId);
+  var uc = pd.calls;
+  var uo = pd.opps;
+
   container.innerHTML = `
     <div class="person-info-card">
       <div class="person-avatar">${person.name.charAt(0)}</div>
@@ -2359,17 +2339,11 @@ function selectPerson(role, personId) {
     </div>
   `;
 
-  // Falls keine cached Daten, live für diese Person laden
-  if ((!window._closeData || (!uc.total && !uo.total)) && closeApiKey) {
-    var personRange = personTimeRanges[role] || state.timeRange;
-    container.querySelector('.stats-panel')?.insertAdjacentHTML('beforebegin', '<div style="text-align:center;padding:8px;color:var(--text-dim);font-size:12px;">Lade Daten aus Close...</div>');
-    fetchPersonData(personId, personRange).then(function(data) {
-      if (data) {
-        window._personData = window._personData || {};
-        window._personData[personId] = data;
-        selectPerson(role, personId);
-      }
-    });
+  // Falls noch keine globalen Daten geladen, jetzt laden
+  if ((!window._closeData || !window._closeData.calls) && closeApiKey) {
+    container.querySelector('.stats-panel')?.insertAdjacentHTML('beforebegin',
+      '<div style="text-align:center;padding:8px;color:var(--text-dim);font-size:12px;">⏳ Lade Daten aus Close...</div>');
+    loadAndDisplayCloseKPIs().then(function() { selectPerson(role, personId); });
   }
 }
 
@@ -4647,7 +4621,7 @@ async function loadAndDisplayCloseKPIs() {
       fetchCloseEndpoint('activity/?_type=Email&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
       fetchCloseEndpoint('opportunity/'),
       fetchCloseEndpoint('lead/?_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_fields=user_id,duration,direction,disposition')
+      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_fields=user_id,created_by,duration,direction,disposition')
     ]);
 
     // === PROCESS CALLS (mit Pagination für >200) ===
@@ -4658,7 +4632,7 @@ async function loadAndDisplayCloseKPIs() {
       var pages = Math.ceil(totalCalls / 200);
       var pagePromises = [];
       for (var p = 1; p < Math.min(pages, 5); p++) { // Max 1000 Calls (5 Seiten)
-        pagePromises.push(fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,duration,direction,disposition'));
+        pagePromises.push(fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,created_by,duration,direction,disposition'));
       }
       var additionalPages = await Promise.all(pagePromises);
       additionalPages.forEach(function(page) {
@@ -4939,12 +4913,10 @@ let currentParamBeingConfigured = null; // Welcher Parameter wird gerade konfigu
 // Wir nutzen jetzt KPI_DEFINITIONS (definiert weiter oben im Script).
 // Die neue findKpiDefinition Funktion ist ebenfalls oben definiert.
 
-// Event Listener für KPI-Karten (nur Team-View, NICHT Person-View)
+// Event Listener für ALLE KPI-Karten (Team-View UND Person-View)
 document.addEventListener('click', function(e) {
   const kpiCard = e.target.closest('.kpi-card');
   if (!kpiCard) return;
-  // Ignoriere KPI-Cards innerhalb der Person-KPI-Container (dynamisch generiert)
-  if (kpiCard.closest('.person-kpis-container')) return;
   const header = kpiCard.querySelector('.kpi-header');
   const kpiName = header ? header.textContent.trim() : 'KPI';
   const kpiId = kpiName.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 50);
