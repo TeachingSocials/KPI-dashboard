@@ -4551,13 +4551,13 @@ async function fetchCloseKPIs(period) {
     var totalRevenue = wonOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
     var pipelineValue = activeOpps.reduce(function(sum, o) { return sum + (o.value || 0); }, 0);
 
-    // Filter leads by date
+    // Filter leads by date (mit Original-Daten, nicht API-Daten)
     var allLeads = leadsData.data || [];
     var filteredLeads = allLeads.filter(function(l) {
       var created = l.date_created || l.created;
       if (!created) return false;
       var d = created.split('T')[0];
-      return d >= dateFrom && d <= dateTo;
+      return d >= originalFrom && d <= originalTo;
     });
 
     return {
@@ -4598,49 +4598,52 @@ async function loadAndDisplayCloseKPIs() {
   try {
     var range = TIME_RANGES[state.timeRange];
     var dateRange = range ? range.getRange() : TIME_RANGES.month.getRange();
-    // Close API __gt/__lt sind exklusiv, daher -1/+1 Tag
+    // Originale Daten für client-side Filterung (inklusiv)
+    var originalFrom = dateRange.start.toISOString().split('T')[0];
+    var originalTo = dateRange.end.toISOString().split('T')[0];
+    // Close API __gt/__lt sind exklusiv, daher -1/+1 Tag für API-Calls
     var startDate = new Date(dateRange.start);
     startDate.setDate(startDate.getDate() - 1);
     var endDate = new Date(dateRange.end);
     endDate.setDate(endDate.getDate() + 1);
-    var dateFrom = startDate.toISOString().split('T')[0];
-    var dateTo = endDate.toISOString().split('T')[0];
+    var apiFrom = startDate.toISOString().split('T')[0];
+    var apiTo = endDate.toISOString().split('T')[0];
 
-    // Fetch ALL data in parallel
-    var [callsData, emailsData, oppsData, leadsData, callsPage1] = await Promise.all([
-      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Email&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=0'),
+    console.log('📊 Zeitraum:', state.timeRange, '| API:', apiFrom, '→', apiTo, '| Filter:', originalFrom, '→', originalTo);
+
+    // Fetch ALL data in parallel — KEINE _limit=0, immer Details laden
+    var [emailsData, oppsData, leadsData, callsPage1] = await Promise.all([
+      fetchCloseEndpoint('activity/?_type=Email&date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=0'),
       fetchCloseEndpoint('opportunity/'),
       fetchCloseEndpoint('lead/?_limit=0'),
-      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_fields=user_id,created_by,duration,direction,disposition')
+      fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_fields=user_id,created_by,duration,direction,disposition')
     ]);
 
     // === PROCESS CALLS (mit Pagination für >200) ===
-    var totalCalls = callsData.total_results || 0;
     var calls = callsPage1.data || [];
-    // Lade weitere Seiten wenn nötig
-    if (totalCalls > 200 && calls.length >= 200) {
-      var pages = Math.ceil(totalCalls / 200);
-      var pagePromises = [];
-      for (var p = 1; p < Math.min(pages, 5); p++) { // Max 1000 Calls (5 Seiten)
-        pagePromises.push(fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,created_by,duration,direction,disposition'));
+    if (calls.length >= 200) {
+      // Lade weitere Seiten
+      for (var p = 1; p < 5; p++) {
+        var nextPage = await fetchCloseEndpoint('activity/?_type=Call&date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,created_by,duration,direction,disposition');
+        if (!nextPage.data || nextPage.data.length === 0) break;
+        calls = calls.concat(nextPage.data);
+        if (nextPage.data.length < 200) break;
       }
-      var additionalPages = await Promise.all(pagePromises);
-      additionalPages.forEach(function(page) {
-        if (page.data) calls = calls.concat(page.data);
-      });
     }
+    var totalCalls = calls.length; // Echte Anzahl, nicht total_results
     var outboundCalls = calls.filter(function(c) { return c.direction === 'outbound'; });
     var answeredCalls = calls.filter(function(c) { return c.disposition === 'answered' || c.duration > 0; });
     var totalDuration = calls.reduce(function(sum, c) { return sum + (c.duration || 0); }, 0);
     var avgDuration = calls.length > 0 ? Math.round(totalDuration / calls.length) : 0;
     var reachRate = calls.length > 0 ? Math.round(answeredCalls.length / calls.length * 100) : 0;
 
-    // === PROCESS OPPORTUNITIES ===
+    console.log('📞 Calls:', totalCalls, '| Answered:', answeredCalls.length, '| User IDs:', [...new Set(calls.map(function(c){return c.user_id;}))]);
+
+    // === PROCESS OPPORTUNITIES (client-side mit ORIGINAL-Daten filtern) ===
     var allOpps = oppsData.data || [];
     var filteredOpps = allOpps.filter(function(o) {
       var d = (o.date_created || '').split('T')[0];
-      return d >= dateFrom && d <= dateTo;
+      return d >= originalFrom && d <= originalTo;
     });
     var wonOpps = filteredOpps.filter(function(o) { return o.status_type === 'won'; });
     var lostOpps = filteredOpps.filter(function(o) { return o.status_type === 'lost'; });
@@ -4680,7 +4683,7 @@ async function loadAndDisplayCloseKPIs() {
     });
 
     // Store for person view
-    window._closeData = { userCalls: userCalls, userOpps: userOpps, calls: calls, opps: filteredOpps, leads: filteredLeads, dateFrom: dateFrom, dateTo: dateTo };
+    window._closeData = { userCalls: userCalls, userOpps: userOpps, calls: calls, opps: filteredOpps, leads: filteredLeads, dateFrom: originalFrom, dateTo: originalTo };
 
     // === UPDATE GESAMT STATS ===
     setEl('kpi-umsatz', formatCurrency(totalRevenue));
