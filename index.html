@@ -2283,16 +2283,25 @@ async function fetchPersonData(personId, timeRange) {
     var dateFrom = startDate.toISOString().split('T')[0];
     var dateTo = endDate.toISOString().split('T')[0];
 
-    var [callsData, oppsData] = await Promise.all([
+    // Close nutzt user_id für Activities, assigned_to für manche Opportunities
+    var [callsData, oppsData, oppsAssigned] = await Promise.all([
       fetchCloseEndpoint('activity/?_type=Call&user_id=' + personId + '&date_created__gt=' + dateFrom + '&date_created__lt=' + dateTo + '&_limit=200&_fields=user_id,duration,direction,disposition'),
-      fetchCloseEndpoint('opportunity/?user_id=' + personId)
+      fetchCloseEndpoint('opportunity/?user_id=' + personId),
+      fetchCloseEndpoint('opportunity/?assigned_to=' + personId)
     ]);
+
+    // Merge opportunities (deduplicate by id)
+    var allOppsMerged = [...(oppsData.data || [])];
+    var existingIds = new Set(allOppsMerged.map(function(o) { return o.id; }));
+    (oppsAssigned.data || []).forEach(function(o) {
+      if (!existingIds.has(o.id)) allOppsMerged.push(o);
+    });
 
     var calls = callsData.data || [];
     var answered = calls.filter(function(c) { return c.disposition === 'answered' || c.duration > 0; });
     var totalDur = calls.reduce(function(s, c) { return s + (c.duration || 0); }, 0);
 
-    var allOpps = oppsData.data || [];
+    var allOpps = allOppsMerged;
     var filteredOpps = allOpps.filter(function(o) {
       var d = (o.date_created || '').split('T')[0];
       return d >= startDate.toISOString().split('T')[0] && d <= endDate.toISOString().split('T')[0];
@@ -2334,11 +2343,6 @@ function selectPerson(role, personId) {
     uc = data.userCalls && data.userCalls[personId] || { total: 0, answered: 0, duration: 0 };
     uo = data.userOpps && data.userOpps[personId] || { won: 0, lost: 0, total: 0, revenue: 0 };
   }
-  var avgDur = uc.total > 0 ? Math.round(uc.duration / uc.total) : 0;
-  var reachPct = uc.total > 0 ? Math.round(uc.answered / uc.total * 100) : 0;
-  var winPct = uo.total > 0 ? Math.round(uo.won / uo.total * 100) : 0;
-  var avgDeal = uo.won > 0 ? Math.round(uo.revenue / uo.won) : 0;
-
   container.innerHTML = `
     <div class="person-info-card">
       <div class="person-avatar">${person.name.charAt(0)}</div>
@@ -2351,7 +2355,7 @@ function selectPerson(role, personId) {
       ${getPersonStatsHtml(role, person, uc, uo)}
     </div>
     <div class="kpi-grid">
-      ${getPersonKpisHtml(role, person, uc, uo, avgDur, reachPct, winPct, avgDeal)}
+      ${getPersonKpisHtml(role, person, uc, uo)}
     </div>
   `;
 
@@ -2380,78 +2384,88 @@ function getRoleLabel(role) {
   return labels[role] || role;
 }
 
-// Stats-Panel für Person generieren - MIT echten Close-Daten
+// Stats-Panel für Person - rollenspezifisch mit echten Daten
 function getPersonStatsHtml(role, person, uc, uo) {
   uc = uc || { total: 0, answered: 0, duration: 0 };
   uo = uo || { won: 0, lost: 0, total: 0, revenue: 0 };
-  var reachPct = uc.total > 0 ? Math.round(uc.answered / uc.total * 100) + '%' : '-';
-  var winPct = uo.total > 0 ? Math.round(uo.won / uo.total * 100) + '%' : '-';
+  var avgDur = uc.total > 0 ? Math.round(uc.duration / uc.total) : 0;
+  var reachPct = uc.total > 0 ? Math.round(uc.answered / uc.total * 100) : 0;
+  var winPct = uo.total > 0 ? Math.round(uo.won / uo.total * 100) : 0;
+  var avgDeal = uo.won > 0 ? formatCurrency(Math.round(uo.revenue / uo.won)) : '€0';
 
   if (role === 'opener') {
     return `
-      <div class="stat-item"><div class="stat-value">${uc.total.toLocaleString('de-DE')}</div><div class="stat-label">📞 Anrufe</div></div>
-      <div class="stat-item"><div class="stat-value">${uc.answered.toLocaleString('de-DE')}</div><div class="stat-label">✅ Erreicht</div></div>
-      <div class="stat-item"><div class="stat-value">${uo.total.toLocaleString('de-DE')}</div><div class="stat-label">➡️ Opportunities</div></div>
-      <div class="stat-item"><div class="stat-value">${reachPct}</div><div class="stat-label">📊 Erreichbarkeit</div></div>
+      <div class="stat-item"><div class="stat-value">${uc.total}</div><div class="stat-label">📞 Ausgehende Anrufe</div></div>
+      <div class="stat-item"><div class="stat-value">${uc.answered}</div><div class="stat-label">✅ Erreicht</div></div>
+      <div class="stat-item"><div class="stat-value">${reachPct}%</div><div class="stat-label">📊 Erreichbarkeitsquote</div></div>
+      <div class="stat-item"><div class="stat-value">${formatDuration(avgDur)}</div><div class="stat-label">⏱️ Ø Gesprächsdauer</div></div>
     `;
   } else if (role === 'setter') {
     return `
-      <div class="stat-item"><div class="stat-value">${uc.total.toLocaleString('de-DE')}</div><div class="stat-label">📅 Aktivitäten</div></div>
-      <div class="stat-item"><div class="stat-value">${uo.total.toLocaleString('de-DE')}</div><div class="stat-label">🎯 Opportunities</div></div>
-      <div class="stat-item"><div class="stat-value">${uo.won.toLocaleString('de-DE')}</div><div class="stat-label">✅ Qualifiziert</div></div>
-      <div class="stat-item"><div class="stat-value">${winPct}</div><div class="stat-label">➡️ Quote</div></div>
+      <div class="stat-item"><div class="stat-value">${uo.total}</div><div class="stat-label">📅 Termine / Opportunities</div></div>
+      <div class="stat-item"><div class="stat-value">${uo.won}</div><div class="stat-label">✅ Qualifiziert / Übergeben</div></div>
+      <div class="stat-item"><div class="stat-value">${winPct}%</div><div class="stat-label">🎯 Qualifizierungsquote</div></div>
+      <div class="stat-item"><div class="stat-value">${uc.total}</div><div class="stat-label">📞 Follow-up Aktivitäten</div></div>
     `;
   } else if (role === 'closer') {
     return `
-      <div class="stat-item"><div class="stat-value">${formatCurrency(uo.revenue)}</div><div class="stat-label">💰 Umsatz</div></div>
-      <div class="stat-item"><div class="stat-value">${winPct}</div><div class="stat-label">✅ Abschlussquote</div></div>
-      <div class="stat-item"><div class="stat-value">${uo.won.toLocaleString('de-DE')}</div><div class="stat-label">🤝 Abschlüsse</div></div>
-      <div class="stat-item"><div class="stat-value">${uo.won > 0 ? formatCurrency(Math.round(uo.revenue / uo.won)) : '-'}</div><div class="stat-label">📊 Ø Auftrag</div></div>
+      <div class="stat-item"><div class="stat-value">${formatCurrency(uo.revenue)}</div><div class="stat-label">💰 Umsatz (gewonnen)</div></div>
+      <div class="stat-item"><div class="stat-value">${uo.won}</div><div class="stat-label">🤝 Abschlüsse</div></div>
+      <div class="stat-item"><div class="stat-value">${winPct}%</div><div class="stat-label">✅ Abschlussquote</div></div>
+      <div class="stat-item"><div class="stat-value">${avgDeal}</div><div class="stat-label">💎 Ø Auftragswert</div></div>
     `;
   }
+  // Gesamt: Zeige die wichtigsten KPIs über alle Rollen
   return `
-    <div class="stat-item"><div class="stat-value">${(uc.total + uo.total).toLocaleString('de-DE')}</div><div class="stat-label">📋 Aktivitäten</div></div>
-    <div class="stat-item"><div class="stat-value">${uc.total.toLocaleString('de-DE')}</div><div class="stat-label">📞 Anrufe</div></div>
-    <div class="stat-item"><div class="stat-value">${uo.won.toLocaleString('de-DE')}</div><div class="stat-label">🤝 Deals gewonnen</div></div>
+    <div class="stat-item"><div class="stat-value">${uc.total}</div><div class="stat-label">📞 Anrufe</div></div>
+    <div class="stat-item"><div class="stat-value">${uo.won}</div><div class="stat-label">🤝 Deals gewonnen</div></div>
     <div class="stat-item"><div class="stat-value">${formatCurrency(uo.revenue)}</div><div class="stat-label">💰 Umsatz</div></div>
+    <div class="stat-item"><div class="stat-value">${winPct}%</div><div class="stat-label">✅ Abschlussquote</div></div>
   `;
 }
 
-// KPI-Kacheln für Person - MIT echten Close-Daten
-function getPersonKpisHtml(role, person, uc, uo, avgDur, reachPct, winPct, avgDeal) {
+// KPI-Kacheln für Person - rollenspezifisch aus Head-of-Sales Perspektive
+function getPersonKpisHtml(role, person, uc, uo) {
   uc = uc || { total: 0, answered: 0, duration: 0 };
   uo = uo || { won: 0, lost: 0, total: 0, revenue: 0 };
-  avgDur = avgDur || 0; reachPct = reachPct || 0; winPct = winPct || 0; avgDeal = avgDeal || 0;
+  var avgDur = uc.total > 0 ? Math.round(uc.duration / uc.total) : 0;
+  var reachPct = uc.total > 0 ? Math.round(uc.answered / uc.total * 100) : 0;
+  var winPct = uo.total > 0 ? Math.round(uo.won / uo.total * 100) : 0;
+  var avgDeal = uo.won > 0 ? Math.round(uo.revenue / uo.won) : 0;
+  var notReached = uc.total - uc.answered;
 
   if (role === 'opener') {
+    // OPENER: Anruf-Performance, Erreichbarkeit, Gesprächsqualität
     return `
-      <div class="kpi-card"><div class="kpi-header">🎯 ÜBERGABE-QUOTE</div><div class="kpi-value">${reachPct}%</div><div class="kpi-subtitle">Erreichte → qualifizierte Kontakte</div><div class="kpi-footer"><span>${uc.answered} von ${uc.total}</span><span>Ziel: 50%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">⏱️ Ø GESPRÄCHSZEIT</div><div class="kpi-value">${formatDuration(avgDur)}</div><div class="kpi-subtitle">Minuten pro Gespräch</div><div class="kpi-footer"><span>${uc.total} Gespräche</span><span>Optimal: 3-5 Min</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">📊 ERREICHBARKEIT</div><div class="kpi-value">${reachPct}%</div><div class="kpi-subtitle">Kontakte die ans Telefon gehen</div><div class="kpi-footer"><span>${uc.answered} erreicht</span><span>Ziel: 30%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">📞 ANRUFE GESAMT</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Im gewählten Zeitraum</div><div class="kpi-footer"><span>Ø ${avgDur > 0 ? formatDuration(avgDur) : '-'}/Gespräch</span><span></span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📞 ANRUFE GESAMT</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Ausgehende Anrufe im Zeitraum</div><div class="kpi-footer"><span>${uc.answered} erreicht, ${notReached} nicht erreicht</span><span></span></div></div>
+      <div class="kpi-card" style="border-color:${reachPct >= 30 ? 'var(--success)' : 'var(--warning)'}"><div class="kpi-header">📊 ERREICHBARKEITSQUOTE</div><div class="kpi-value">${reachPct}%</div><div class="kpi-subtitle">Kontakte die ans Telefon gehen</div><div class="kpi-footer"><span>${uc.answered} von ${uc.total}</span><span>Ziel: 30%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">⏱️ Ø GESPRÄCHSDAUER</div><div class="kpi-value">${formatDuration(avgDur)}</div><div class="kpi-subtitle">Durchschnitt pro Gespräch</div><div class="kpi-footer"><span>Gesamt: ${formatDuration(uc.duration)}</span><span>Optimal: 3-5 Min</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">🎯 KONTAKTE ERREICHT</div><div class="kpi-value">${uc.answered}</div><div class="kpi-subtitle">Erfolgreiche Verbindungen</div><div class="kpi-footer"><span>Quote: ${reachPct}%</span><span></span></div></div>
     `;
   } else if (role === 'setter') {
+    // SETTER: Terminqualität, Qualifizierung, Übergabe-Effizienz
     return `
-      <div class="kpi-card"><div class="kpi-header">🎯 QUALIFIZIERUNGSQUOTE</div><div class="kpi-value">${winPct}%</div><div class="kpi-subtitle">Opportunities → gewonnen</div><div class="kpi-footer"><span>${uo.won} von ${uo.total}</span><span>Ziel: 75%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">📅 OPPORTUNITIES</div><div class="kpi-value">${uo.total}</div><div class="kpi-subtitle">Bearbeitete Opportunities</div><div class="kpi-footer"><span>${uo.won} gewonnen</span><span>${uo.lost} verloren</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">📞 AKTIVITÄTEN</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Anrufe + Kontakte</div><div class="kpi-footer"><span>${uc.answered} erreicht</span><span>${reachPct}% Quote</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">💰 PIPELINE-WERT</div><div class="kpi-value">${formatCurrency(uo.revenue)}</div><div class="kpi-subtitle">Gewonnener Umsatz</div><div class="kpi-footer"><span>${uo.won} Deals</span><span></span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📅 OPPORTUNITIES</div><div class="kpi-value">${uo.total}</div><div class="kpi-subtitle">Bearbeitete Opportunities im Zeitraum</div><div class="kpi-footer"><span>${uo.won} qualifiziert, ${uo.lost} verloren</span><span></span></div></div>
+      <div class="kpi-card" style="border-color:${winPct >= 50 ? 'var(--success)' : 'var(--warning)'}"><div class="kpi-header">🎯 QUALIFIZIERUNGSQUOTE</div><div class="kpi-value">${winPct}%</div><div class="kpi-subtitle">Erfolgreich qualifiziert & übergeben</div><div class="kpi-footer"><span>${uo.won} von ${uo.total}</span><span>Ziel: 60%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">📞 AKTIVITÄTEN</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Anrufe & Follow-ups</div><div class="kpi-footer"><span>${uc.answered} erreicht (${reachPct}%)</span><span></span></div></div>
+      <div class="kpi-card"><div class="kpi-header">💰 PIPELINE-WERT</div><div class="kpi-value">${formatCurrency(uo.revenue)}</div><div class="kpi-subtitle">Wert qualifizierter Deals</div><div class="kpi-footer"><span>${uo.won} Deals</span><span></span></div></div>
     `;
   } else if (role === 'closer') {
+    // CLOSER: Umsatz, Abschlussquote, Deal-Größe
     return `
-      <div class="kpi-card" style="border-color: var(--success);"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">${winPct}%</div><div class="kpi-subtitle">Gewonnene Deals</div><div class="kpi-footer"><span>${uo.won} von ${uo.total}</span><span>Ziel: 30%</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">💰 UMSATZ</div><div class="kpi-value">${formatCurrency(uo.revenue)}</div><div class="kpi-subtitle">Gewonnener Umsatz im Zeitraum</div><div class="kpi-footer"><span>${uo.won} Abschlüsse</span><span></span></div></div>
-      <div class="kpi-card"><div class="kpi-header">💰 Ø AUFTRAGSWERT</div><div class="kpi-value">${formatCurrency(avgDeal)}</div><div class="kpi-subtitle">Durchschnitt pro Abschluss</div><div class="kpi-footer"><span>${uo.won} Deals</span><span>Ziel: €8.000</span></div></div>
-      <div class="kpi-card"><div class="kpi-header">📞 AKTIVITÄTEN</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Anrufe im Zeitraum</div><div class="kpi-footer"><span>Ø ${avgDur > 0 ? formatDuration(avgDur) : '-'}/Gespräch</span><span></span></div></div>
+      <div class="kpi-card" style="border-color:var(--success)"><div class="kpi-header">💰 UMSATZ</div><div class="kpi-value">${formatCurrency(uo.revenue)}</div><div class="kpi-subtitle">Gewonnener Umsatz im Zeitraum</div><div class="kpi-footer"><span>${uo.won} Abschlüsse</span><span></span></div></div>
+      <div class="kpi-card" style="border-color:${winPct >= 30 ? 'var(--success)' : 'var(--warning)'}"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">${winPct}%</div><div class="kpi-subtitle">Gewonnene vs. alle Opportunities</div><div class="kpi-footer"><span>${uo.won} von ${uo.total}</span><span>Ziel: 30%</span></div></div>
+      <div class="kpi-card"><div class="kpi-header">💎 Ø AUFTRAGSWERT</div><div class="kpi-value">${formatCurrency(avgDeal)}</div><div class="kpi-subtitle">Durchschnitt pro Abschluss</div><div class="kpi-footer"><span>${uo.won} Deals</span><span></span></div></div>
+      <div class="kpi-card"><div class="kpi-header">❌ VERLOREN</div><div class="kpi-value">${uo.lost}</div><div class="kpi-subtitle">Verlorene Opportunities</div><div class="kpi-footer"><span>${uo.total > 0 ? Math.round(uo.lost / uo.total * 100) : 0}% Verlustrate</span><span></span></div></div>
     `;
   }
 
-  // Gesamt
+  // GESAMT: Überblick über alle Aktivitäten
   return `
-    <div class="kpi-card"><div class="kpi-header">📞 ANRUFE</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Gesamt im Zeitraum</div><div class="kpi-footer"><span>${uc.answered} erreicht (${reachPct}%)</span><span></span></div></div>
-    <div class="kpi-card"><div class="kpi-header">💰 UMSATZ</div><div class="kpi-value">${formatCurrency(uo.revenue)}</div><div class="kpi-subtitle">Gewonnener Umsatz</div><div class="kpi-footer"><span>${uo.won} Deals</span><span></span></div></div>
-    <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">${winPct}%</div><div class="kpi-subtitle">Gewonnene Opportunities</div><div class="kpi-footer"><span>${uo.won} von ${uo.total}</span><span>Ziel: 30%</span></div></div>
-    <div class="kpi-card"><div class="kpi-header">💰 Ø DEAL</div><div class="kpi-value">${formatCurrency(avgDeal)}</div><div class="kpi-subtitle">Durchschnittlicher Auftragswert</div><div class="kpi-footer"><span></span><span></span></div></div>
+    <div class="kpi-card"><div class="kpi-header">📞 ANRUFE</div><div class="kpi-value">${uc.total}</div><div class="kpi-subtitle">Gesamt im Zeitraum</div><div class="kpi-footer"><span>${uc.answered} erreicht (${reachPct}%)</span><span>Ø ${formatDuration(avgDur)}</span></div></div>
+    <div class="kpi-card" style="border-color:var(--success)"><div class="kpi-header">💰 UMSATZ</div><div class="kpi-value">${formatCurrency(uo.revenue)}</div><div class="kpi-subtitle">Gewonnener Umsatz</div><div class="kpi-footer"><span>${uo.won} Deals</span><span></span></div></div>
+    <div class="kpi-card"><div class="kpi-header">✅ ABSCHLUSSQUOTE</div><div class="kpi-value">${winPct}%</div><div class="kpi-subtitle">Gewonnene Opportunities</div><div class="kpi-footer"><span>${uo.won} von ${uo.total}</span><span></span></div></div>
+    <div class="kpi-card"><div class="kpi-header">💎 Ø DEAL</div><div class="kpi-value">${formatCurrency(avgDeal)}</div><div class="kpi-subtitle">Durchschnittlicher Auftragswert</div><div class="kpi-footer"><span>${uo.lost} verloren</span><span></span></div></div>
   `;
 }
 
