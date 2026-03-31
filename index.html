@@ -4617,30 +4617,43 @@ async function loadAndDisplayCloseKPIs() {
 
     console.log('📊 Zeitraum:', state.timeRange, '| API:', apiFrom, '→', apiTo, '| Filter:', originalFrom, '→', originalTo);
 
-    // Fetch ALL data in parallel
-    var callEndpoint = 'activity/call/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_fields=user_id,created_by,duration,direction,disposition';
+    // Fetch ALL data in parallel — OHNE _fields (kann Probleme machen)
+    var callEndpoint = 'activity/call/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200';
     console.log('🔗 Call endpoint:', callEndpoint);
     var [emailsData, oppsData, leadsData, callsPage1] = await Promise.all([
-      fetchCloseEndpoint('activity/email/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=0'),
+      fetchCloseEndpoint('activity/email/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200'),
       fetchCloseEndpoint('opportunity/'),
-      fetchCloseEndpoint('lead/?_limit=0'),
+      fetchCloseEndpoint('lead/?_limit=200'),
       fetchCloseEndpoint(callEndpoint)
     ]);
 
-    // === PROCESS CALLS (mit Pagination für >200) ===
+    console.log('📞 API Response:', JSON.stringify(callsPage1).substring(0, 500));
+    console.log('📧 Emails:', JSON.stringify(emailsData).substring(0, 300));
+
+    // === PROCESS CALLS (mit Pagination) ===
     var calls = callsPage1.data || [];
     if (calls.length >= 200) {
-      // Lade weitere Seiten
       for (var p = 1; p < 5; p++) {
-        var nextPage = await fetchCloseEndpoint('activity/call/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_skip=' + (p * 200) + '&_fields=user_id,created_by,duration,direction,disposition');
+        var nextPage = await fetchCloseEndpoint('activity/call/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_skip=' + (p * 200));
         if (!nextPage.data || nextPage.data.length === 0) break;
         calls = calls.concat(nextPage.data);
         if (nextPage.data.length < 200) break;
       }
     }
+    // Emails auch mit Pagination
+    var emails = emailsData.data || [];
+    if (emails.length >= 200) {
+      for (var p = 1; p < 5; p++) {
+        var nextEmailPage = await fetchCloseEndpoint('activity/email/?date_created__gt=' + apiFrom + '&date_created__lt=' + apiTo + '&_limit=200&_skip=' + (p * 200));
+        if (!nextEmailPage.data || nextEmailPage.data.length === 0) break;
+        emails = emails.concat(nextEmailPage.data);
+        if (nextEmailPage.data.length < 200) break;
+      }
+    }
     var totalCalls = calls.length;
-    console.log('📞 API Response callsPage1:', JSON.stringify(callsPage1).substring(0, 500));
-    console.log('📞 Calls geladen:', totalCalls, '| Erstes Objekt:', calls[0] ? JSON.stringify(calls[0]) : 'KEINE CALLS');
+    var totalEmails = emails.length;
+    console.log('📞 Calls:', totalCalls, '| Erstes:', calls[0] ? (calls[0].user_id + ' ' + calls[0].direction + ' ' + calls[0].duration + 's') : 'KEINE');
+    console.log('📧 Emails:', totalEmails);
     var outboundCalls = calls.filter(function(c) { return c.direction === 'outbound'; });
     var answeredCalls = calls.filter(function(c) { return c.disposition === 'answered' || c.duration > 0; });
     var totalDuration = calls.reduce(function(sum, c) { return sum + (c.duration || 0); }, 0);
